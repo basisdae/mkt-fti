@@ -19,6 +19,7 @@ import {
   updateSupplier as updateSupplierRecord,
   updateSupplierContact,
 } from "@/lib/services/suppliers";
+import { removeSupplierFromStorage } from "@/lib/supplier-storage";
 import type {
   Supplier,
   SupplierContact,
@@ -150,6 +151,7 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
 
     try {
       await deleteSupplierRecord(supplierId);
+      removeSupplierFromStorage(supplierId);
       setError(null);
     } catch (err) {
       setSuppliers(snapshot);

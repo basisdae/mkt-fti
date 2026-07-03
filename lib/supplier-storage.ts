@@ -32,3 +32,12 @@ export function saveSuppliersToStorage(suppliers: Supplier[]): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(SUPPLIERS_STORAGE_KEY, JSON.stringify(suppliers));
 }
+
+/** Legacy localStorage cleanup — contacts are embedded on each supplier record. */
+export function removeSupplierFromStorage(supplierId: string): void {
+  if (typeof window === "undefined") return;
+  const next = loadSuppliersFromStorage().filter(
+    (supplier) => supplier.id !== supplierId,
+  );
+  saveSuppliersToStorage(next);
+}
