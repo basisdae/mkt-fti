@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, SlidersHorizontal } from "lucide-react";
-import { ProductListRow } from "@/components/cards/ProductListRow";
+import { PackageSearch, Search, SlidersHorizontal } from "lucide-react";
+import { ProductListHeader, ProductListRow } from "@/components/cards/ProductListRow";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Select } from "@/components/forms/Select";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import {
@@ -49,6 +51,12 @@ export function ProductsListView() {
     [allProducts, filters],
   );
 
+  const hasActiveFilters =
+    filters.query !== "" ||
+    filters.status !== "" ||
+    filters.supplier !== "" ||
+    filters.sort !== "latest_updated";
+
   function updateFilter<K extends keyof ProductFilterState>(
     key: K,
     value: ProductFilterState[K],
@@ -56,13 +64,15 @@ export function ProductsListView() {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }
 
+  function clearFilters() {
+    setFilters(DEFAULT_PRODUCT_FILTERS);
+  }
+
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          Products
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
+    <div className="page-shell">
+      <div className="page-header-block">
+        <h1 className="page-title">Products</h1>
+        <p className="page-description">
           All sourcing products with pricing, MOQ, and margin overview.
         </p>
       </div>
@@ -129,37 +139,23 @@ export function ProductsListView() {
       </Card>
 
       {filteredProducts.length === 0 ? (
-        <Card className="border-dashed text-center">
-          <p className="text-sm text-gray-500">No products match your filters.</p>
+        <Card className="border-dashed">
+          <EmptyState
+            icon={PackageSearch}
+            title="No products match your filters"
+            description="Try adjusting your search terms or clearing filters to see the full product catalog."
+            action={
+              hasActiveFilters ? (
+                <Button variant="secondary" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              ) : undefined
+            }
+          />
         </Card>
       ) : (
         <>
-          <div className="mb-3 hidden rounded-[20px] border border-gray-100 bg-gray-50/80 px-6 py-3 md:grid md:grid-cols-[2fr_1.2fr_repeat(5,1fr)_auto] md:gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Product
-            </span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Supplier
-            </span>
-            <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
-              MOQ
-            </span>
-            <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Cost
-            </span>
-            <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
-              FTI Price
-            </span>
-            <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
-              GP%
-            </span>
-            <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Dealer
-            </span>
-            <span className="text-right text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Status
-            </span>
-          </div>
+          <ProductListHeader />
 
           <div className="space-y-3">
             {filteredProducts.map((product) => (

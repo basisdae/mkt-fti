@@ -26,6 +26,8 @@ export interface ProductSeedInput {
   packagingNotes: string;
   marginTarget: number;
   annualVolumeTarget: number;
+  imageUrl?: string | null;
+  imageAlt?: string;
   certifications: string[];
   customOptions?: Partial<ProductCustomOptions>;
   certification?: Partial<Omit<ProductCertification, "certifications">>;
@@ -101,6 +103,8 @@ export function createProduct(seed: ProductSeedInput): Product {
     packagingNotes: seed.packagingNotes,
     marginTarget: seed.marginTarget,
     annualVolumeTarget: seed.annualVolumeTarget,
+    imageUrl: seed.imageUrl ?? null,
+    imageAlt: seed.imageAlt ?? seed.name,
     customOptions: {
       ...typeDefaults,
       customNotes: seed.packagingNotes,

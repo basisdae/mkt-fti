@@ -30,6 +30,10 @@ export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+export function formatSignedGp(value: number): string {
+  return `+${value.toFixed(1)}%`;
+}
+
 export function getStatusColor(status: ProductStatus): {
   bg: string;
   text: string;
@@ -65,9 +69,9 @@ export function getStatusColor(status: ProductStatus): {
       badge: "success",
     },
     on_hold: {
-      bg: "bg-gray-100",
-      text: "text-gray-600",
-      badge: "muted",
+      bg: "bg-red-50",
+      text: "text-fti-red",
+      badge: "danger",
     },
   };
 

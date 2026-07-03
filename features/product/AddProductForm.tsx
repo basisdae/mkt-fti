@@ -9,6 +9,12 @@ import { Input } from "@/components/forms/Input";
 import { Select } from "@/components/forms/Select";
 import { Textarea } from "@/components/forms/Textarea";
 import { Checkbox } from "@/components/forms/Checkbox";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import {
+  createEmptyProductImageValue,
+  ProductImageUpload,
+  type ProductImageValue,
+} from "@/components/product/ProductImageUpload";
 import {
   PRODUCT_CATEGORY_LABELS,
   PRODUCT_STATUS_LABELS,
@@ -64,6 +70,9 @@ export function AddProductForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
+  const [imageValue, setImageValue] = useState<ProductImageValue>(
+    createEmptyProductImageValue(),
+  );
 
   const pricingPreview = useMemo(() => {
     const usd = parseFloat(form.usdCost);
@@ -170,11 +179,12 @@ export function AddProductForm() {
     setErrors({});
     setSubmitted(false);
     setSavedName("");
+    setImageValue(createEmptyProductImageValue());
   }
 
   if (submitted) {
     return (
-      <div className="p-6 lg:p-8">
+      <div className="page-shell">
         <Card className="mx-auto max-w-lg text-center" padding="lg">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50">
             <CheckCircle2 className="h-8 w-8 text-success" />
@@ -184,6 +194,19 @@ export function AddProductForm() {
             <span className="font-medium text-gray-800">{savedName}</span> has
             been saved locally. Database connection coming soon.
           </p>
+          {imageValue.previewUrl && (
+            <div className="mx-auto mt-6 flex max-w-xs flex-col items-center gap-2">
+              <ProductImageDisplay
+                src={imageValue.previewUrl}
+                alt={imageValue.alt || savedName}
+                size="lg"
+                className="p-2"
+              />
+              {imageValue.alt && (
+                <p className="text-xs text-gray-400">{imageValue.alt}</p>
+              )}
+            </div>
+          )}
           {pricingPreview && (
             <div className="mt-6 rounded-xl bg-light-purple/40 px-4 py-3 text-left text-sm">
               <p className="font-medium text-gray-700">Pricing preview</p>
@@ -207,7 +230,7 @@ export function AddProductForm() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="page-shell">
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -300,6 +323,17 @@ export function AddProductForm() {
                 onChange={(e) => updateField("leadTime", e.target.value)}
               />
             </div>
+          </FormSection>
+
+          <FormSection
+            title="Product Image"
+            description="Square 1:1 · PNG with transparent background preferred"
+          >
+            <ProductImageUpload
+              value={imageValue}
+              onChange={setImageValue}
+              productName={form.productName}
+            />
           </FormSection>
 
           <FormSection

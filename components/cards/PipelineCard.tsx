@@ -26,8 +26,9 @@ export function PipelineCard({ item, stage, onMoveNext }: PipelineCardProps) {
   return (
     <Card
       padding="sm"
+      interactive
       className={cn(
-        "border-l-[3px] transition-all hover:shadow-md",
+        "border-l-[3px] transition-all duration-200 hover:shadow-[var(--shadow-card-hover)]",
         toneStyles.cardAccent,
       )}
     >

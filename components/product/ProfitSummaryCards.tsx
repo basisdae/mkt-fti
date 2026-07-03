@@ -49,6 +49,7 @@ export function ProfitSummaryCards({ summary }: ProfitSummaryCardsProps) {
           key={card.title}
           className={card.accent}
           padding="md"
+          interactive
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
             {card.title}

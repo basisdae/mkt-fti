@@ -1,7 +1,8 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Trash2, ListPlus } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   isLowProfitMargin,
   sumScenarioRows,
@@ -28,8 +29,7 @@ function ProfitValue({
   return (
     <span
       className={cn(
-        "font-semibold",
-        low ? "text-fti-red" : "text-green-800",
+        low ? "font-semibold text-fti-red" : "font-semibold text-green-800",
         className,
       )}
     >
@@ -45,23 +45,25 @@ export function ScenarioTable({ rows, onRemove }: ScenarioTableProps) {
   if (rows.length === 0) {
     return (
       <Card className="border-dashed">
-        <p className="text-center text-sm text-gray-400">
-          No products in scenario yet. Configure inputs and click{" "}
-          <span className="font-medium text-gray-600">Add to Scenario</span>.
-        </p>
+        <EmptyState
+          icon={ListPlus}
+          title="No scenario products yet"
+          description='Configure inputs above and click "Add to Scenario" to build a multi-product forecast.'
+          compact
+        />
       </Card>
     );
   }
 
   return (
-    <Card padding="none">
-      <div className="border-b border-gray-100 px-6 py-4">
+    <Card padding="none" interactive>
+      <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
         <h2 className="text-base font-semibold text-gray-900">
           Multi-Product Scenario
         </h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 border-b border-gray-100 bg-light-purple/30 px-6 py-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 border-b border-gray-100 bg-light-purple/30 px-5 py-4 sm:grid-cols-4 sm:px-6">
         <SummaryTile label="Total Revenue" value={formatCurrencyTHB(totals.revenue)} />
         <SummaryTile label="Total Cost" value={formatCurrencyTHB(totals.totalCost)} />
         <SummaryTile
@@ -82,7 +84,7 @@ export function ScenarioTable({ rows, onRemove }: ScenarioTableProps) {
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-gray-100 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              <th className="px-6 py-3">Product</th>
+              <th className="px-5 py-3 sm:px-6">Product</th>
               <th className="px-4 py-3 text-right">Qty</th>
               <th className="px-4 py-3 text-right">Revenue</th>
               <th className="px-4 py-3 text-right">Cost</th>
@@ -93,48 +95,48 @@ export function ScenarioTable({ rows, onRemove }: ScenarioTableProps) {
           </thead>
           <tbody>
             {rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-gray-50 transition-colors hover:bg-gray-50/60"
-                >
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-gray-900">{row.productName}</p>
-                    <p className="text-xs text-gray-400">
-                      {formatCurrencyTHB(row.sellingPrice)} / unit
-                    </p>
-                  </td>
-                  <td className="px-4 py-4 text-right text-gray-700">
-                    {row.qty.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-4 text-right text-gray-900">
-                    {formatCurrencyTHB(row.revenue)}
-                  </td>
-                  <td className="px-4 py-4 text-right text-gray-700">
-                    {formatCurrencyTHB(row.totalCost)}
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <ProfitValue
-                      value={formatCurrencyTHB(row.grossProfit)}
-                      gpPercent={row.grossProfitPercent}
-                    />
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <ProfitValue
-                      value={formatPercent(row.grossProfitPercent)}
-                      gpPercent={row.grossProfitPercent}
-                    />
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => onRemove(row.id)}
-                      className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-fti-red"
-                      aria-label={`Remove ${row.productName}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
+              <tr
+                key={row.id}
+                className="border-b border-gray-50 transition-colors hover:bg-gray-50/60"
+              >
+                <td className="px-5 py-4 sm:px-6">
+                  <p className="font-medium text-gray-900">{row.productName}</p>
+                  <p className="text-xs text-gray-400">
+                    {formatCurrencyTHB(row.sellingPrice)} / unit
+                  </p>
+                </td>
+                <td className="px-4 py-4 text-right text-gray-700">
+                  {row.qty.toLocaleString()}
+                </td>
+                <td className="px-4 py-4 text-right text-gray-900">
+                  {formatCurrencyTHB(row.revenue)}
+                </td>
+                <td className="px-4 py-4 text-right text-gray-700">
+                  {formatCurrencyTHB(row.totalCost)}
+                </td>
+                <td className="px-4 py-4 text-right">
+                  <ProfitValue
+                    value={formatCurrencyTHB(row.grossProfit)}
+                    gpPercent={row.grossProfitPercent}
+                  />
+                </td>
+                <td className="px-4 py-4 text-right">
+                  <ProfitValue
+                    value={formatPercent(row.grossProfitPercent)}
+                    gpPercent={row.grossProfitPercent}
+                  />
+                </td>
+                <td className="px-4 py-4 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onRemove(row.id)}
+                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-fti-red"
+                    aria-label={`Remove ${row.productName}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
             ))}
           </tbody>
         </table>

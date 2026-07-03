@@ -95,19 +95,17 @@ export function SimulatorView() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          Target Simulator
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
+    <div className="page-shell">
+      <div className="page-header-block">
+        <h1 className="page-title">Target Simulator</h1>
+        <p className="page-description">
           Model revenue targets, build multi-product scenarios, and track
           margin performance.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2" interactive>
           <h2 className="mb-5 text-base font-semibold text-gray-900">
             Inputs
           </h2>
@@ -153,7 +151,7 @@ export function SimulatorView() {
             </div>
 
             {lowMargin && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-fti-red">
+              <div className="warning-banner">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 Profit margin below 25%
               </div>
@@ -202,7 +200,7 @@ export function SimulatorView() {
             </ResultCard>
           </div>
 
-          <Card>
+          <Card interactive>
             <h2 className="mb-4 text-base font-semibold text-gray-900">
               Target vs Expected
             </h2>
@@ -266,6 +264,7 @@ function ResultCard({
 }) {
   return (
     <Card
+      interactive
       className={cn(
         profit && !lowMargin && "bg-gradient-to-br from-green-50/80 to-card",
         profit && lowMargin && "border-red-200 bg-red-50/50",

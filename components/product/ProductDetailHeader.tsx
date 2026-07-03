@@ -6,11 +6,14 @@ import { ArrowLeft, MessageSquarePlus, X } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/forms/Textarea";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { timeAgo } from "@/lib/utils";
 import type { ProductView } from "@/types/product";
 
 interface ProductDetailHeaderProps {
   product: ProductView;
+  imagePreviewUrl?: string | null;
+  imageAlt?: string;
 }
 
 interface LocalNote {
@@ -19,7 +22,11 @@ interface LocalNote {
   createdAt: string;
 }
 
-export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
+export function ProductDetailHeader({
+  product,
+  imagePreviewUrl,
+  imageAlt,
+}: ProductDetailHeaderProps) {
   const [showNoteForm, setShowNoteForm] = useState(false);
   const [noteText, setNoteText] = useState("");
   const [notes, setNotes] = useState<LocalNote[]>([]);
@@ -43,26 +50,35 @@ export function ProductDetailHeader({ product }: ProductDetailHeaderProps) {
 
   return (
     <div className="mb-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex-1">
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <StatusBadge status={product.status} />
-            <span className="text-xs text-gray-400">{product.code}</span>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+          <ProductImageDisplay
+            src={imagePreviewUrl ?? product.imageUrl}
+            alt={imageAlt || product.imageAlt || product.name}
+            size="lg"
+            className="p-2"
+          />
+
+          <div className="flex-1">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <StatusBadge status={product.status} />
+              <span className="text-xs text-gray-400">{product.code}</span>
+            </div>
+
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 lg:text-3xl">
+              {product.name}
+            </h1>
+            <p className="mt-2 text-sm font-medium text-gray-600">
+              {product.supplier}
+            </p>
+            <p className="mt-3 max-w-2xl text-sm text-gray-400">
+              {product.description}
+            </p>
+
+            <p className="mt-3 text-xs text-gray-400">
+              Updated {updatedLabel ?? timeAgo(product.updatedAt)}
+            </p>
           </div>
-
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 lg:text-3xl">
-            {product.name}
-          </h1>
-          <p className="mt-2 text-sm font-medium text-gray-600">
-            {product.supplier}
-          </p>
-          <p className="mt-3 max-w-2xl text-sm text-gray-400">
-            {product.description}
-          </p>
-
-          <p className="mt-3 text-xs text-gray-400">
-            Updated {updatedLabel ?? timeAgo(product.updatedAt)}
-          </p>
         </div>
 
         <div className="flex shrink-0 gap-2">

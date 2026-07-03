@@ -38,6 +38,8 @@ export const products: Product[] = [
     packagingNotes: "White-label box with FTI branding",
     marginTarget: 40,
     annualVolumeTarget: 12000,
+    imageUrl: "/images/products/prod-001.svg",
+    imageAlt: "Smart Air Purifier Pro transparent product cutout",
     certifications: ["TISI", "CE", "RoHS"],
   }),
   createProduct({
@@ -57,6 +59,8 @@ export const products: Product[] = [
     packagingNotes: "Color box + Thai manual",
     marginTarget: 45,
     annualVolumeTarget: 25000,
+    imageUrl: "/images/products/prod-002.svg",
+    imageAlt: "Portable Blender Max transparent product cutout",
     certifications: ["TISI", "CB"],
   }),
   createProduct({
@@ -76,6 +80,8 @@ export const products: Product[] = [
     packagingNotes: "Premium gift box option",
     marginTarget: 42,
     annualVolumeTarget: 8000,
+    imageUrl: "/images/products/prod-003.svg",
+    imageAlt: "UV Water Sterilizer transparent product cutout",
     certifications: ["TISI", "FDA", "NSF"],
   }),
   createProduct({
@@ -95,6 +101,8 @@ export const products: Product[] = [
     packagingNotes: "Compact retail packaging",
     marginTarget: 40,
     annualVolumeTarget: 15000,
+    imageUrl: "/images/products/prod-004.svg",
+    imageAlt: "Cordless Vacuum Lite transparent product cutout",
     certifications: ["TISI", "CE"],
   }),
   createProduct({
@@ -114,6 +122,8 @@ export const products: Product[] = [
     packagingNotes: "Installer kit included",
     marginTarget: 45,
     annualVolumeTarget: 6000,
+    imageUrl: "/images/products/prod-005.svg",
+    imageAlt: "Smart Door Lock S3 transparent product cutout",
     certifications: ["TISI", "Bluetooth SIG"],
   }),
   createProduct({

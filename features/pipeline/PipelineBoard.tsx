@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { Inbox } from "lucide-react";
 import { PipelineCard } from "@/components/cards/PipelineCard";
-import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   PIPELINE_STAGE_LABELS,
   PIPELINE_STAGE_TONES,
@@ -63,12 +64,10 @@ export function PipelineBoard() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col p-6 lg:p-8">
-      <div className="mb-6 shrink-0">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          Product Pipeline
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
+    <div className="page-shell flex h-full flex-col">
+      <div className="page-header-block shrink-0">
+        <h1 className="page-title">Product Pipeline</h1>
+        <p className="page-description">
           Kanban view from factory contact through launch readiness.
         </p>
 
@@ -99,7 +98,7 @@ export function PipelineBoard() {
             const toneStyles = PIPELINE_TONE_STYLES[column.tone];
 
             return (
-              <div key={column.id} className="flex w-72 shrink-0 flex-col">
+              <div key={column.id} className="flex w-64 shrink-0 flex-col sm:w-72">
                 <div className="mb-3 flex items-center justify-between px-1">
                   <h2 className="text-sm font-semibold text-gray-700">
                     {column.title}
@@ -121,9 +120,13 @@ export function PipelineBoard() {
                   )}
                 >
                   {column.items.length === 0 ? (
-                    <Card className="border-dashed bg-transparent text-center shadow-none">
-                      <p className="text-xs text-gray-400">No products</p>
-                    </Card>
+                    <EmptyState
+                      icon={Inbox}
+                      title="Empty stage"
+                      description="No products here yet."
+                      compact
+                      className="rounded-xl border border-dashed border-gray-200 bg-white/60"
+                    />
                   ) : (
                     column.items.map((item) => (
                       <PipelineCard

@@ -8,18 +8,16 @@ export const metadata = {
 
 export default function SettingsPage() {
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          Settings
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
+    <div className="page-shell">
+      <div className="page-header-block">
+        <h1 className="page-title">Settings</h1>
+        <p className="page-description">
           Configure workspace preferences and display options.
         </p>
       </div>
 
-      <div className="space-y-6 max-w-2xl">
-        <Card>
+      <div className="max-w-2xl space-y-6">
+        <Card interactive>
           <h2 className="mb-4 text-base font-semibold text-gray-900">
             General
           </h2>
@@ -30,7 +28,7 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card interactive>
           <h2 className="mb-4 text-base font-semibold text-gray-900">
             Notifications
           </h2>
@@ -43,7 +41,7 @@ export default function SettingsPage() {
             ].map((item) => (
               <label
                 key={item}
-                className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
+                className="flex cursor-default items-center justify-between rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100/80"
               >
                 <span className="text-sm text-gray-700">{item}</span>
                 <input

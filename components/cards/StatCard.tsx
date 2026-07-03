@@ -22,13 +22,13 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-[20px] border border-gray-100 bg-gradient-to-br p-6 shadow-sm shadow-gray-200/50",
+        "rounded-[20px] border border-gray-100 bg-gradient-to-br p-5 shadow-sm shadow-gray-200/50 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/10 hover:shadow-[var(--shadow-card-hover)] sm:p-6",
         accentStyles[accent],
         className,
       )}
     >
       <p className="text-sm font-medium text-gray-500">{metric.label}</p>
-      <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+      <p className="mt-2 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
         {metric.value}
       </p>
       {metric.change && (

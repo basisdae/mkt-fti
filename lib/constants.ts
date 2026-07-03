@@ -8,8 +8,12 @@ import {
 } from "lucide-react";
 import type { PipelineStage, PipelineStageTone, ProductStatus } from "@/types/product";
 
-export const APP_NAME = "MKT-FTI";
-export const APP_TAGLINE = "FTI Product Command Center";
+export const APP_TITLE = "FTI Product Command Center";
+export const APP_SHORT = "MKT-FTI";
+/** @deprecated Use APP_TITLE */
+export const APP_NAME = APP_SHORT;
+export const APP_TAGLINE = APP_TITLE;
+export const APP_VERSION = "MKT-FTI Product Line-up MVP v0.1";
 
 export const DESIGN_TOKENS = {
   primary: "#695CFF",

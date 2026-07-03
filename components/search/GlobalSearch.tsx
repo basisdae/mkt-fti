@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { searchProducts } from "@/lib/product-filters";
 import { getProducts } from "@/lib/mock-data";
@@ -41,7 +41,7 @@ export function GlobalSearch() {
   }
 
   return (
-    <div ref={containerRef} className="relative flex-1 max-w-md">
+    <div ref={containerRef} className="relative min-w-0 flex-1 max-w-md">
       <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
       <input
         type="search"
@@ -58,7 +58,15 @@ export function GlobalSearch() {
       {open && query.trim() && (
         <div className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[20px] border border-gray-100 bg-card shadow-lg shadow-gray-200/60">
           {results.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-gray-500">No matching products</p>
+            <div className="flex items-center gap-3 px-4 py-4 text-sm text-gray-500">
+              <SearchX className="h-5 w-5 shrink-0 text-gray-400" />
+              <div>
+                <p className="font-medium text-gray-700">No matching products</p>
+                <p className="mt-0.5 text-xs text-gray-400">
+                  Try supplier, brand, or factory name
+                </p>
+              </div>
+            </div>
           ) : (
             <ul>
               {results.map((product) => (
@@ -91,7 +99,7 @@ export function GlobalSearch() {
                   setOpen(false);
                   setQuery("");
                 }}
-                className="text-xs font-medium text-primary hover:underline"
+                className="text-xs font-medium text-primary transition-colors hover:underline"
               >
                 View all results on Products page
               </Link>
@@ -119,9 +127,9 @@ export function QuickFilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors",
+        "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-150",
         active
-          ? "bg-primary text-white shadow-sm"
+          ? "bg-primary text-white shadow-sm hover:bg-primary/90"
           : "bg-gray-100 text-gray-600 hover:bg-light-purple/60 hover:text-primary",
       )}
     >

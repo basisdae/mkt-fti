@@ -2,14 +2,17 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, FilterX } from "lucide-react";
 import { StatCard } from "@/components/cards/StatCard";
 import {
-  OpportunityRow,
+  DashboardProductCard,
   PipelineOverview,
 } from "@/components/cards/DashboardCards";
+import { ProductSpotlightSlider } from "@/features/dashboard/ProductSpotlightSlider";
 import { QuickFilterChip } from "@/components/search/GlobalSearch";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import { PIPELINE_STAGE_LABELS } from "@/lib/constants";
 import {
   DASHBOARD_QUICK_FILTERS,
@@ -46,12 +49,17 @@ export function DashboardView() {
     [allProducts, quickFilter],
   );
 
-  const topProducts = useMemo(
+  const spotlightProducts = useMemo(
     () =>
       [...filteredProducts]
         .sort((a, b) => b.opportunityScore - a.opportunityScore)
-        .slice(0, 5),
+        .slice(0, 8),
     [filteredProducts],
+  );
+
+  const topProducts = useMemo(
+    () => spotlightProducts.slice(0, 5),
+    [spotlightProducts],
   );
 
   function toggleQuickFilter(id: DashboardQuickFilter) {
@@ -59,12 +67,10 @@ export function DashboardView() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 lg:text-3xl">
-          Product Command Center
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-gray-500 lg:text-base">
+    <div className="page-shell">
+      <div className="page-header-block">
+        <h1 className="page-title">Product Command Center</h1>
+        <p className="page-description">
           Track new product ideas, pricing, pipeline and launch readiness.
         </p>
 
@@ -93,7 +99,7 @@ export function DashboardView() {
         )}
       </div>
 
-      <section className="mb-8">
+      <section className="mb-6 sm:mb-8">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {dashboardMetrics.map((metric, i) => (
             <StatCard key={metric.label} metric={metric} accent={accents[i]} />
@@ -101,21 +107,25 @@ export function DashboardView() {
         </div>
       </section>
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-5">
+      {spotlightProducts.length > 0 && (
+        <ProductSpotlightSlider products={spotlightProducts} />
+      )}
+
+      <div className="mb-6 grid gap-6 sm:mb-8 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <PipelineOverview stages={pipelineOverview} />
         </div>
 
         <div className="lg:col-span-2">
-          <Card padding="none">
-            <div className="border-b border-gray-100 px-6 py-4">
+          <Card padding="none" interactive>
+            <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
               <h2 className="text-base font-semibold text-gray-900">
                 Recent Activity
               </h2>
             </div>
             <ul className="divide-y divide-gray-50">
               {recentActivity.map((item) => (
-                <li key={item.id} className="px-6 py-4">
+                <li key={item.id} className="px-5 py-4 sm:px-6">
                   <p className="text-sm font-medium text-gray-900">
                     {item.action}
                   </p>
@@ -132,14 +142,14 @@ export function DashboardView() {
       </div>
 
       <section>
-        <Card padding="none">
-          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <Card padding="none" interactive>
+          <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <h2 className="text-base font-semibold text-gray-900">
               {quickFilter ? "Filtered Products" : "Top Opportunity Products"}
             </h2>
             <Link
               href="/products"
-              className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:underline"
             >
               View all
               <ArrowRight className="h-4 w-4" />
@@ -147,17 +157,31 @@ export function DashboardView() {
           </div>
 
           {topProducts.length === 0 ? (
-            <p className="px-6 py-8 text-center text-sm text-gray-500">
-              No products match this filter.
-            </p>
+            <EmptyState
+              icon={FilterX}
+              title="No products in this view"
+              description="Try another quick filter or browse the full product catalog."
+              compact
+              action={
+                quickFilter ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setQuickFilter(null)}
+                  >
+                    Clear filter
+                  </Button>
+                ) : (
+                  <Button href="/products" variant="secondary" size="sm">
+                    Browse products
+                  </Button>
+                )
+              }
+            />
           ) : (
-            <div className="divide-y divide-gray-50 px-2 py-1">
-              {topProducts.map((product, index) => (
-                <OpportunityRow
-                  key={product.id}
-                  product={product}
-                  rank={index + 1}
-                />
+            <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
+              {topProducts.map((product) => (
+                <DashboardProductCard key={product.id} product={product} />
               ))}
             </div>
           )}

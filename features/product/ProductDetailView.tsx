@@ -6,6 +6,11 @@ import { CertificationCard } from "@/components/product/CertificationCard";
 import { OemCustomCard } from "@/components/product/OemCustomCard";
 import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
 import { ProfitSummaryCards } from "@/components/product/ProfitSummaryCards";
+import {
+  createProductImageValueFromProduct,
+  ProductImageUpload,
+  type ProductImageValue,
+} from "@/components/product/ProductImageUpload";
 import { Card } from "@/components/ui/Card";
 import { getMoqTierById } from "@/lib/mock-data";
 import { getProfitSummary } from "@/lib/product-detail";
@@ -19,6 +24,13 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   const [selectedTierId, setSelectedTierId] = useState(
     product.priceOptions[0].id,
   );
+  const [imageValue, setImageValue] = useState<ProductImageValue>(() =>
+    createProductImageValueFromProduct(
+      product.imageUrl,
+      product.imageAlt,
+      product.name,
+    ),
+  );
 
   const selectedTier = useMemo(
     () => getMoqTierById(product, selectedTierId) ?? product.priceOptions[0],
@@ -31,8 +43,29 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   );
 
   return (
-    <div className="p-6 lg:p-8">
-      <ProductDetailHeader product={product} />
+    <div className="page-shell">
+      <ProductDetailHeader
+        product={product}
+        imagePreviewUrl={imageValue.previewUrl}
+        imageAlt={imageValue.alt}
+      />
+
+      <Card className="mb-6" padding="lg">
+        <div className="mb-5">
+          <h2 className="text-base font-semibold text-gray-900">
+            Product Image
+          </h2>
+          <p className="mt-1 text-xs text-gray-400">
+            Square 1:1 artwork · PNG with transparent background preferred ·
+            object-contain preview
+          </p>
+        </div>
+        <ProductImageUpload
+          value={imageValue}
+          onChange={setImageValue}
+          productName={product.name}
+        />
+      </Card>
 
       <Card className="mb-6" padding="lg">
         <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

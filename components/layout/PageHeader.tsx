@@ -6,13 +6,11 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, action }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 border-b border-gray-100 bg-card px-8 py-6 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 border-b border-gray-100 bg-card px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          {title}
-        </h1>
+        <h1 className="page-title">{title}</h1>
         {description && (
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
+          <p className="page-description mt-1">{description}</p>
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}

@@ -8,10 +8,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles = {
-  primary: "bg-primary text-white hover:bg-primary/90 shadow-sm",
-  secondary: "bg-light-purple text-primary hover:bg-light-purple/80",
-  ghost: "bg-transparent text-gray-600 hover:bg-gray-100",
-  danger: "bg-fti-red text-white hover:bg-fti-red/90",
+  primary:
+    "bg-primary text-white shadow-sm hover:bg-primary/90 hover:shadow-md active:scale-[0.98]",
+  secondary:
+    "bg-light-purple text-primary hover:bg-light-purple/80 hover:shadow-sm active:scale-[0.98]",
+  ghost:
+    "bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 active:scale-[0.98]",
+  danger:
+    "bg-fti-red text-white shadow-sm hover:bg-fti-red/90 hover:shadow-md active:scale-[0.98]",
 };
 
 const sizeStyles = {
@@ -29,7 +33,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const classes = cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors disabled:opacity-50",
+    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-150 disabled:pointer-events-none disabled:opacity-50",
     variantStyles[variant],
     sizeStyles[size],
     className,

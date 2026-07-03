@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ProductsListView } from "@/features/product/ProductsListView";
+import { ProductListSkeleton } from "@/components/ui/Skeleton";
 
 export const metadata = {
   title: "Products",
@@ -7,7 +8,7 @@ export const metadata = {
 
 export default function ProductsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-gray-500">Loading...</div>}>
+    <Suspense fallback={<ProductListSkeleton rows={6} />}>
       <ProductsListView />
     </Suspense>
   );

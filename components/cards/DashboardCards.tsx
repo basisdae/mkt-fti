@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { Card } from "@/components/ui/Card";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import {
@@ -21,17 +23,27 @@ export function OpportunityRow({ product, rank }: OpportunityRowProps) {
   return (
     <Link
       href={`/products/${product.id}`}
-      className="flex items-center gap-4 rounded-xl px-4 py-3 transition-colors hover:bg-light-purple/40"
+      className="group flex items-center gap-3 rounded-2xl px-3 py-3 transition-all duration-200 hover:bg-light-purple/40 sm:gap-4 sm:px-4"
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-light-purple text-sm font-bold text-primary">
-        {rank}
-      </span>
+      <div className="relative shrink-0">
+        <ProductImageDisplay
+          src={product.imageUrl}
+          alt={product.imageAlt || product.name}
+          size="md"
+          className="p-1.5"
+        />
+        <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-sm">
+          {rank}
+        </span>
+      </div>
+
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-gray-900">
+        <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
           {product.name}
         </p>
-        <p className="text-xs text-gray-400">{product.supplier}</p>
+        <p className="truncate text-xs text-gray-400">{product.supplier}</p>
       </div>
+
       <div className="hidden text-right sm:block">
         <p className="text-sm font-semibold text-success">
           {formatPercent(product.gpPercent)} GP
@@ -40,7 +52,11 @@ export function OpportunityRow({ product, rank }: OpportunityRowProps) {
           {formatCurrencyTHB(product.ftiSellingPrice)}
         </p>
       </div>
-      <Badge variant={statusStyle.badge}>{PRODUCT_STATUS_LABELS[product.status]}</Badge>
+
+      <Badge variant={statusStyle.badge}>
+        {PRODUCT_STATUS_LABELS[product.status]}
+      </Badge>
+
       <div className="hidden w-12 text-right lg:block">
         <p className="text-sm font-bold text-primary">{product.opportunityScore}</p>
         <p className="text-[10px] text-gray-400">score</p>
@@ -57,7 +73,7 @@ export function PipelineOverview({ stages }: PipelineOverviewProps) {
   const maxCount = Math.max(...stages.map((s) => s.count), 1);
 
   return (
-    <Card>
+    <Card interactive>
       <h2 className="mb-5 text-base font-semibold text-gray-900">
         Product Pipeline Overview
       </h2>
@@ -82,5 +98,55 @@ export function PipelineOverview({ stages }: PipelineOverviewProps) {
         ))}
       </div>
     </Card>
+  );
+}
+
+interface DashboardProductCardProps {
+  product: ProductView;
+}
+
+export function DashboardProductCard({ product }: DashboardProductCardProps) {
+  const statusStyle = getStatusColor(product.status);
+
+  return (
+    <Link href={`/products/${product.id}`} className="group block">
+      <Card
+        padding="sm"
+        interactive
+        className="overflow-hidden transition-all duration-200 hover:border-primary/20"
+      >
+        <ProductImageDisplay
+          src={product.imageUrl}
+          alt={product.imageAlt || product.name}
+          fluid
+          frameClassName="mb-3 rounded-xl"
+          className="p-3 sm:p-4"
+        />
+        <div className="px-1 pb-1">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
+                {product.name}
+              </p>
+              <p className="mt-0.5 truncate text-xs text-gray-400">
+                {product.supplier}
+              </p>
+            </div>
+            <Badge variant={statusStyle.badge} className="shrink-0">
+              {PRODUCT_STATUS_LABELS[product.status]}
+            </Badge>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <span className="font-semibold text-success">
+              {formatPercent(product.gpPercent)} GP
+            </span>
+            <span className="flex items-center gap-1 font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+              View
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
+        </div>
+      </Card>
+    </Link>
   );
 }

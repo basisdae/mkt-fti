@@ -35,3 +35,31 @@ body {
 * {
   box-sizing: border-box;
 }
+
+@layer utilities {
+  .page-shell {
+    @apply px-4 py-6 sm:px-6 sm:py-8 lg:px-8;
+  }
+
+  .page-header-block {
+    @apply mb-6 sm:mb-8;
+  }
+
+  .page-title {
+    @apply text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl;
+  }
+
+  .page-description {
+    @apply mt-2 text-sm text-gray-500 lg:text-base;
+  }
+
+  .warning-banner {
+    @apply flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-fti-red;
+  }
+
+  .product-image-frame {
+    background:
+      linear-gradient(135deg, rgb(243 241 255 / 0.65) 0%, rgb(255 255 255 / 0.95) 45%, rgb(243 241 255 / 0.45) 100%),
+      repeating-conic-gradient(rgb(243 241 255 / 0.35) 0% 25%, transparent 0% 50%) 50% / 14px 14px;
+  }
+}

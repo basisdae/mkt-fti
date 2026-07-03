@@ -37,6 +37,44 @@ export function initPipelineItems(products: ProductView[]): PipelineItem[] {
   return products.map(productToPipelineItem);
 }
 
+export const PIPELINE_STEP_TOTAL = 11;
+
+const PIPELINE_STAGE_STEP_NUMBERS: Record<PipelineStage, number> = {
+  contact_factory: 1,
+  waiting_moq: 2,
+  quotation: 3,
+  sample_testing: 4,
+  certification: 5,
+  purchase_approved: 6,
+  ordered: 7,
+  shipping: 8,
+  received: 9,
+  ready_launch: 10,
+};
+
+export function getPipelineStepNumber(
+  pipelineStage: PipelineStage,
+  status?: ProductView["status"],
+): number {
+  if (status === "launched") return 11;
+  return PIPELINE_STAGE_STEP_NUMBERS[pipelineStage];
+}
+
+export function formatPipelineStep(
+  pipelineStage: PipelineStage,
+  status?: ProductView["status"],
+): string {
+  const step = getPipelineStepNumber(pipelineStage, status);
+  const stepLabel = String(step).padStart(2, "0");
+  const total = String(PIPELINE_STEP_TOTAL).padStart(2, "0");
+
+  if (status === "launched") {
+    return `STEP ${stepLabel}/${total} • Launched`;
+  }
+
+  return `STEP ${stepLabel}/${total} • ${PIPELINE_STAGE_LABELS[pipelineStage]}`;
+}
+
 export interface PipelineColumnView {
   id: PipelineStage;
   title: string;

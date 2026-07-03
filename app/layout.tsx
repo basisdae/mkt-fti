@@ -10,8 +10,8 @@ const geistSans = Geist({
 
 export const metadata: Metadata = {
   title: {
-    default: "MKT-FTI | Product Command Center",
-    template: "%s | MKT-FTI",
+    default: "FTI Product Command Center",
+    template: "%s | FTI Product Command Center",
   },
   description: "Internal Marketing Product Command Center for FTI",
 };

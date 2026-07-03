@@ -42,6 +42,8 @@ export interface Product {
   packagingNotes: string;
   marginTarget: number;
   annualVolumeTarget: number;
+  imageUrl: string | null;
+  imageAlt: string;
   customOptions: ProductCustomOptions;
   certification: ProductCertification;
 }
