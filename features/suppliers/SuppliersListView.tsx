@@ -12,7 +12,7 @@ import { countLinkedProducts, matchesSupplierSearch } from "@/lib/supplier";
 
 export function SuppliersListView() {
   const [query, setQuery] = useState("");
-  const { suppliers } = useSupplierStore();
+  const { suppliers, hydrated } = useSupplierStore();
   const products = useLiveProducts();
 
   const filtered = useMemo(() => {
@@ -40,7 +40,7 @@ export function SuppliersListView() {
         </Link>
       </div>
 
-      {suppliers.length === 0 ? (
+      {!hydrated ? null : suppliers.length === 0 ? (
         <PageEmptyState
           icon={Plus}
           title="ยังไม่มี Supplier"

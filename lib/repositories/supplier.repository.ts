@@ -1,8 +1,9 @@
+import { loadSuppliersFromStorage } from "@/lib/supplier-storage";
 import type { SupplierRepository } from "@/lib/repositories/types";
 
-/** Empty initial state — production starts with no suppliers. */
+/** Loads from localStorage on the client; empty on the server. */
 export const localSupplierRepository: SupplierRepository = {
   listInitial() {
-    return [];
+    return loadSuppliersFromStorage();
   },
 };

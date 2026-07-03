@@ -13,9 +13,13 @@ interface SupplierDetailClientProps {
 export function SupplierDetailClient({
   supplierId,
 }: SupplierDetailClientProps) {
-  const { getSupplier } = useSupplierStore();
+  const { getSupplier, hydrated } = useSupplierStore();
   const products = useLiveProducts();
   const supplier = getSupplier(supplierId);
+
+  if (!hydrated) {
+    return null;
+  }
 
   if (!supplier) {
     notFound();

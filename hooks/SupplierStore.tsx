@@ -4,12 +4,16 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import { createSupplierContact } from "@/lib/supplier-builder";
-import { localSupplierRepository } from "@/lib/repositories";
+import {
+  loadSuppliersFromStorage,
+  saveSuppliersToStorage,
+} from "@/lib/supplier-storage";
 import type {
   Supplier,
   SupplierContact,
@@ -18,8 +22,11 @@ import type {
 
 interface SupplierStoreValue {
   suppliers: Supplier[];
+  hydrated: boolean;
   getSupplier: (id: string) => Supplier | undefined;
   addSupplier: (supplier: Supplier) => void;
+  updateSupplier: (supplierId: string, patch: Partial<Supplier>) => void;
+  deleteSupplier: (supplierId: string) => void;
   updateContact: (
     supplierId: string,
     contactId: string,
@@ -36,9 +43,18 @@ function touchSupplier(supplier: Supplier): Supplier {
 }
 
 export function SupplierStoreProvider({ children }: { children: ReactNode }) {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(() =>
-    localSupplierRepository.listInitial(),
-  );
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setSuppliers(loadSuppliersFromStorage());
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    saveSuppliersToStorage(suppliers);
+  }, [suppliers, hydrated]);
 
   const getSupplier = useCallback(
     (id: string) => suppliers.find((s) => s.id === id),
@@ -47,6 +63,23 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
 
   const addSupplier = useCallback((supplier: Supplier) => {
     setSuppliers((prev) => [supplier, ...prev]);
+  }, []);
+
+  const updateSupplier = useCallback(
+    (supplierId: string, patch: Partial<Supplier>) => {
+      setSuppliers((prev) =>
+        prev.map((supplier) =>
+          supplier.id === supplierId
+            ? touchSupplier({ ...supplier, ...patch })
+            : supplier,
+        ),
+      );
+    },
+    [],
+  );
+
+  const deleteSupplier = useCallback((supplierId: string) => {
+    setSuppliers((prev) => prev.filter((supplier) => supplier.id !== supplierId));
   }, []);
 
   const updateContact = useCallback(
@@ -122,13 +155,26 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     (): SupplierStoreValue => ({
       suppliers,
+      hydrated,
       getSupplier,
       addSupplier,
+      updateSupplier,
+      deleteSupplier,
       updateContact,
       setPrimaryContact,
       addContact,
     }),
-    [suppliers, getSupplier, addSupplier, updateContact, setPrimaryContact, addContact],
+    [
+      suppliers,
+      hydrated,
+      getSupplier,
+      addSupplier,
+      updateSupplier,
+      deleteSupplier,
+      updateContact,
+      setPrimaryContact,
+      addContact,
+    ],
   );
 
   return (
