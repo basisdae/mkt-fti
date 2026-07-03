@@ -10,7 +10,11 @@ import {
   PIPELINE_STAGES,
   PIPELINE_TONE_STYLES,
 } from "@/lib/constants";
-import { isAllowedPipelineMove } from "@/lib/pipeline";
+import {
+  formatPipelineColumnTitle,
+  formatPipelineProductCount,
+  isAllowedPipelineMove,
+} from "@/lib/pipeline";
 import {
   decodePipelineDragPayload,
   usePipelineStore,
@@ -134,18 +138,12 @@ export function PipelineBoard() {
 
             return (
               <div key={column.id} className="flex w-64 shrink-0 flex-col sm:w-72">
-                <div className="mb-3 flex items-center justify-between px-1">
-                  <h2 className="text-sm font-semibold text-gray-700">
-                    {column.title}
+                <div className="mb-3 flex items-baseline justify-between gap-2 px-0.5">
+                  <h2 className="text-[13px] font-semibold leading-snug text-gray-800">
+                    {formatPipelineColumnTitle(column.id)}
                   </h2>
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-0.5 text-xs font-semibold transition-transform duration-200",
-                      toneStyles.columnBadge,
-                      isHoverTarget && "scale-110",
-                    )}
-                  >
-                    {column.items.length}
+                  <span className="shrink-0 text-xs text-gray-400">
+                    {formatPipelineProductCount(column.items.length)}
                   </span>
                 </div>
 
@@ -164,13 +162,19 @@ export function PipelineBoard() {
                   }}
                   onDrop={(e) => handleDrop(e, column.id)}
                   className={cn(
-                    "pipeline-column flex min-h-[180px] flex-1 flex-col gap-3 rounded-[20px] border border-gray-100 bg-gray-50/50 p-3 border-t-[3px] transition-all duration-300 ease-out",
-                    toneStyles.columnBorder,
+                    "pipeline-column relative flex min-h-[180px] flex-1 flex-col gap-3 overflow-hidden rounded-[20px] border border-[#EEF0F6] bg-[#FBFBFD] p-3 pt-4 transition-all duration-300 ease-out",
                     dragging && isValidTarget && "pipeline-column--valid",
                     isHoverTarget && "pipeline-column--hover",
                     dragging && isAdjacentBlocked && "pipeline-column--blocked",
                   )}
                 >
+                  <div
+                    className={cn(
+                      "absolute inset-x-0 top-0 h-[3px]",
+                      toneStyles.columnAccent,
+                    )}
+                    aria-hidden
+                  />
                   {dropHint && isHoverTarget && (
                     <p className="pipeline-drop-hint">{dropHint}</p>
                   )}
@@ -178,18 +182,17 @@ export function PipelineBoard() {
                   {column.items.length === 0 ? (
                     <EmptyState
                       icon={Inbox}
-                      title={isHoverTarget ? "Drop here" : "Empty stage"}
+                      title={isHoverTarget ? "Drop here" : "No products"}
                       description={
                         isHoverTarget
                           ? dropHint ?? "Release to move product here."
-                          : "Drag a product from an adjacent stage."
+                          : "Drag from an adjacent stage."
                       }
                       compact
                       className={cn(
-                        "rounded-xl border border-dashed bg-white/60 transition-all duration-300",
-                        isHoverTarget
-                          ? "border-primary/40 bg-light-purple/30"
-                          : "border-gray-200",
+                        "rounded-2xl border border-dashed border-[#EEF0F6] bg-white/50 py-7 transition-all duration-300",
+                        isHoverTarget &&
+                          "border-primary/15 bg-[#F3F1FF]/60 shadow-[0_0_20px_rgb(105_92_255/0.1)]",
                       )}
                     />
                   ) : (

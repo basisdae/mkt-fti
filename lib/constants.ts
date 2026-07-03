@@ -116,38 +116,33 @@ export const PIPELINE_STAGE_TONES: Record<PipelineStage, PipelineStageTone> = {
 export const PIPELINE_TONE_STYLES: Record<
   PipelineStageTone,
   {
-    columnBorder: string;
+    columnAccent: string;
     columnBadge: string;
-    cardAccent: string;
     dot: string;
     label: string;
   }
 > = {
   pending: {
-    columnBorder: "border-t-amber-400",
+    columnAccent: "bg-amber-400",
     columnBadge: "bg-amber-50 text-amber-700",
-    cardAccent: "border-l-amber-400",
     dot: "bg-amber-400",
     label: "Pending",
   },
   working: {
-    columnBorder: "border-t-primary",
+    columnAccent: "bg-primary",
     columnBadge: "bg-light-purple text-primary",
-    cardAccent: "border-l-primary",
     dot: "bg-primary",
     label: "Working",
   },
   success: {
-    columnBorder: "border-t-success",
+    columnAccent: "bg-success",
     columnBadge: "bg-green-50 text-green-700",
-    cardAccent: "border-l-success",
     dot: "bg-success",
     label: "Success",
   },
   critical: {
-    columnBorder: "border-t-fti-red",
+    columnAccent: "bg-fti-red",
     columnBadge: "bg-red-50 text-fti-red",
-    cardAccent: "border-l-fti-red",
     dot: "bg-fti-red",
     label: "Critical",
   },

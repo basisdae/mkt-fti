@@ -93,19 +93,15 @@ body {
   }
 
   .pipeline-column--valid {
-    box-shadow:
-      inset 0 0 0 1px rgb(105 92 255 / 0.15),
-      0 0 0 1px rgb(105 92 255 / 0.08);
+    box-shadow: 0 0 16px rgb(105 92 255 / 0.08);
   }
 
   .pipeline-column--hover {
-    transform: scale(1.015);
-    background: rgb(243 241 255 / 0.55);
-    border-color: rgb(105 92 255 / 0.35);
+    background: #f3f1ff;
+    border-color: #eef0f6;
     box-shadow:
-      inset 0 0 0 2px rgb(105 92 255 / 0.35),
-      0 0 28px rgb(105 92 255 / 0.18),
-      0 8px 24px rgb(105 92 255 / 0.1);
+      0 0 28px rgb(105 92 255 / 0.14),
+      0 4px 16px rgb(105 92 255 / 0.06);
   }
 
   .pipeline-column--blocked {
@@ -114,7 +110,8 @@ body {
   }
 
   .pipeline-drop-hint {
-    @apply rounded-xl border border-primary/20 bg-light-purple/60 px-3 py-2 text-center text-[11px] font-semibold text-primary;
+    @apply rounded-xl bg-[#F3F1FF]/90 px-3 py-2 text-center text-[11px] font-medium text-primary/80;
+    border: 1px solid rgb(105 92 255 / 0.1);
     animation: pipeline-hint-pulse 1.2s ease-in-out infinite;
   }
 
