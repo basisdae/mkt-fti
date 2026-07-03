@@ -9,6 +9,7 @@ import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
 import { Checkbox } from "@/components/forms/Checkbox";
 import { SupplierHighlightSection } from "@/components/supplier/SupplierHighlightSection";
+import { DataStatusBanner } from "@/components/ui/DataStatus";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/constants";
 import { buildSupplierFromForm } from "@/lib/services/supplier.service";
 import { useSupplierStore } from "@/hooks/SupplierStore";
@@ -50,6 +51,8 @@ export function AddSupplierForm() {
   const [form, setForm] = useState<NewSupplierFormData>(INITIAL_SUPPLIER_FORM);
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function updateField<K extends keyof NewSupplierFormData>(
     key: K,
@@ -101,12 +104,25 @@ export function AddSupplierForm() {
     }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const supplier = buildSupplierFromForm(form);
-    addSupplier(supplier);
-    setSavedName(form.factoryName.trim() || form.displayName.trim() || "New Supplier");
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const supplier = buildSupplierFromForm(form);
+      await addSupplier(supplier);
+      setSavedName(
+        form.factoryName.trim() || form.displayName.trim() || "New Supplier",
+      );
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "Failed to save supplier",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -360,13 +376,17 @@ export function AddSupplierForm() {
           </div>
         </FormSection>
 
+        <DataStatusBanner error={submitError} />
+
         <div className="flex justify-end gap-3 pb-8">
           <Link href="/suppliers">
-            <Button type="button" variant="ghost">
+            <Button type="button" variant="ghost" disabled={submitting}>
               Cancel
             </Button>
           </Link>
-          <Button type="submit">Save supplier (mock)</Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Saving…" : "Save supplier"}
+          </Button>
         </div>
       </form>
     </div>

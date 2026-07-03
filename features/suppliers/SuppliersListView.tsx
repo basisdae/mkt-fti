@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { Button } from "@/components/ui/Button";
+import { DataLoadingState, DataStatusBanner } from "@/components/ui/DataStatus";
 import { SupplierListCard } from "@/components/supplier/SupplierListCard";
 import { useLiveProducts } from "@/hooks/PipelineStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
@@ -12,7 +13,7 @@ import { countLinkedProducts, matchesSupplierSearch } from "@/lib/supplier";
 
 export function SuppliersListView() {
   const [query, setQuery] = useState("");
-  const { suppliers, hydrated } = useSupplierStore();
+  const { suppliers, loading, error, hydrated } = useSupplierStore();
   const products = useLiveProducts();
 
   const filtered = useMemo(() => {
@@ -40,7 +41,11 @@ export function SuppliersListView() {
         </Link>
       </div>
 
-      {!hydrated ? null : suppliers.length === 0 ? (
+      <DataStatusBanner error={error} className="mb-4" />
+
+      {loading ? (
+        <DataLoadingState label="Loading suppliers…" />
+      ) : !hydrated ? null : suppliers.length === 0 ? (
         <PageEmptyState
           icon={Plus}
           title="ยังไม่มี Supplier"
