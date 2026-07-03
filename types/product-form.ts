@@ -1,4 +1,20 @@
+import { PIPELINE_STAGES } from "@/lib/constants";
 import type { ProductStatus } from "@/types/product";
+
+/** True when status is after Contact Factory in the lifecycle. */
+export function isStatusBeyondContactFactory(
+  status: ProductStatus | "",
+): boolean {
+  if (!status) return false;
+  const idx = PIPELINE_STAGES.indexOf(status);
+  const contactIdx = PIPELINE_STAGES.indexOf("contact_factory");
+  if (idx === -1 || contactIdx === -1) return false;
+  return idx > contactIdx;
+}
+
+export function canSaveWithoutSupplier(status: ProductStatus | ""): boolean {
+  return status === "interested";
+}
 
 export interface MoqOptionRow {
   id: string;
@@ -10,8 +26,6 @@ export interface NewProductFormData {
   productName: string;
   brand: string;
   supplierId: string | null;
-  supplier: string;
-  factoryLocation: string;
   category: string;
   status: ProductStatus | "";
   moqOptions: MoqOptionRow[];
@@ -42,8 +56,6 @@ export const INITIAL_FORM_DATA: NewProductFormData = {
   productName: "",
   brand: "",
   supplierId: null,
-  supplier: "",
-  factoryLocation: "",
   category: "",
   status: "",
   moqOptions: [createMoqRow()],

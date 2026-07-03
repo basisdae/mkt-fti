@@ -28,6 +28,7 @@ import {
   CERTIFICATION_OPTIONS,
   createMoqRow,
   INITIAL_FORM_DATA,
+  isStatusBeyondContactFactory,
   PRODUCT_SYSTEM_OPTIONS,
   type MoqOptionRow,
   type NewProductFormData,
@@ -145,22 +146,22 @@ export function AddProductForm() {
   }
 
   function handleSupplierChange(supplierId: string | null) {
-    const supplier = supplierId ? getSupplierById(supplierId) : undefined;
-    setForm((prev) => ({
-      ...prev,
-      supplierId,
-      supplier: supplier?.factoryName ?? "",
-      factoryLocation: supplier
-        ? [supplier.cityDistrict, supplier.provinceRegion, supplier.country]
-            .filter(Boolean)
-            .join(", ")
-        : prev.factoryLocation,
-    }));
+    setForm((prev) => ({ ...prev, supplierId }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.supplierId;
+      return next;
+    });
   }
 
   const selectedSupplier = form.supplierId
     ? getSupplierById(form.supplierId)
     : undefined;
+
+  const showSupplierWarning =
+    !form.supplierId &&
+    form.status !== "" &&
+    isStatusBeyondContactFactory(form.status);
 
   function validate(): boolean {
     const next: Record<string, string> = {};
@@ -292,18 +293,17 @@ export function AddProductForm() {
                   value={form.supplierId}
                   onChange={handleSupplierChange}
                 />
+                {showSupplierWarning && (
+                  <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    ควรเลือก Supplier ก่อนเข้าสู่ขั้นตอนติดต่อโรงงาน
+                  </p>
+                )}
               </div>
               {selectedSupplier && (
                 <div className="sm:col-span-2">
                   <LinkedSupplierSummaryCard supplier={selectedSupplier} />
                 </div>
               )}
-              <Input
-                label="Factory Location"
-                placeholder="Auto-filled when supplier selected"
-                value={form.factoryLocation}
-                onChange={(e) => updateField("factoryLocation", e.target.value)}
-              />
               <div>
                 <Select
                   label="Product Category *"
