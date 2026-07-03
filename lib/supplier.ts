@@ -34,6 +34,13 @@ export function countLinkedProducts(
   return products.filter((p) => p.supplierId === supplierId).length;
 }
 
+export function getLinkedProducts<T extends Pick<Product, "id" | "name" | "supplierId">>(
+  supplierId: string,
+  products: T[],
+): T[] {
+  return products.filter((product) => product.supplierId === supplierId);
+}
+
 export function matchesSupplierSearch(supplier: Supplier, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;

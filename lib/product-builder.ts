@@ -1,5 +1,5 @@
 import { evalExtras } from "@/lib/product-detail-defaults";
-import { defaultBrandStrategy, formatFtiBrand } from "@/lib/brand-strategy";
+import { defaultBrandStrategy } from "@/lib/brand-strategy";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
 import type {
   OemType,
@@ -7,6 +7,7 @@ import type {
   ProductBrandStrategy,
   ProductCertification,
   ProductCustomOptions,
+  ProductGalleryImage,
   ProductPriceOption,
 } from "@/types/product";
 
@@ -32,6 +33,7 @@ export interface ProductSeedInput {
   annualVolumeTarget: number;
   imageUrl?: string | null;
   imageAlt?: string;
+  images?: ProductGalleryImage[];
   certifications: string[];
   customOptions?: Partial<ProductCustomOptions>;
   certification?: Partial<Omit<ProductCertification, "certifications">>;
@@ -71,23 +73,22 @@ function oemTypeDefaults(oemType: OemType): ProductCustomOptions {
   }
 }
 
-function defaultProductSystems(category: string, name: string): string[] {
-  if (name.includes("Air Purifier")) return ["HEPA", "Smart"];
-  if (name.includes("Water")) return ["RO", "PP", "CTO"];
-  if (name.includes("Lamp")) return ["LED", "Smart"];
-  if (name.includes("Door Lock")) return ["Smart", "PCB"];
-  if (name.includes("Dash Cam")) return ["Smart", "PCB"];
-  if (name.includes("Blender")) return ["PP", "PCB"];
-  if (name.includes("Vacuum")) return ["PP", "HEPA"];
-  if (name.includes("Robot")) return ["Smart", "PCB"];
-  if (name.includes("Massage")) return ["PP", "PCB"];
-  if (category === "health") return ["PP", "CTO"];
-  return ["PP"];
-}
-
 function inferFactoryLocation(supplier: string): string {
   const city = supplier.split(/[\s,]+/)[0];
   return `${city}, China`;
+}
+
+export function emptyProductCertification(
+  certifications: string[] = [],
+): ProductCertification {
+  const validCerts = certifications.filter((item) => item.trim());
+  return {
+    iso1: "",
+    iso2: "",
+    iso3: "",
+    certifications: validCerts,
+    productSystems: [],
+  };
 }
 
 export function createProduct(seed: ProductSeedInput): Product {
@@ -110,11 +111,7 @@ export function createProduct(seed: ProductSeedInput): Product {
     id: seed.id,
     name: seed.name,
     code: seed.code,
-    brand:
-      seed.brand ??
-      (strategy.currentBrand
-        ? formatFtiBrand(strategy.currentBrand)
-        : seed.productSystem),
+    brand: seed.brand ?? "",
     brandStrategy: strategy,
     supplierId: seed.supplierId ?? null,
     supplier: seed.supplier,
@@ -133,17 +130,14 @@ export function createProduct(seed: ProductSeedInput): Product {
     annualVolumeTarget: seed.annualVolumeTarget,
     imageUrl: seed.imageUrl ?? null,
     imageAlt: seed.imageAlt ?? seed.name,
+    images: seed.images ?? [],
     customOptions: {
       ...typeDefaults,
       customNotes: seed.packagingNotes,
       ...seed.customOptions,
     },
     certification: {
-      iso1: "ISO 9001",
-      iso2: "ISO 14001",
-      iso3: seed.certifications.includes("TISI") ? "TISI Certified" : "",
-      certifications: seed.certifications,
-      productSystems: defaultProductSystems(seed.category, seed.name),
+      ...emptyProductCertification(seed.certifications),
       ...seed.certification,
     },
     evaluationScorecard: createEmptyEvaluationScorecard(),

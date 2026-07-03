@@ -4,12 +4,18 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
 import { PIPELINE_STAGE_LABELS, PIPELINE_STAGES } from "@/lib/constants";
 import { generateId } from "@/lib/generate-id";
+import {
+  loadPipelineSnapshot,
+  savePipelineSnapshot,
+} from "@/lib/pipeline-storage";
+import { syncCoverFields } from "@/lib/product-gallery";
 import {
   createPipelineMoveLog,
   initPipelineItems,
@@ -32,6 +38,7 @@ import type {
   PipelineLog,
   PipelineStage,
   Product,
+  ProductGalleryImage,
   ProductPriceOption,
   ProductStatusEntry,
   ProductTimelineMovement,
@@ -57,6 +64,11 @@ interface PipelineStoreValue {
   pipelineOverview: { stage: PipelineStage; label: string; count: number }[];
   moveProduct: (productId: string, targetStage: PipelineStage) => boolean;
   addProduct: (input: ProductCreateBundle) => string;
+  updateProduct: (input: ProductCreateBundle) => void;
+  updateProductGallery: (
+    productId: string,
+    images: ProductGalleryImage[],
+  ) => void;
   getStageForProduct: (productId: string) => PipelineStage | undefined;
   getTimelineForProduct: (productId: string) => {
     movements: ProductTimelineMovement[];
@@ -82,6 +94,20 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
   const [timelineMovements, setTimelineMovements] = useState<
     ProductTimelineMovement[]
   >(() => localTimelineRepository.listInitial());
+  const [pipelineHydrated, setPipelineHydrated] = useState(false);
+
+  useEffect(() => {
+    const snapshot = loadPipelineSnapshot();
+    setProductRecords(snapshot.productRecords);
+    setStatuses(snapshot.statuses);
+    setPriceOptions(snapshot.priceOptions);
+    setPipelineHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!pipelineHydrated) return;
+    savePipelineSnapshot({ productRecords, statuses, priceOptions });
+  }, [pipelineHydrated, productRecords, statuses, priceOptions]);
 
   const products = useMemo(
     () =>
@@ -190,6 +216,55 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     return bundle.product.id;
   }, []);
 
+  const updateProduct = useCallback((input: ProductCreateBundle) => {
+    const now = new Date().toISOString();
+    const productId = input.product.id;
+
+    setProductRecords((prev) =>
+      prev.map((product) =>
+        product.id === productId ? input.product : product,
+      ),
+    );
+    setPriceOptions((prev) => [
+      ...prev.filter((option) => option.productId !== productId),
+      ...input.priceOptions,
+    ]);
+    setStatuses((prev) => ({
+      ...prev,
+      [productId]: { ...input.status, updatedAt: now },
+    }));
+    setLogs((prev) => [
+      {
+        id: generateId(),
+        productId,
+        action: "Product updated",
+        detail: `Updated product: ${input.product.name}`,
+        updatedAt: now,
+      },
+      ...prev,
+    ]);
+  }, []);
+
+  const updateProductGallery = useCallback(
+    (productId: string, images: ProductGalleryImage[]) => {
+      const now = new Date().toISOString();
+      setProductRecords((prev) =>
+        prev.map((product) => {
+          if (product.id !== productId) return product;
+          const cover = syncCoverFields(images, product.name);
+          return {
+            ...product,
+            images,
+            imageUrl: cover.imageUrl,
+            imageAlt: cover.imageAlt,
+            updatedAt: now,
+          };
+        }),
+      );
+    },
+    [],
+  );
+
   const moveProduct = useCallback(
     (productId: string, targetStage: PipelineStage): boolean => {
       const current = statuses[productId];
@@ -253,6 +328,8 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       pipelineOverview,
       moveProduct,
       addProduct,
+      updateProduct,
+      updateProductGallery,
       getStageForProduct,
       getTimelineForProduct,
       recentTimelineFeed,
@@ -266,6 +343,8 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       pipelineOverview,
       moveProduct,
       addProduct,
+      updateProduct,
+      updateProductGallery,
       getStageForProduct,
       getTimelineForProduct,
       recentTimelineFeed,

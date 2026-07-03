@@ -4,10 +4,14 @@ import { getStatusColor } from "@/lib/utils";
 import type { ProductStatus } from "@/types/product";
 
 interface StatusBadgeProps {
-  status: ProductStatus;
+  status: ProductStatus | null | undefined;
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
+  if (!status || !PRODUCT_STATUS_LABELS[status]) {
+    return null;
+  }
+
   const colors = getStatusColor(status);
 
   return (

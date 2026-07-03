@@ -46,6 +46,11 @@ export interface SupplierContactInput {
   notes: string;
 }
 
+/** Contact row in supplier form — includes id when editing existing contacts. */
+export interface SupplierFormContactInput extends SupplierContactInput {
+  id?: string;
+}
+
 /** Contact fields for create — no id (Supabase generates UUID). */
 export type NewSupplierContactInput = SupplierContactInput;
 
@@ -78,10 +83,10 @@ export interface NewSupplierFormData {
   alibabaLink: string;
   mainProductCategory: string;
   notes: string;
-  contacts: SupplierContactInput[];
+  contacts: SupplierFormContactInput[];
 }
 
-export function createEmptyContactInput(): SupplierContactInput {
+export function createEmptyContactInput(): SupplierFormContactInput {
   return {
     contactName: "",
     position: "",

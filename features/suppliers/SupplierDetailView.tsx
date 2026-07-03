@@ -8,9 +8,11 @@ import {
   Globe,
   MapPin,
   Package,
+  Pencil,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { SupplierContactsSection } from "@/components/supplier/SupplierContactsSection";
 import { formatSupplierLocation } from "@/lib/supplier";
 import { formatDate } from "@/lib/utils";
@@ -33,13 +35,25 @@ export function SupplierDetailView({
 
   return (
     <div className="page-shell">
-      <Link
-        href="/suppliers"
-        className="mb-4 inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to suppliers
-      </Link>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/suppliers"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to suppliers
+        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            href={`/suppliers/${supplier.id}/edit`}
+            variant="secondary"
+            size="sm"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Supplier
+          </Button>
+        </div>
+      </div>
 
       <div className="rounded-[20px] bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e3a5f] p-6 shadow-lg shadow-indigo-900/20 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">

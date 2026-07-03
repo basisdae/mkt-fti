@@ -86,6 +86,17 @@ export function buildProductFromIdea(idea: ProductIdea): ConvertedProductBundle 
     marginTarget: 40,
     annualVolumeTarget: 5000,
     imageUrl: idea.imageUrl,
+    images: idea.imageUrl
+      ? [
+          {
+            id: generateId(),
+            url: idea.imageUrl,
+            alt: idea.productName,
+            sortOrder: 0,
+            isCover: true,
+          },
+        ]
+      : [],
     imageAlt: idea.productName,
     certifications: [],
     brandStrategy: {

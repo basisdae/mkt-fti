@@ -53,6 +53,14 @@ export interface ProductBrandStrategy {
   brandFitScore: number | null;
 }
 
+export interface ProductGalleryImage {
+  id: string;
+  url: string;
+  alt: string;
+  sortOrder: number;
+  isCover: boolean;
+}
+
 /** Core product record (no pricing summary or workflow status). */
 export interface Product {
   id: string;
@@ -78,6 +86,8 @@ export interface Product {
   annualVolumeTarget: number;
   imageUrl: string | null;
   imageAlt: string;
+  /** Full gallery — list/card views use cover image only via imageUrl. */
+  images: ProductGalleryImage[];
   customOptions: ProductCustomOptions;
   certification: ProductCertification;
   evaluationScorecard: ProductEvaluationScorecard;

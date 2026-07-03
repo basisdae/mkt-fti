@@ -316,6 +316,26 @@ export async function addSupplierContact(
   return mapContactRow(data as SupplierContactRow);
 }
 
+export async function deleteSupplierContact(
+  supplierId: string,
+  contactId: string,
+): Promise<void> {
+  const supabase = getClient();
+
+  const { error } = await supabase
+    .from("supplier_contacts")
+    .delete()
+    .eq("id", contactId)
+    .eq("supplier_id", supplierId);
+
+  throwOnError(error);
+
+  await supabase
+    .from("suppliers")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", supplierId);
+}
+
 export async function setSupplierPrimaryContact(
   supplierId: string,
   contactId: string,

@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, MapPin, Package, Pencil, Trash2, User } from "lucide-react";
+import { Building2, MapPin, Pencil, Trash2, User } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { DeleteSupplierModal } from "@/components/supplier/DeleteSupplierModal";
+import { LinkedProductsModal } from "@/components/supplier/LinkedProductsModal";
+import { SupplierDeleteBlockedModal } from "@/components/supplier/SupplierDeleteBlockedModal";
+import { useLiveProducts } from "@/hooks/PipelineStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import { cn, formatDate } from "@/lib/utils";
-import { getPrimaryContact } from "@/lib/supplier";
+import { getLinkedProducts, getPrimaryContact } from "@/lib/supplier";
 import type { Supplier } from "@/types/supplier";
 
 interface SupplierListCardProps {
@@ -17,11 +19,13 @@ interface SupplierListCardProps {
   className?: string;
 }
 
-const LINKED_PRODUCT_WARNING =
-  "Supplier นี้ถูกใช้งานกับสินค้าอยู่ ต้องเปลี่ยน Supplier ของสินค้าก่อนลบ";
-
 const actionButtonClass =
   "inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors";
+
+function linkedBadgeLabel(count: number): string {
+  if (count === 1) return "🔗 1 Product Linked";
+  return `🔗 ${count} Products Linked`;
+}
 
 export function SupplierListCard({
   supplier,
@@ -29,7 +33,11 @@ export function SupplierListCard({
   className,
 }: SupplierListCardProps) {
   const { deleteSupplier } = useSupplierStore();
+  const products = useLiveProducts();
+  const linkedProducts = getLinkedProducts(supplier.id, products);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [blockedOpen, setBlockedOpen] = useState(false);
+  const [linkedOpen, setLinkedOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const primary = getPrimaryContact(supplier);
@@ -43,6 +51,27 @@ export function SupplierListCard({
     } finally {
       setDeleting(false);
     }
+  }
+
+  function handleDeleteClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (hasLinkedProducts) {
+      setBlockedOpen(true);
+    } else {
+      setDeleteOpen(true);
+    }
+  }
+
+  function handleLinkedBadgeClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setLinkedOpen(true);
+  }
+
+  function handleViewProductsFromBlocked() {
+    setBlockedOpen(false);
+    setLinkedOpen(true);
   }
 
   return (
@@ -63,20 +92,13 @@ export function SupplierListCard({
           </Link>
           <button
             type="button"
-            title={hasLinkedProducts ? LINKED_PRODUCT_WARNING : "ลบ Supplier"}
+            title="ลบ Supplier"
             aria-label="ลบ Supplier"
-            disabled={hasLinkedProducts}
             className={cn(
               actionButtonClass,
-              "hover:bg-red-50 hover:text-fti-red disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-gray-400",
+              "hover:bg-red-50 hover:text-fti-red",
             )}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!hasLinkedProducts) {
-                setDeleteOpen(true);
-              }
-            }}
+            onClick={handleDeleteClick}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -116,17 +138,17 @@ export function SupplierListCard({
             </p>
           )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <Badge variant="default" className="bg-light-purple text-primary">
-              <Package className="mr-1 h-3 w-3" />
-              {linkedProductCount} product{linkedProductCount !== 1 ? "s" : ""}
-            </Badge>
-          </div>
-
           {hasLinkedProducts && (
-            <p className="mt-3 text-xs leading-relaxed text-amber-700">
-              {LINKED_PRODUCT_WARNING}
-            </p>
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleLinkedBadgeClick}
+                className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-100"
+                title="ดูสินค้าที่เชื่อมอยู่"
+              >
+                {linkedBadgeLabel(linkedProductCount)}
+              </button>
+            </div>
           )}
 
           {primary && (
@@ -157,6 +179,20 @@ export function SupplierListCard({
         deleting={deleting}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
+      />
+
+      <SupplierDeleteBlockedModal
+        open={blockedOpen}
+        linkedProductCount={linkedProductCount}
+        onClose={() => setBlockedOpen(false)}
+        onViewProducts={handleViewProductsFromBlocked}
+      />
+
+      <LinkedProductsModal
+        open={linkedOpen}
+        supplierName={supplier.factoryName}
+        products={linkedProducts}
+        onClose={() => setLinkedOpen(false)}
       />
     </>
   );

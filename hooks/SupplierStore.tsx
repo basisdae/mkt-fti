@@ -13,14 +13,17 @@ import {
   addSupplierContact,
   createSupplier,
   deleteSupplier as deleteSupplierRecord,
+  deleteSupplierContact,
   listSuppliers,
   setSupplierPrimaryContact,
   updateSupplier as updateSupplierRecord,
   updateSupplierContact,
 } from "@/lib/services/suppliers";
+import { supplierFactoryPatchFromForm } from "@/lib/services/supplier.service";
 import { removeSupplierFromStorage } from "@/lib/supplier-storage";
 import type {
   NewSupplierInput,
+  NewSupplierFormData,
   Supplier,
   SupplierContact,
   SupplierContactInput,
@@ -35,6 +38,10 @@ interface SupplierStoreValue {
   getSupplier: (id: string) => Supplier | undefined;
   addSupplier: (input: NewSupplierInput) => Promise<void>;
   updateSupplier: (supplierId: string, patch: Partial<Supplier>) => Promise<void>;
+  updateSupplierFromForm: (
+    supplierId: string,
+    form: NewSupplierFormData,
+  ) => Promise<void>;
   deleteSupplier: (supplierId: string) => Promise<void>;
   updateContact: (
     supplierId: string,
@@ -137,6 +144,96 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
       }
     },
     [],
+  );
+
+  const updateSupplierFromForm = useCallback(
+    async (supplierId: string, form: NewSupplierFormData) => {
+      const existing = suppliers.find((supplier) => supplier.id === supplierId);
+      if (!existing) {
+        throw new Error("Supplier not found");
+      }
+
+      let snapshot: Supplier[] = [];
+      const factoryPatch = supplierFactoryPatchFromForm(form);
+      const formContacts = form.contacts.filter((contact) =>
+        contact.contactName.trim(),
+      );
+
+      if (formContacts.length > 0 && !formContacts.some((c) => c.isPrimary)) {
+        formContacts[0]!.isPrimary = true;
+      }
+
+      setSuppliers((prev) => {
+        snapshot = prev;
+        return prev.map((supplier) =>
+          supplier.id === supplierId
+            ? touchSupplier({ ...supplier, ...factoryPatch })
+            : supplier,
+        );
+      });
+
+      try {
+        await updateSupplierRecord(supplierId, factoryPatch);
+
+        const keptContactIds = new Set(
+          formContacts
+            .map((contact) => contact.id)
+            .filter((id): id is string => Boolean(id)),
+        );
+
+        for (const contact of existing.contacts) {
+          if (!keptContactIds.has(contact.id)) {
+            await deleteSupplierContact(supplierId, contact.id);
+          }
+        }
+
+        const syncedContacts: SupplierContact[] = [];
+        for (const contact of formContacts) {
+          const input: SupplierContactInput = {
+            contactName: contact.contactName.trim(),
+            position: contact.position.trim(),
+            salesRepCode: contact.salesRepCode.trim(),
+            wechatId: contact.wechatId.trim(),
+            whatsapp: contact.whatsapp.trim(),
+            phone: contact.phone.trim(),
+            email: contact.email.trim(),
+            line: contact.line.trim(),
+            isPrimary: contact.isPrimary,
+            isActive: contact.isActive,
+            notes: contact.notes.trim(),
+          };
+
+          if (contact.id) {
+            syncedContacts.push(
+              await updateSupplierContact(supplierId, contact.id, input),
+            );
+          } else {
+            syncedContacts.push(
+              await addSupplierContact(supplierId, input),
+            );
+          }
+        }
+
+        setSuppliers((prev) =>
+          prev.map((supplier) =>
+            supplier.id === supplierId
+              ? touchSupplier({
+                  ...supplier,
+                  ...factoryPatch,
+                  contacts: syncedContacts,
+                })
+              : supplier,
+          ),
+        );
+        setError(null);
+      } catch (err) {
+        setSuppliers(snapshot);
+        const message = toErrorMessage(err, "Failed to update supplier");
+        setError(message);
+        throw new Error(message);
+      }
+    },
+    [suppliers],
   );
 
   const deleteSupplier = useCallback(async (supplierId: string) => {
@@ -274,6 +371,7 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
       getSupplier,
       addSupplier,
       updateSupplier,
+      updateSupplierFromForm,
       deleteSupplier,
       updateContact,
       setPrimaryContact,
@@ -288,6 +386,7 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
       getSupplier,
       addSupplier,
       updateSupplier,
+      updateSupplierFromForm,
       deleteSupplier,
       updateContact,
       setPrimaryContact,

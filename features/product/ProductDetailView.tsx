@@ -10,12 +10,18 @@ import { ProductLinkedSupplierCard } from "@/components/supplier/ProductLinkedSu
 import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
 import { ProfitSummaryCards } from "@/components/product/ProfitSummaryCards";
 import {
-  createProductImageValueFromProduct,
-  ProductImageUpload,
-  type ProductImageValue,
-} from "@/components/product/ProductImageUpload";
+  createGalleryItemsFromProduct,
+  ProductGalleryEditor,
+} from "@/components/product/ProductGalleryEditor";
+import type { ProductGalleryItem } from "@/lib/product-gallery";
 import { Card } from "@/components/ui/Card";
+import { usePipelineStore } from "@/hooks/PipelineStore";
 import { getPriceOptionById } from "@/lib/assemble-product";
+import {
+  getCoverImageUrl,
+  itemsFromPersistedImages,
+  prepareGalleryForPersistence,
+} from "@/lib/product-gallery";
 import { getProfitSummary } from "@/lib/product-detail";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import type { ProductView } from "@/types/product";
@@ -25,17 +31,26 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({ product }: ProductDetailViewProps) {
+  const { updateProductGallery } = usePipelineStore();
   const { getSupplier } = useSupplierStore();
   const [selectedTierId, setSelectedTierId] = useState(
     product.priceOptions[0]?.id ?? "",
   );
-  const [imageValue, setImageValue] = useState<ProductImageValue>(() =>
-    createProductImageValueFromProduct(
+  const [galleryItems, setGalleryItems] = useState<ProductGalleryItem[]>(() =>
+    createGalleryItemsFromProduct(
+      product.images,
       product.imageUrl,
       product.imageAlt,
       product.name,
     ),
   );
+  const [savingGallery, setSavingGallery] = useState(false);
+  const [gallerySaveError, setGallerySaveError] = useState<string | null>(null);
+
+  const coverPreviewUrl =
+    getCoverImageUrl(galleryItems) ?? product.imageUrl ?? null;
+  const coverAlt =
+    galleryItems.find((item) => item.isCover)?.alt ?? product.imageAlt;
 
   const selectedTier = useMemo(
     () =>
@@ -52,12 +67,29 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
     ? getSupplier(product.supplierId)
     : undefined;
 
+  async function handleSaveGallery() {
+    setSavingGallery(true);
+    setGallerySaveError(null);
+
+    try {
+      const images = await prepareGalleryForPersistence(galleryItems);
+      updateProductGallery(product.id, images);
+      setGalleryItems(itemsFromPersistedImages(images));
+    } catch (err) {
+      setGallerySaveError(
+        err instanceof Error ? err.message : "Failed to save gallery",
+      );
+    } finally {
+      setSavingGallery(false);
+    }
+  }
+
   return (
     <div className="page-shell">
       <ProductDetailHeader
         product={product}
-        imagePreviewUrl={imageValue.previewUrl}
-        imageAlt={imageValue.alt}
+        imagePreviewUrl={coverPreviewUrl}
+        imageAlt={coverAlt}
       />
 
       <div className="mb-6">
@@ -77,17 +109,20 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
       <Card className="mb-6" padding="lg">
         <div className="mb-5">
           <h2 className="text-base font-semibold text-gray-900">
-            Product Image
+            Product Gallery
           </h2>
           <p className="mt-1 text-xs text-gray-400">
-            Square 1:1 artwork · PNG with transparent background preferred ·
-            object-contain preview
+            Multiple images supported · cover image appears on product lists
           </p>
         </div>
-        <ProductImageUpload
-          value={imageValue}
-          onChange={setImageValue}
+        <ProductGalleryEditor
+          items={galleryItems}
+          onChange={setGalleryItems}
           productName={product.name}
+          mode="edit"
+          onSave={handleSaveGallery}
+          saving={savingGallery}
+          saveError={gallerySaveError}
         />
       </Card>
 

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -10,20 +11,25 @@ import { Select } from "@/components/forms/Select";
 import { Textarea } from "@/components/forms/Textarea";
 import { Checkbox } from "@/components/forms/Checkbox";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import {
+  createEmptyGalleryItems,
+  ProductGalleryEditor,
+} from "@/components/product/ProductGalleryEditor";
+import type { ProductGalleryItem } from "@/lib/product-gallery";
 import { SupplierSearchPicker } from "@/components/supplier/SupplierSearchPicker";
 import { LinkedSupplierSummaryCard } from "@/components/supplier/LinkedSupplierSummaryCard";
-import {
-  createEmptyProductImageValue,
-  ProductImageUpload,
-  type ProductImageValue,
-} from "@/components/product/ProductImageUpload";
+import { getCoverImageUrl, prepareGalleryForPersistence, galleryItemsFromProduct } from "@/lib/product-gallery";
 import {
   PRODUCT_CATEGORY_LABELS,
   PRODUCT_STATUS_LABELS,
 } from "@/lib/constants";
 import { MoqPricingSpreadsheet } from "@/components/product/MoqPricingSpreadsheet";
 import { computeMoqRowPreview } from "@/lib/moq-pricing-table";
-import { buildProductBundleFromForm } from "@/lib/services/product.service";
+import {
+  buildProductBundleFromForm,
+  productViewToFormData,
+  updateProductBundleFromForm,
+} from "@/lib/services/product.service";
 import { usePipelineStore } from "@/hooks/PipelineStore";
 import { useSettingsStore } from "@/hooks/SettingsStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
@@ -35,6 +41,7 @@ import {
   PRODUCT_SYSTEM_OPTIONS,
   type NewProductFormData,
 } from "@/types/product-form";
+import type { ProductView } from "@/types/product";
 
 const categoryOptions = Object.entries(PRODUCT_CATEGORY_LABELS).map(
   ([value, label]) => ({ value, label }),
@@ -71,17 +78,42 @@ function FormSection({
   );
 }
 
-export function AddProductForm() {
-  const { addProduct } = usePipelineStore();
+export interface ProductFormProps {
+  mode?: "create" | "edit";
+  productId?: string;
+  initialProduct?: ProductView;
+}
+
+export function ProductForm({
+  mode = "create",
+  productId,
+  initialProduct,
+}: ProductFormProps) {
+  const router = useRouter();
+  const { addProduct, updateProduct } = usePipelineStore();
   const { getSupplier } = useSupplierStore();
   const { exchangeRate } = useSettingsStore();
-  const [form, setForm] = useState<NewProductFormData>(INITIAL_FORM_DATA);
+  const isEdit = mode === "edit";
+  const [form, setForm] = useState<NewProductFormData>(() =>
+    isEdit && initialProduct
+      ? productViewToFormData(initialProduct)
+      : INITIAL_FORM_DATA,
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
-  const [imageValue, setImageValue] = useState<ProductImageValue>(
-    createEmptyProductImageValue(),
-  );
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [galleryItems, setGalleryItems] = useState<ProductGalleryItem[]>(() => {
+    if (isEdit && initialProduct) {
+      const items = galleryItemsFromProduct(initialProduct);
+      return items.length > 0 ? items : createEmptyGalleryItems();
+    }
+    return createEmptyGalleryItems();
+  });
+
+  const detailHref =
+    isEdit && productId ? `/products/${productId}` : "/products";
 
   const pricingPreview = useMemo(() => {
     const firstRow = form.moqOptions.find(
@@ -170,21 +202,52 @@ export function AddProductForm() {
     return Object.keys(next).length === 0;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
 
-    const bundle = buildProductBundleFromForm(form, {
-      imageUrl: imageValue.previewUrl,
-      imageAlt: imageValue.alt,
-      supplierName: selectedSupplier?.factoryName ?? "",
-      supplierId: form.supplierId,
-      exchangeRate,
-    });
-    addProduct(bundle);
+    setSubmitting(true);
+    setSubmitError(null);
 
-    setSavedName(form.productName.trim());
-    setSubmitted(true);
+    try {
+      const images = await prepareGalleryForPersistence(galleryItems);
+      if (isEdit && productId && initialProduct) {
+        const bundle = updateProductBundleFromForm(
+          productId,
+          initialProduct,
+          form,
+          {
+            images,
+            supplierName: selectedSupplier?.factoryName ?? "",
+            supplierId: form.supplierId,
+            exchangeRate,
+          },
+        );
+        updateProduct(bundle);
+        router.push(detailHref);
+        return;
+      }
+
+      const bundle = buildProductBundleFromForm(form, {
+        images,
+        supplierName: selectedSupplier?.factoryName ?? "",
+        supplierId: form.supplierId,
+        exchangeRate,
+      });
+      addProduct(bundle);
+      setSavedName(form.productName.trim());
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : isEdit
+            ? "Failed to update product"
+            : "Failed to create product",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleReset() {
@@ -192,10 +255,11 @@ export function AddProductForm() {
     setErrors({});
     setSubmitted(false);
     setSavedName("");
-    setImageValue(createEmptyProductImageValue());
+    setSubmitError(null);
+    setGalleryItems(createEmptyGalleryItems());
   }
 
-  if (submitted) {
+  if (submitted && !isEdit) {
     return (
       <div className="page-shell">
         <Card className="mx-auto max-w-lg text-center" padding="lg">
@@ -207,17 +271,14 @@ export function AddProductForm() {
             <span className="font-medium text-gray-800">{savedName}</span> has
             been added to your product catalog.
           </p>
-          {imageValue.previewUrl && (
+          {getCoverImageUrl(galleryItems) && (
             <div className="mx-auto mt-6 flex max-w-xs flex-col items-center gap-2">
               <ProductImageDisplay
-                src={imageValue.previewUrl}
-                alt={imageValue.alt || savedName}
+                src={getCoverImageUrl(galleryItems)}
+                alt={savedName}
                 size="lg"
                 className="p-2"
               />
-              {imageValue.alt && (
-                <p className="text-xs text-gray-400">{imageValue.alt}</p>
-              )}
             </div>
           )}
           {pricingPreview && (
@@ -247,13 +308,15 @@ export function AddProductForm() {
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              Add Product
+              {isEdit ? "Edit Product" : "Add Product"}
             </h1>
             <p className="mt-2 text-sm text-gray-500">
-              Create a new sourcing entry for the product pipeline.
+              {isEdit
+                ? "Update sourcing details for this product."
+                : "Create a new sourcing entry for the product pipeline."}
             </p>
           </div>
-          <Button href="/products" variant="ghost" size="sm">
+          <Button href={detailHref} variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
@@ -338,14 +401,18 @@ export function AddProductForm() {
           </FormSection>
 
           <FormSection
-            title="Product Image"
-            description="Square 1:1 · PNG with transparent background preferred"
+            title="Product Gallery"
+            description="Upload multiple images · first image is the cover shown on lists"
           >
-            <ProductImageUpload
-              value={imageValue}
-              onChange={setImageValue}
+            <ProductGalleryEditor
+              items={galleryItems}
+              onChange={setGalleryItems}
               productName={form.productName}
+              mode={isEdit ? "edit" : "create"}
             />
+            {submitError && (
+              <p className="mt-3 text-xs font-medium text-fti-red">{submitError}</p>
+            )}
           </FormSection>
 
           <FormSection
@@ -500,15 +567,27 @@ export function AddProductForm() {
             </p>
             <div className="flex gap-3">
               <Link
-                href="/products"
+                href={detailHref}
                 className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
               >
                 Cancel
               </Link>
-              <Button type="submit">Create Product</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting
+                  ? isEdit
+                    ? "Saving…"
+                    : "Creating…"
+                  : isEdit
+                    ? "Save Product"
+                    : "Create Product"}
+              </Button>
             </div>
           </div>
         </form>
     </div>
   );
+}
+
+export function AddProductForm() {
+  return <ProductForm mode="create" />;
 }

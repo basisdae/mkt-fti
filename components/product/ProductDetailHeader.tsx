@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Clock3, StickyNote } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Clock3, Pencil, StickyNote } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
@@ -20,6 +21,8 @@ export function ProductDetailHeader({
   imagePreviewUrl,
   imageAlt,
 }: ProductDetailHeaderProps) {
+  const router = useRouter();
+
   return (
     <div className="mb-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -65,6 +68,15 @@ export function ProductDetailHeader({
           <Button href={`/timeline?product=${product.id}`} variant="secondary" size="sm">
             <Clock3 className="h-4 w-4" />
             Timeline
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => router.push(`/products/${product.id}/edit`)}
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Product
           </Button>
           <Button href="/products" variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />

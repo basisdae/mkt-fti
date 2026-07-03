@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -11,12 +12,16 @@ import { Checkbox } from "@/components/forms/Checkbox";
 import { SupplierHighlightSection } from "@/components/supplier/SupplierHighlightSection";
 import { DataStatusBanner } from "@/components/ui/DataStatus";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/constants";
-import { buildSupplierFromForm } from "@/lib/services/supplier.service";
+import {
+  buildSupplierFromForm,
+  supplierToFormData,
+} from "@/lib/services/supplier.service";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import {
   createEmptyContactInput,
   INITIAL_SUPPLIER_FORM,
   type NewSupplierFormData,
+  type Supplier,
   type SupplierContactInput,
 } from "@/types/supplier";
 
@@ -46,13 +51,32 @@ function FormSection({
   );
 }
 
-export function AddSupplierForm() {
-  const { addSupplier } = useSupplierStore();
-  const [form, setForm] = useState<NewSupplierFormData>(INITIAL_SUPPLIER_FORM);
+export interface SupplierFormProps {
+  mode?: "create" | "edit";
+  supplierId?: string;
+  initialSupplier?: Supplier;
+}
+
+export function SupplierForm({
+  mode = "create",
+  supplierId,
+  initialSupplier,
+}: SupplierFormProps) {
+  const router = useRouter();
+  const { addSupplier, updateSupplierFromForm } = useSupplierStore();
+  const isEdit = mode === "edit";
+  const [form, setForm] = useState<NewSupplierFormData>(() =>
+    isEdit && initialSupplier
+      ? supplierToFormData(initialSupplier)
+      : INITIAL_SUPPLIER_FORM,
+  );
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const detailHref =
+    isEdit && supplierId ? `/suppliers/${supplierId}` : "/suppliers";
 
   function updateField<K extends keyof NewSupplierFormData>(
     key: K,
@@ -110,6 +134,12 @@ export function AddSupplierForm() {
     setSubmitError(null);
 
     try {
+      if (isEdit && supplierId) {
+        await updateSupplierFromForm(supplierId, form);
+        router.push(detailHref);
+        return;
+      }
+
       const input = buildSupplierFromForm(form);
       await addSupplier(input);
       setSavedName(
@@ -118,14 +148,18 @@ export function AddSupplierForm() {
       setSubmitted(true);
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : "Failed to save supplier",
+        err instanceof Error
+          ? err.message
+          : isEdit
+            ? "Failed to update supplier"
+            : "Failed to save supplier",
       );
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (submitted) {
+  if (submitted && !isEdit) {
     return (
       <div className="page-shell">
         <Card padding="lg" className="mx-auto max-w-lg text-center">
@@ -154,15 +188,19 @@ export function AddSupplierForm() {
     <div className="page-shell">
       <div className="page-header-block">
         <Link
-          href="/suppliers"
+          href={detailHref}
           className="mb-4 inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to suppliers
+          {isEdit ? "Back to supplier" : "Back to suppliers"}
         </Link>
-        <h1 className="page-title">Register Supplier / Factory</h1>
+        <h1 className="page-title">
+          {isEdit ? "Edit Supplier / Factory" : "Register Supplier / Factory"}
+        </h1>
         <p className="page-description">
-          Create a factory master record — link products to avoid duplicate supplier data
+          {isEdit
+            ? "Update factory master record and contacts."
+            : "Create a factory master record — link products to avoid duplicate supplier data"}
         </p>
       </div>
 
@@ -261,7 +299,7 @@ export function AddSupplierForm() {
           <div className="space-y-6">
             {form.contacts.map((contact, index) => (
               <div
-                key={index}
+                key={contact.id ?? `contact-${index}`}
                 className="rounded-xl border border-gray-100 bg-gray-50/50 p-4"
               >
                 <div className="mb-4 flex items-center justify-between">
@@ -379,16 +417,24 @@ export function AddSupplierForm() {
         <DataStatusBanner error={submitError} />
 
         <div className="flex justify-end gap-3 pb-8">
-          <Link href="/suppliers">
+          <Link href={detailHref}>
             <Button type="button" variant="ghost" disabled={submitting}>
               Cancel
             </Button>
           </Link>
           <Button type="submit" disabled={submitting}>
-            {submitting ? "Saving…" : "Save supplier"}
+            {submitting
+              ? "Saving…"
+              : isEdit
+                ? "Save Supplier"
+                : "Save supplier"}
           </Button>
         </div>
       </form>
     </div>
   );
+}
+
+export function AddSupplierForm() {
+  return <SupplierForm mode="create" />;
 }
