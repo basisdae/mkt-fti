@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +37,7 @@ import type { ProductView } from "@/types/product";
 interface ScenarioTableProps {
   rows: ScenarioRow[];
   onChange: (rows: ScenarioRow[]) => void;
+  historyRevision?: number;
 }
 
 const compactField =
@@ -75,11 +76,21 @@ function rowToDraft(row: ScenarioRow): ScenarioRowDraft {
   };
 }
 
-export function ScenarioTable({ rows, onChange }: ScenarioTableProps) {
+export function ScenarioTable({
+  rows,
+  onChange,
+  historyRevision = 0,
+}: ScenarioTableProps) {
   const products = useMemo(() => getProducts(), []);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ScenarioRowDraft | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEditingId(null);
+    setDraft(null);
+    setDeleteConfirmId(null);
+  }, [historyRevision]);
 
   const totals = useMemo(() => sumScenarioRows(rows), [rows]);
   const totalsLow = isLowProfitMargin(totals.grossProfitPercent);

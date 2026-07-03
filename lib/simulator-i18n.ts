@@ -72,6 +72,11 @@ export const SIMULATOR_COPY = {
   confirmDelete: "ลบ",
   cancelDelete: "ยกเลิก",
   editRowHint: "ดับเบิลคลิกเพื่อแก้ไข",
+  undoRedoToolbar: "เลิกทำ / ทำซ้ำ",
+  undo: "เลิกทำ",
+  redo: "ทำซ้ำ",
+  undoShortcut: "Ctrl+Z",
+  redoShortcut: "Ctrl+Y",
   removeProduct: (name: string) => `ลบ ${name}`,
   perUnit: "ต่อชิ้น",
 } as const;

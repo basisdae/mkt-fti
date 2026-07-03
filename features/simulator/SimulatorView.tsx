@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CircleDollarSign,
@@ -20,6 +20,8 @@ import {
   SimulatorKpiGrid,
 } from "@/components/simulator/SimulatorKpiCard";
 import { ScenarioTable } from "@/components/simulator/ScenarioTable";
+import { SimulatorUndoToolbar } from "@/components/simulator/SimulatorUndoToolbar";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 import {
   buildScenarioRow,
   calculatePricing,
@@ -40,7 +42,16 @@ export function SimulatorView() {
   const [expectedQty, setExpectedQty] = useState(
     simulatorDefaults.expectedQty,
   );
-  const [scenarioRows, setScenarioRows] = useState<ScenarioRow[]>([]);
+
+  const {
+    state: scenarioRows,
+    commit: commitScenarioRows,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    revision: scenarioRevision,
+  } = useUndoRedo<ScenarioRow[]>([]);
 
   const product = useMemo(
     () => getProducts().find((p) => p.id === productId) ?? getProducts()[0],
@@ -106,8 +117,8 @@ export function SimulatorView() {
   function handleAddToScenario() {
     if (expectedQty <= 0) return;
 
-    setScenarioRows((prev) => [
-      ...prev,
+    commitScenarioRows([
+      ...scenarioRows,
       buildScenarioRow(
         product.id,
         product.name,
@@ -124,11 +135,50 @@ export function SimulatorView() {
   }
 
   function handleScenarioChange(nextRows: ScenarioRow[]) {
-    setScenarioRows(nextRows);
+    commitScenarioRows(nextRows);
   }
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const mod = event.ctrlKey || event.metaKey;
+      if (!mod) return;
+
+      if (event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      } else if (
+        event.key.toLowerCase() === "y" ||
+        (event.key.toLowerCase() === "z" && event.shiftKey)
+      ) {
+        event.preventDefault();
+        redo();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo]);
 
   return (
     <div className="page-shell">
+      <SimulatorUndoToolbar
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onUndo={undo}
+        onRedo={redo}
+      />
+
       <div className="page-header-block">
         <h1 className="page-title">{t.pageTitle}</h1>
         <p className="page-description">{t.pageSubtitle}</p>
@@ -290,7 +340,11 @@ export function SimulatorView() {
       </div>
 
       <div className="mt-8">
-        <ScenarioTable rows={scenarioRows} onChange={handleScenarioChange} />
+        <ScenarioTable
+          rows={scenarioRows}
+          onChange={handleScenarioChange}
+          historyRevision={scenarioRevision}
+        />
       </div>
     </div>
   );
