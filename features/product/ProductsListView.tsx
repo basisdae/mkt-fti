@@ -16,9 +16,9 @@ import {
   PRODUCT_SORT_OPTIONS,
   type ProductFilterState,
 } from "@/lib/product-filters";
-import { FTI_BRAND_OPTIONS, getUniqueBusinessUnits } from "@/lib/brand-strategy";
-import { useLiveProducts } from "@/hooks/PipelineStore";
-import type { FtiBrand, ProductStatus } from "@/types/product";
+import { FTI_BRAND_OPTIONS, getUniqueBusinessUnits, type ProductBrandFilter } from "@/lib/brand-strategy";
+import { useBrandStore } from "@/hooks/BrandStore";
+import type { ProductStatus } from "@/types/product";
 
 const statusOptions = [
   { value: "", label: "All statuses" },
@@ -30,7 +30,7 @@ const statusOptions = [
 
 export function ProductsListView() {
   const searchParams = useSearchParams();
-  const allProducts = useLiveProducts();
+  const { productsWithBrand: allProducts } = useBrandStore();
   const suppliers = useMemo(
     () => getUniqueSuppliers(allProducts),
     [allProducts],
@@ -121,11 +121,12 @@ export function ProductsListView() {
             label="Brand"
             options={[
               { value: "", label: "All brands" },
+              { value: "unassigned", label: "Unassigned" },
               ...FTI_BRAND_OPTIONS,
             ]}
             value={filters.brand}
             onChange={(e) =>
-              updateFilter("brand", e.target.value as FtiBrand | "")
+              updateFilter("brand", e.target.value as ProductBrandFilter)
             }
           />
           <Select

@@ -5,15 +5,15 @@ import type {
   ProductStatus,
   ProductView,
 } from "@/types/product";
-import type { DashboardBrandFilter } from "@/lib/brand-strategy";
-import { matchesBrandFilter } from "@/lib/brand-strategy";
+import type { DashboardBrandFilter, ProductBrandFilter } from "@/lib/brand-strategy";
+import { matchesBrandFilter, matchesProductBrandFilter } from "@/lib/brand-strategy";
 import { getEvaluationTotalScore } from "@/lib/evaluation-scorecard";
 
 export interface ProductFilterState {
   query: string;
   status: ProductStatus | "";
   supplier: string;
-  brand: FtiBrand | "";
+  brand: ProductBrandFilter;
   businessUnit: string;
   sort: ProductSortOption;
 }
@@ -74,7 +74,7 @@ export function filterProducts(
     if (!matchesProductSearch(product, filters.query)) return false;
     if (filters.status && product.status !== filters.status) return false;
     if (filters.supplier && product.supplier !== filters.supplier) return false;
-    if (filters.brand && !matchesBrandFilter(product, filters.brand)) {
+    if (filters.brand && !matchesProductBrandFilter(product, filters.brand)) {
       return false;
     }
     if (

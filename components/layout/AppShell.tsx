@@ -6,6 +6,7 @@ import { TopHeader } from "./TopHeader";
 import { AppFooter } from "./AppFooter";
 import { PipelineStoreProvider } from "@/hooks/PipelineStore";
 import { IdeaStoreProvider } from "@/hooks/IdeaStore";
+import { BrandStoreProvider } from "@/hooks/BrandStore";
 import { SupplierStoreProvider } from "@/hooks/SupplierStore";
 import { ProductNotesStoreProvider } from "@/hooks/ProductNotesStore";
 
@@ -18,6 +19,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <PipelineStoreProvider>
+      <BrandStoreProvider>
       <SupplierStoreProvider>
       <IdeaStoreProvider>
       <ProductNotesStoreProvider>
@@ -45,6 +47,7 @@ export function AppShell({ children }: AppShellProps) {
       </ProductNotesStoreProvider>
       </IdeaStoreProvider>
       </SupplierStoreProvider>
+      </BrandStoreProvider>
     </PipelineStoreProvider>
   );
 }

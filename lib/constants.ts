@@ -5,6 +5,7 @@ import {
   Lightbulb,
   Package,
   GitBranch,
+  Sparkles,
   StickyNote,
   Calculator,
   Settings,
@@ -38,6 +39,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/products", icon: Package },
+  { label: "Brand Board", href: "/brand-board", icon: Sparkles },
   { label: "Ideas", href: "/ideas", icon: Lightbulb },
   { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },

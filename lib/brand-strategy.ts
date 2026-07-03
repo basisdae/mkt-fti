@@ -68,6 +68,20 @@ export function matchesBrandFilter(
   return currentBrand === filter || candidateBrands.includes(filter);
 }
 
+export type ProductBrandFilter = FtiBrand | "unassigned" | "";
+
+export function matchesProductBrandFilter(
+  product: ProductView,
+  filter: ProductBrandFilter,
+): boolean {
+  if (!filter) return true;
+  if (filter === "unassigned") {
+    const { currentBrand, candidateBrands } = product.brandStrategy;
+    return currentBrand === null && candidateBrands.length === 0;
+  }
+  return matchesBrandFilter(product, filter);
+}
+
 export function filterProductsByBrand(
   products: ProductView[],
   filter: DashboardBrandFilter,
