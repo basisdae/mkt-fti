@@ -122,6 +122,8 @@ export interface PipelineItem {
   productId: string;
   productName: string;
   supplier: string;
+  imageUrl: string | null;
+  imageAlt: string;
   latestNote: string;
   activityNote: string;
   updatedAt: string;

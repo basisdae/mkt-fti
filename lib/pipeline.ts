@@ -26,6 +26,8 @@ export function productToPipelineItem(product: ProductView): PipelineItem {
     productId: product.id,
     productName: product.name,
     supplier: product.supplier,
+    imageUrl: product.imageUrl,
+    imageAlt: product.imageAlt,
     latestNote: product.latestNote,
     activityNote: "",
     updatedAt: product.updatedAt,

@@ -10,14 +10,31 @@ export const ACCEPTED_PRODUCT_IMAGE_ACCEPT =
 
 export const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
-export type ProductImageSize = "sm" | "md" | "lg" | "xl";
+export type ProductImageSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 export const PRODUCT_IMAGE_SIZE_CLASSES: Record<ProductImageSize, string> = {
+  xs: "h-10 w-10",
   sm: "h-12 w-12",
   md: "h-16 w-16 sm:h-[72px] sm:w-[72px]",
   lg: "h-32 w-32 sm:h-40 sm:w-40",
   xl: "h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64",
 };
+
+export interface ProductImageSource {
+  name: string;
+  imageUrl: string | null;
+  imageAlt?: string;
+}
+
+export function resolveProductImageAlt(
+  product: ProductImageSource,
+): string {
+  return product.imageAlt?.trim() || defaultProductImageAlt(product.name);
+}
+
+export function isBlobProductImage(url: string | null | undefined): boolean {
+  return Boolean(url?.startsWith("blob:"));
+}
 
 export function validateProductImageFile(file: File): string | null {
   if (!ACCEPTED_PRODUCT_IMAGE_TYPES.includes(file.type as (typeof ACCEPTED_PRODUCT_IMAGE_TYPES)[number])) {

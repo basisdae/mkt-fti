@@ -21,6 +21,7 @@ import {
 } from "@/components/simulator/SimulatorKpiCard";
 import { ScenarioTable } from "@/components/simulator/ScenarioTable";
 import { SimulatorUndoToolbar } from "@/components/simulator/SimulatorUndoToolbar";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import {
   buildScenarioRow,
@@ -30,6 +31,7 @@ import {
 } from "@/lib/pricing";
 import { getProducts, simulatorDefaults } from "@/lib/mock-data";
 import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
+import { resolveProductImageAlt } from "@/lib/product-image";
 import { cn, formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import type { ScenarioRow } from "@/lib/pricing";
 
@@ -190,6 +192,23 @@ export function SimulatorView() {
             {t.inputsTitle}
           </h2>
           <div className="space-y-4">
+            <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-light-purple/30 p-3">
+              <ProductImageDisplay
+                src={product.imageUrl}
+                alt={resolveProductImageAlt(product)}
+                size="md"
+                className="p-1.5"
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-gray-900">
+                  {product.name}
+                </p>
+                <p className="truncate text-xs text-gray-500">
+                  {product.supplier}
+                </p>
+              </div>
+            </div>
+
             <Select
               label={t.selectProduct}
               options={productOptions}

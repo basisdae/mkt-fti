@@ -143,6 +143,8 @@ export const products: Product[] = [
     packagingNotes: "SD card bundle option",
     marginTarget: 45,
     annualVolumeTarget: 30000,
+    imageUrl: "/images/products/prod-006.svg",
+    imageAlt: "Car Dash Cam 4K transparent product cutout",
     certifications: ["TISI", "CE", "FCC"],
   }),
   createProduct({
@@ -162,6 +164,8 @@ export const products: Product[] = [
     packagingNotes: "Carry case included",
     marginTarget: 45,
     annualVolumeTarget: 18000,
+    imageUrl: "/images/products/prod-007.svg",
+    imageAlt: "Massage Gun Elite transparent product cutout",
     certifications: ["TISI", "CE"],
   }),
   createProduct({
@@ -181,6 +185,8 @@ export const products: Product[] = [
     packagingNotes: "TBD",
     marginTarget: 42,
     annualVolumeTarget: 5000,
+    imageUrl: "/images/products/prod-008.svg",
+    imageAlt: "Robot Mop Cleaner transparent product cutout",
     certifications: ["TISI", "CE", "RoHS"],
   }),
   createProduct({
@@ -200,6 +206,8 @@ export const products: Product[] = [
     packagingNotes: "Minimalist white box",
     marginTarget: 50,
     annualVolumeTarget: 40000,
+    imageUrl: "/images/products/prod-009.svg",
+    imageAlt: "LED Desk Lamp Pro transparent product cutout",
     certifications: ["TISI", "CE"],
   }),
 ];
@@ -355,6 +363,8 @@ export function getPipelineColumns(): PipelineColumn[] {
         productId: p.id,
         productName: p.name,
         supplier: p.supplier,
+        imageUrl: p.imageUrl,
+        imageAlt: p.imageAlt,
         latestNote: p.latestNote,
         activityNote: "",
         updatedAt: p.updatedAt,

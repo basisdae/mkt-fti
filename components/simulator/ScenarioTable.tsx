@@ -31,7 +31,9 @@ import {
 } from "@/lib/pricing";
 import { getProducts } from "@/lib/mock-data";
 import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
+import { resolveProductImageAlt } from "@/lib/product-image";
 import { cn, formatCurrencyTHB, formatPercent } from "@/lib/utils";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import type { ProductView } from "@/types/product";
 
 interface ScenarioTableProps {
@@ -338,6 +340,12 @@ function ScenarioRowItem({
     label: p.name,
   }));
 
+  const rowProduct =
+    products.find((p) => p.id === row.productId) ?? products[0];
+  const draftProduct = draft
+    ? (products.find((p) => p.id === draft.productId) ?? products[0])
+    : rowProduct;
+
   return (
     <tr
       onDoubleClick={() => {
@@ -353,21 +361,37 @@ function ScenarioRowItem({
     >
       <td className="px-4 py-3 sm:px-5">
         {isEditing && draft ? (
-          <select
-            value={draft.productId}
-            onChange={(e) =>
-              onDraftChange({ productId: e.target.value }, true)
-            }
-            className={cn(compactField, "min-w-[140px]")}
-          >
-            {productOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-3">
+            <ProductImageDisplay
+              src={draftProduct.imageUrl}
+              alt={resolveProductImageAlt(draftProduct)}
+              size="xs"
+              className="p-0.5"
+            />
+            <select
+              value={draft.productId}
+              onChange={(e) =>
+                onDraftChange({ productId: e.target.value }, true)
+              }
+              className={cn(compactField, "min-w-[120px]")}
+            >
+              {productOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         ) : (
-          <p className="font-medium text-gray-900">{row.productName}</p>
+          <div className="flex items-center gap-3">
+            <ProductImageDisplay
+              src={rowProduct.imageUrl}
+              alt={resolveProductImageAlt(rowProduct)}
+              size="xs"
+              className="p-0.5"
+            />
+            <p className="font-medium text-gray-900">{row.productName}</p>
+          </div>
         )}
       </td>
 

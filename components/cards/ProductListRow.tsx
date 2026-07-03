@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { isLowProfitMargin } from "@/lib/pricing";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import { formatPipelineStep } from "@/lib/pipeline";
+import { resolveProductImageAlt } from "@/lib/product-image";
 import {
   cn,
   formatCurrencyTHB,
@@ -70,21 +72,31 @@ export function ProductListRow({ product }: ProductListRowProps) {
           "min-w-0 px-4 py-4 md:py-5 md:pl-6 md:text-left",
         )}
       >
-        <div className="flex flex-wrap items-start gap-2">
-          <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
-            {product.name}
-          </p>
-          <Badge
-            variant={statusStyle.badge}
-            className={cn("shrink-0", statusStyle.bg)}
-          >
-            {PRODUCT_STATUS_LABELS[product.status]}
-          </Badge>
+        <div className="flex gap-3">
+          <ProductImageDisplay
+            src={product.imageUrl}
+            alt={resolveProductImageAlt(product)}
+            size="sm"
+            className="p-1"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start gap-2">
+              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
+                {product.name}
+              </p>
+              <Badge
+                variant={statusStyle.badge}
+                className={cn("shrink-0", statusStyle.bg)}
+              >
+                {PRODUCT_STATUS_LABELS[product.status]}
+              </Badge>
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-primary/80">
+              {pipelineStep}
+            </p>
+            <p className="mt-1 text-xs text-gray-400">{product.code}</p>
+          </div>
         </div>
-        <p className="mt-1.5 text-xs font-medium text-primary/80">
-          {pipelineStep}
-        </p>
-        <p className="mt-1 text-xs text-gray-400">{product.code}</p>
       </div>
 
       {/* Supplier — center aligned */}

@@ -7,12 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import {
   ACCEPTED_PRODUCT_IMAGE_ACCEPT,
-  createProductImagePreviewUrl,
   defaultProductImageAlt,
-  revokeProductImagePreviewUrl,
-  validateProductImageFile,
 } from "@/lib/product-image";
-import { isSupabaseStorageConnected } from "@/lib/storage";
+import { getProductImageStorage } from "@/lib/product-image-storage";
 import { cn } from "@/lib/utils";
 
 export interface ProductImageValue {
@@ -38,11 +35,12 @@ export function ProductImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const storageReady = isSupabaseStorageConnected();
+  const storage = getProductImageStorage();
+  const storageReady = storage.isConnected();
 
   const revokeIfBlob = useCallback((url: string | null) => {
-    revokeProductImagePreviewUrl(url);
-  }, []);
+    storage.revokePreviewUrl(url);
+  }, [storage]);
 
   useEffect(() => {
     return () => revokeIfBlob(value.previewUrl);
@@ -57,14 +55,14 @@ export function ProductImageUpload({
       return;
     }
 
-    const validationError = validateProductImageFile(file);
+    const validationError = storage.validate(file);
     if (validationError) {
       setError(validationError);
       return;
     }
 
     revokeIfBlob(value.previewUrl);
-    const previewUrl = createProductImagePreviewUrl(file);
+    const previewUrl = storage.createPreviewUrl(file);
     const alt =
       value.alt.trim() ||
       (productName ? defaultProductImageAlt(productName) : "");
