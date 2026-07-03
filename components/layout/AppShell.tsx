@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
 import { AppFooter } from "./AppFooter";
 import { PipelineStoreProvider } from "@/hooks/PipelineStore";
+import { IdeaStoreProvider } from "@/hooks/IdeaStore";
 import { ProductNotesStoreProvider } from "@/hooks/ProductNotesStore";
 
 interface AppShellProps {
@@ -16,6 +17,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <PipelineStoreProvider>
+      <IdeaStoreProvider>
       <ProductNotesStoreProvider>
       <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar
@@ -39,6 +41,7 @@ export function AppShell({ children }: AppShellProps) {
       </div>
     </div>
       </ProductNotesStoreProvider>
+      </IdeaStoreProvider>
     </PipelineStoreProvider>
   );
 }

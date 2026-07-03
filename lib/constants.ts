@@ -2,6 +2,7 @@ import {
   Clock3,
   Factory,
   LayoutDashboard,
+  Lightbulb,
   Package,
   GitBranch,
   StickyNote,
@@ -37,6 +38,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/products", icon: Package },
+  { label: "Ideas", href: "/ideas", icon: Lightbulb },
   { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
   { label: "Timeline", href: "/timeline", icon: Clock3 },
