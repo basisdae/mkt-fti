@@ -110,8 +110,8 @@ export function AddSupplierForm() {
     setSubmitError(null);
 
     try {
-      const supplier = buildSupplierFromForm(form);
-      await addSupplier(supplier);
+      const input = buildSupplierFromForm(form);
+      await addSupplier(input);
       setSavedName(
         form.factoryName.trim() || form.displayName.trim() || "New Supplier",
       );

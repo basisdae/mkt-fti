@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type {
+  NewSupplierInput,
   Supplier,
   SupplierContact,
   SupplierContactInput,
@@ -39,6 +40,9 @@ interface SupplierContactRow {
   is_active: boolean;
   notes: string;
 }
+
+type SupplierInsertRow = Omit<SupplierRow, "id" | "updated_at">;
+type SupplierContactInsertRow = Omit<SupplierContactRow, "id">;
 
 function mapContactRow(row: SupplierContactRow): SupplierContact {
   return {
@@ -81,54 +85,28 @@ function mapSupplierRow(
   };
 }
 
-function supplierToRow(supplier: Supplier): SupplierRow {
+function supplierInputToInsert(input: NewSupplierInput): SupplierInsertRow {
   return {
-    id: supplier.id,
-    factory_name: supplier.factoryName,
-    display_name: supplier.displayName,
-    country: supplier.country,
-    province_region: supplier.provinceRegion,
-    city_district: supplier.cityDistrict,
-    full_address: supplier.fullAddress,
-    location_note: supplier.locationNote,
-    website: supplier.website,
-    alibaba_link: supplier.alibabaLink,
-    main_product_category: supplier.mainProductCategory,
-    image_url: supplier.imageUrl,
-    notes: supplier.notes,
-    updated_at: supplier.updatedAt,
+    factory_name: input.factoryName,
+    display_name: input.displayName,
+    country: input.country,
+    province_region: input.provinceRegion,
+    city_district: input.cityDistrict,
+    full_address: input.fullAddress,
+    location_note: input.locationNote,
+    website: input.website,
+    alibaba_link: input.alibabaLink,
+    main_product_category: input.mainProductCategory,
+    image_url: input.imageUrl,
+    notes: input.notes,
   };
 }
 
-function contactToRow(
+function contactInputToInsert(
   supplierId: string,
-  contact: SupplierContact,
-): SupplierContactRow {
-  return {
-    id: contact.id,
-    supplier_id: supplierId,
-    contact_name: contact.contactName,
-    position: contact.position,
-    sales_rep_code: contact.salesRepCode,
-    wechat_id: contact.wechatId,
-    whatsapp: contact.whatsapp,
-    phone: contact.phone,
-    email: contact.email,
-    line: contact.line,
-    image_url: contact.imageUrl,
-    is_primary: contact.isPrimary,
-    is_active: contact.isActive,
-    notes: contact.notes,
-  };
-}
-
-function contactInputToRow(
-  supplierId: string,
-  contactId: string,
   input: SupplierContactInput,
-): SupplierContactRow {
+): SupplierContactInsertRow {
   return {
-    id: contactId,
     supplier_id: supplierId,
     contact_name: input.contactName,
     position: input.position,
@@ -192,24 +170,35 @@ export async function listSuppliers(): Promise<Supplier[]> {
   );
 }
 
-export async function createSupplier(supplier: Supplier): Promise<Supplier> {
+export async function createSupplier(input: NewSupplierInput): Promise<Supplier> {
   const supabase = getClient();
 
-  const { error: supplierError } = await supabase
+  const { data: supplierRow, error: supplierError } = await supabase
     .from("suppliers")
-    .insert(supplierToRow(supplier));
+    .insert(supplierInputToInsert(input))
+    .select()
+    .single();
 
   throwOnError(supplierError);
 
-  if (supplier.contacts.length > 0) {
-    const { error: contactError } = await supabase
+  const createdSupplier = supplierRow as SupplierRow;
+  let contactRows: SupplierContactRow[] = [];
+
+  if (input.contacts.length > 0) {
+    const { data: insertedContacts, error: contactError } = await supabase
       .from("supplier_contacts")
-      .insert(supplier.contacts.map((c) => contactToRow(supplier.id, c)));
+      .insert(
+        input.contacts.map((contact) =>
+          contactInputToInsert(createdSupplier.id, contact),
+        ),
+      )
+      .select();
 
     throwOnError(contactError);
+    contactRows = (insertedContacts ?? []) as SupplierContactRow[];
   }
 
-  return supplier;
+  return mapSupplierRow(createdSupplier, contactRows);
 }
 
 export async function updateSupplier(
@@ -268,24 +257,25 @@ export async function updateSupplierContact(
       .eq("supplier_id", supplierId);
   }
 
-  const row = contactInputToRow(supplierId, contactId, input);
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("supplier_contacts")
     .update({
-      contact_name: row.contact_name,
-      position: row.position,
-      sales_rep_code: row.sales_rep_code,
-      wechat_id: row.wechat_id,
-      whatsapp: row.whatsapp,
-      phone: row.phone,
-      email: row.email,
-      line: row.line,
-      is_primary: row.is_primary,
-      is_active: row.is_active,
-      notes: row.notes,
+      contact_name: input.contactName,
+      position: input.position,
+      sales_rep_code: input.salesRepCode,
+      wechat_id: input.wechatId,
+      whatsapp: input.whatsapp,
+      phone: input.phone,
+      email: input.email,
+      line: input.line,
+      is_primary: input.isPrimary,
+      is_active: input.isActive,
+      notes: input.notes,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", contactId);
+    .eq("id", contactId)
+    .select()
+    .single();
 
   throwOnError(error);
 
@@ -294,12 +284,11 @@ export async function updateSupplierContact(
     .update({ updated_at: new Date().toISOString() })
     .eq("id", supplierId);
 
-  return mapContactRow(row);
+  return mapContactRow(data as SupplierContactRow);
 }
 
 export async function addSupplierContact(
   supplierId: string,
-  contactId: string,
   input: SupplierContactInput,
 ): Promise<SupplierContact> {
   const supabase = getClient();
@@ -311,8 +300,11 @@ export async function addSupplierContact(
       .eq("supplier_id", supplierId);
   }
 
-  const row = contactInputToRow(supplierId, contactId, input);
-  const { error } = await supabase.from("supplier_contacts").insert(row);
+  const { data, error } = await supabase
+    .from("supplier_contacts")
+    .insert(contactInputToInsert(supplierId, input))
+    .select()
+    .single();
 
   throwOnError(error);
 
@@ -321,7 +313,7 @@ export async function addSupplierContact(
     .update({ updated_at: new Date().toISOString() })
     .eq("id", supplierId);
 
-  return mapContactRow(row);
+  return mapContactRow(data as SupplierContactRow);
 }
 
 export async function setSupplierPrimaryContact(

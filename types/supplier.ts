@@ -46,6 +46,26 @@ export interface SupplierContactInput {
   notes: string;
 }
 
+/** Contact fields for create — no id (Supabase generates UUID). */
+export type NewSupplierContactInput = SupplierContactInput;
+
+/** Supplier fields for create — no id (Supabase generates UUID). */
+export interface NewSupplierInput {
+  factoryName: string;
+  displayName: string;
+  country: string;
+  provinceRegion: string;
+  cityDistrict: string;
+  fullAddress: string;
+  locationNote: string;
+  website: string;
+  alibabaLink: string;
+  mainProductCategory: string;
+  imageUrl: string | null;
+  notes: string;
+  contacts: NewSupplierContactInput[];
+}
+
 export interface NewSupplierFormData {
   factoryName: string;
   displayName: string;

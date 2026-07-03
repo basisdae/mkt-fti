@@ -9,7 +9,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createSupplierContact } from "@/lib/supplier-builder";
 import {
   addSupplierContact,
   createSupplier,
@@ -21,6 +20,7 @@ import {
 } from "@/lib/services/suppliers";
 import { removeSupplierFromStorage } from "@/lib/supplier-storage";
 import type {
+  NewSupplierInput,
   Supplier,
   SupplierContact,
   SupplierContactInput,
@@ -33,7 +33,7 @@ interface SupplierStoreValue {
   /** True after the initial Supabase fetch attempt completes. */
   hydrated: boolean;
   getSupplier: (id: string) => Supplier | undefined;
-  addSupplier: (supplier: Supplier) => Promise<void>;
+  addSupplier: (input: NewSupplierInput) => Promise<void>;
   updateSupplier: (supplierId: string, patch: Partial<Supplier>) => Promise<void>;
   deleteSupplier: (supplierId: string) => Promise<void>;
   updateContact: (
@@ -103,14 +103,12 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
     [suppliers],
   );
 
-  const addSupplier = useCallback(async (supplier: Supplier) => {
-    setSuppliers((prev) => [supplier, ...prev]);
-
+  const addSupplier = useCallback(async (input: NewSupplierInput) => {
     try {
-      await createSupplier(supplier);
+      const created = await createSupplier(input);
+      setSuppliers((prev) => [created, ...prev]);
       setError(null);
     } catch (err) {
-      setSuppliers((prev) => prev.filter((s) => s.id !== supplier.id));
       const message = toErrorMessage(err, "Failed to save supplier");
       setError(message);
       throw new Error(message);
@@ -237,26 +235,27 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
 
   const addContact = useCallback(
     async (supplierId: string, input: SupplierContactInput) => {
-      const newId = `${supplierId}-contact-${Date.now()}`;
-      const contact = createSupplierContact(newId, input);
       let snapshot: Supplier[] = [];
 
       setSuppliers((prev) => {
         snapshot = prev;
-        return prev.map((supplier) => {
-          if (supplier.id !== supplierId) return supplier;
-          const contacts = input.isPrimary
-            ? supplier.contacts.map((c) => ({ ...c, isPrimary: false }))
-            : [...supplier.contacts];
-          return touchSupplier({
-            ...supplier,
-            contacts: [...contacts, contact],
-          });
-        });
+        return prev;
       });
 
       try {
-        await addSupplierContact(supplierId, newId, input);
+        const created = await addSupplierContact(supplierId, input);
+        setSuppliers((prev) =>
+          prev.map((supplier) => {
+            if (supplier.id !== supplierId) return supplier;
+            const contacts = input.isPrimary
+              ? supplier.contacts.map((c) => ({ ...c, isPrimary: false }))
+              : [...supplier.contacts];
+            return touchSupplier({
+              ...supplier,
+              contacts: [...contacts, created],
+            });
+          }),
+        );
         setError(null);
       } catch (err) {
         setSuppliers(snapshot);
