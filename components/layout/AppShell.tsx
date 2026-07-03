@@ -6,6 +6,7 @@ import { TopHeader } from "./TopHeader";
 import { AppFooter } from "./AppFooter";
 import { PipelineStoreProvider } from "@/hooks/PipelineStore";
 import { IdeaStoreProvider } from "@/hooks/IdeaStore";
+import { SupplierStoreProvider } from "@/hooks/SupplierStore";
 import { ProductNotesStoreProvider } from "@/hooks/ProductNotesStore";
 
 interface AppShellProps {
@@ -17,6 +18,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <PipelineStoreProvider>
+      <SupplierStoreProvider>
       <IdeaStoreProvider>
       <ProductNotesStoreProvider>
       <div className="flex h-dvh overflow-hidden bg-background">
@@ -42,6 +44,7 @@ export function AppShell({ children }: AppShellProps) {
     </div>
       </ProductNotesStoreProvider>
       </IdeaStoreProvider>
+      </SupplierStoreProvider>
     </PipelineStoreProvider>
   );
 }

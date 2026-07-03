@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { SupplierContactCard } from "@/components/supplier/SupplierContactCard";
+import { SupplierContactsSection } from "@/components/supplier/SupplierContactsSection";
 import { formatSupplierLocation } from "@/lib/supplier";
 import { formatDate } from "@/lib/utils";
 import { getProducts } from "@/lib/mock-data";
@@ -140,16 +140,10 @@ export function SupplierDetailView({
             )}
           </Card>
 
-          <div>
-            <h2 className="mb-4 text-base font-semibold text-gray-900">
-              Contacts ({supplier.contacts.length})
-            </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {supplier.contacts.map((contact) => (
-                <SupplierContactCard key={contact.id} contact={contact} />
-              ))}
-            </div>
-          </div>
+          <SupplierContactsSection
+            supplierId={supplier.id}
+            initialContacts={supplier.contacts}
+          />
         </div>
 
         <div className="space-y-6">
