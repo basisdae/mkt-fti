@@ -52,13 +52,31 @@ export interface ScenarioRow {
   id: string;
   productId: string;
   productName: string;
+  moqTierId: string;
+  moq: number;
   qty: number;
   sellingPrice: number;
   unitCost: number;
+  targetRevenue: number;
   revenue: number;
   totalCost: number;
   grossProfit: number;
   grossProfitPercent: number;
+}
+
+export interface ScenarioRowDraft {
+  productId: string;
+  moqTierId: string;
+  qty: number;
+  sellingPrice: number;
+  targetRevenue: number;
+}
+
+export interface ScenarioRowBuildOptions {
+  id?: string;
+  moqTierId?: string;
+  moq?: number;
+  targetRevenue?: number;
 }
 
 export interface ScenarioTotals {
@@ -100,7 +118,7 @@ export function buildScenarioRow(
   qty: number,
   sellingPrice: number,
   unitCost: number,
-  id?: string,
+  options: ScenarioRowBuildOptions = {},
 ): ScenarioRow {
   const revenue = sellingPrice * qty;
   const totalCost = unitCost * qty;
@@ -109,17 +127,78 @@ export function buildScenarioRow(
     revenue > 0 ? (grossProfit / revenue) * 100 : 0;
 
   return {
-    id: id ?? `scenario-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id:
+      options.id ??
+      `scenario-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     productId,
     productName,
+    moqTierId: options.moqTierId ?? "",
+    moq: options.moq ?? 0,
     qty,
     sellingPrice,
     unitCost,
+    targetRevenue: options.targetRevenue ?? revenue,
     revenue,
     totalCost,
     grossProfit,
     grossProfitPercent,
   };
+}
+
+export function recalculateScenarioRow(
+  row: ScenarioRow,
+  draft: ScenarioRowDraft,
+  resolveTier: (
+    productId: string,
+    moqTierId: string,
+  ) => {
+    productName: string;
+    moqTierId: string;
+    moq: number;
+    unitCost: number;
+    defaultSellingPrice: number;
+  },
+): ScenarioRow {
+  const tier = resolveTier(draft.productId, draft.moqTierId);
+  const qty = Math.max(0, draft.qty);
+  const sellingPrice = Math.max(0, draft.sellingPrice);
+  const unitCost = tier.unitCost;
+  const revenue = sellingPrice * qty;
+  const totalCost = unitCost * qty;
+  const grossProfit = revenue - totalCost;
+  const grossProfitPercent =
+    revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+
+  return {
+    id: row.id,
+    productId: draft.productId,
+    productName: tier.productName,
+    moqTierId: tier.moqTierId,
+    moq: tier.moq,
+    qty,
+    sellingPrice,
+    unitCost,
+    targetRevenue: Math.max(0, draft.targetRevenue),
+    revenue,
+    totalCost,
+    grossProfit,
+    grossProfitPercent,
+  };
+}
+
+export function duplicateScenarioRow(row: ScenarioRow): ScenarioRow {
+  return buildScenarioRow(
+    row.productId,
+    row.productName,
+    row.qty,
+    row.sellingPrice,
+    row.unitCost,
+    {
+      moqTierId: row.moqTierId,
+      moq: row.moq,
+      targetRevenue: row.targetRevenue,
+    },
+  );
 }
 
 export function sumScenarioRows(rows: ScenarioRow[]): ScenarioTotals {

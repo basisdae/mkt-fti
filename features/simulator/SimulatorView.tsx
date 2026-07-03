@@ -14,6 +14,7 @@ import {
   isLowProfitMargin,
 } from "@/lib/pricing";
 import { getProducts, simulatorDefaults } from "@/lib/mock-data";
+import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
 import { cn, formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import type { ScenarioRow } from "@/lib/pricing";
 
@@ -36,7 +37,7 @@ export function SimulatorView() {
   const activeTierId = tierId || product.priceOptions[0].id;
   const selectedTier = useMemo(
     () =>
-      product.priceOptions.find((t) => t.id === activeTierId) ??
+      product.priceOptions.find((tier) => tier.id === activeTierId) ??
       product.priceOptions[0],
     [product, activeTierId],
   );
@@ -58,15 +59,16 @@ export function SimulatorView() {
 
   const lowMargin = isLowProfitMargin(result.grossProfitPercent);
   const revenueGap = targetRevenue - result.revenue;
+  const qtyLabel = expectedQty.toLocaleString("th-TH");
 
   const productOptions = getProducts().map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  const moqOptions = product.priceOptions.map((t) => ({
-    value: t.id,
-    label: `${t.moq.toLocaleString()}${t.label ? ` · ${t.label}` : ""}`,
+  const moqOptions = product.priceOptions.map((tier) => ({
+    value: tier.id,
+    label: `${tier.moq.toLocaleString("th-TH")} ชิ้น${tier.label ? ` · ${tier.label}` : ""}`,
   }));
 
   function handleProductChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -86,44 +88,46 @@ export function SimulatorView() {
         expectedQty,
         pricing.ftiSellingPrice,
         pricing.costThb,
+        {
+          moqTierId: activeTierId,
+          moq: selectedTier.moq,
+          targetRevenue,
+        },
       ),
     ]);
   }
 
-  function handleRemoveRow(id: string) {
-    setScenarioRows((prev) => prev.filter((row) => row.id !== id));
+  function handleScenarioChange(nextRows: ScenarioRow[]) {
+    setScenarioRows(nextRows);
   }
 
   return (
     <div className="page-shell">
       <div className="page-header-block">
-        <h1 className="page-title">Target Simulator</h1>
-        <p className="page-description">
-          Model revenue targets, build multi-product scenarios, and track
-          margin performance.
-        </p>
+        <h1 className="page-title">{t.pageTitle}</h1>
+        <p className="page-description">{t.pageSubtitle}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-2" interactive>
           <h2 className="mb-5 text-base font-semibold text-gray-900">
-            Inputs
+            {t.inputsTitle}
           </h2>
           <div className="space-y-4">
             <Select
-              label="Select Product"
+              label={t.selectProduct}
               options={productOptions}
               value={productId}
               onChange={handleProductChange}
             />
             <Select
-              label="MOQ Tier"
+              label={t.moqTier}
               options={moqOptions}
               value={activeTierId}
               onChange={(e) => setTierId(e.target.value)}
             />
             <Input
-              label="Target Revenue (THB)"
+              label={t.targetRevenue}
               type="number"
               min={0}
               value={targetRevenue}
@@ -132,7 +136,7 @@ export function SimulatorView() {
               }
             />
             <Input
-              label="Expected Quantity"
+              label={t.expectedQty}
               type="number"
               min={0}
               value={expectedQty}
@@ -140,20 +144,43 @@ export function SimulatorView() {
             />
 
             <div className="rounded-xl bg-light-purple/50 px-4 py-3">
-              <p className="text-xs font-medium text-gray-500">Unit pricing</p>
-              <p className="mt-1 text-lg font-bold text-primary">
+              <p className="text-xs font-medium text-gray-500">
+                {t.unitPricingTitle}
+              </p>
+              <p className="mt-2 text-xs text-gray-500">{t.sellingPrice}</p>
+              <p className="text-lg font-bold text-primary">
                 {formatCurrencyTHB(pricing.ftiSellingPrice)}
               </p>
-              <p className="mt-0.5 text-xs text-gray-400">
-                Cost: {formatCurrencyTHB(pricing.costThb)} · GP{" "}
-                {formatPercent(pricing.wholesaleGpPercent)}
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-gray-400">{t.costPerUnit}</p>
+                  <p className="font-medium text-gray-700">
+                    {formatCurrencyTHB(pricing.costThb)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400">{t.profitPerUnit}</p>
+                  <p
+                    className={cn(
+                      "font-semibold",
+                      isLowProfitMargin(pricing.wholesaleGpPercent)
+                        ? "text-fti-red"
+                        : "text-green-800",
+                    )}
+                  >
+                    {formatCurrencyTHB(pricing.ftiProfit)}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-2 text-[11px] text-gray-400">
+                {t.profitMargin}: {formatPercent(pricing.wholesaleGpPercent)}
               </p>
             </div>
 
             {lowMargin && (
               <div className="warning-banner">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                Profit margin below 25%
+                {t.lowMarginWarning}
               </div>
             )}
 
@@ -165,65 +192,69 @@ export function SimulatorView() {
               disabled={expectedQty <= 0}
             >
               <Plus className="h-4 w-4" />
-              Add to Scenario
+              {t.addToScenario}
             </Button>
           </div>
         </Card>
 
         <div className="space-y-4 lg:col-span-3">
           <div className="grid gap-4 sm:grid-cols-2">
-            <ResultCard label="Revenue" value={formatCurrencyTHB(result.revenue)}>
-              {expectedQty.toLocaleString()} ×{" "}
-              {formatCurrencyTHB(pricing.ftiSellingPrice)}
+            <ResultCard
+              label={t.summaryRevenue}
+              value={formatCurrencyTHB(result.revenue)}
+            >
+              {t.revenueCalcHint(
+                qtyLabel,
+                formatCurrencyTHB(pricing.ftiSellingPrice),
+              )}
             </ResultCard>
             <ResultCard
-              label="Total Cost"
+              label={t.summaryTotalCost}
               value={formatCurrencyTHB(result.totalCost)}
             >
-              {expectedQty.toLocaleString()} ×{" "}
-              {formatCurrencyTHB(pricing.costThb)}
+              {t.costCalcHint(qtyLabel, formatCurrencyTHB(pricing.costThb))}
             </ResultCard>
             <ResultCard
-              label="Gross Profit"
+              label={t.summaryGrossProfit}
               value={formatCurrencyTHB(result.grossProfit)}
               profit
               lowMargin={lowMargin}
             >
-              {formatPercent(result.grossProfitPercent)} margin
+              {t.profitMarginHint(formatPercent(result.grossProfitPercent))}
             </ResultCard>
             <ResultCard
-              label="Required Qty for 100M"
-              value={`${result.requiredQtyFor100M.toLocaleString()} units`}
+              label={t.summaryQtyFor100M}
+              value={t.qtyUnits(result.requiredQtyFor100M)}
               accent
             >
-              At {formatCurrencyTHB(pricing.ftiSellingPrice)} / unit
+              {t.qtyFor100MHint(formatCurrencyTHB(pricing.ftiSellingPrice))}
             </ResultCard>
           </div>
 
           <Card interactive>
             <h2 className="mb-4 text-base font-semibold text-gray-900">
-              Target vs Expected
+              {t.targetVsExpectedTitle}
             </h2>
             <dl className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Target Revenue
+                <dt className="text-xs font-medium text-gray-500">
+                  {t.targetRevenueLabel}
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-gray-900">
                   {formatCurrencyTHB(targetRevenue)}
                 </dd>
               </div>
               <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Projected Revenue
+                <dt className="text-xs font-medium text-gray-500">
+                  {t.projectedRevenueLabel}
                 </dt>
                 <dd className="mt-1 text-sm font-semibold text-primary">
                   {formatCurrencyTHB(result.revenue)}
                 </dd>
               </div>
               <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                  Gap
+                <dt className="text-xs font-medium text-gray-500">
+                  {t.gapLabel}
                 </dt>
                 <dd
                   className={cn(
@@ -233,6 +264,9 @@ export function SimulatorView() {
                 >
                   {revenueGap > 0 ? "−" : "+"}
                   {formatCurrencyTHB(Math.abs(revenueGap))}
+                  <span className="mt-0.5 block text-[11px] font-normal text-gray-400">
+                    {revenueGap > 0 ? t.gapBelow : t.gapAbove}
+                  </span>
                 </dd>
               </div>
             </dl>
@@ -241,7 +275,7 @@ export function SimulatorView() {
       </div>
 
       <div className="mt-8">
-        <ScenarioTable rows={scenarioRows} onRemove={handleRemoveRow} />
+        <ScenarioTable rows={scenarioRows} onChange={handleScenarioChange} />
       </div>
     </div>
   );
@@ -285,7 +319,7 @@ function ResultCard({
         {value}
       </p>
       {children && (
-        <p className="mt-1 text-xs text-gray-400">{children}</p>
+        <p className="mt-1 text-xs leading-relaxed text-gray-400">{children}</p>
       )}
     </Card>
   );
