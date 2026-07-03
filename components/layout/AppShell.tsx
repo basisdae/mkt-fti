@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
 import { AppFooter } from "./AppFooter";
+import { PipelineStoreProvider } from "@/hooks/PipelineStore";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -13,7 +14,8 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    <PipelineStoreProvider>
+      <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar
         mobileOpen={mobileNavOpen}
         onMobileClose={() => setMobileNavOpen(false)}
@@ -34,5 +36,6 @@ export function AppShell({ children }: AppShellProps) {
         <AppFooter />
       </div>
     </div>
+    </PipelineStoreProvider>
   );
 }

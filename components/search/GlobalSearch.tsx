@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Search, SearchX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { searchProducts } from "@/lib/product-filters";
-import { getProducts } from "@/lib/mock-data";
+import { useLiveProducts } from "@/hooks/PipelineStore";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 
 export function GlobalSearch() {
@@ -15,10 +15,12 @@ export function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
+  const products = useLiveProducts();
+
   const results = useMemo(() => {
     if (!query.trim()) return [];
-    return searchProducts(getProducts(), query, 6);
-  }, [query]);
+    return searchProducts(products, query, 6);
+  }, [query, products]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

@@ -16,7 +16,7 @@ import {
   PRODUCT_SORT_OPTIONS,
   type ProductFilterState,
 } from "@/lib/product-filters";
-import { getProducts } from "@/lib/mock-data";
+import { useLiveProducts } from "@/hooks/PipelineStore";
 import type { ProductStatus } from "@/types/product";
 
 const statusOptions = [
@@ -29,7 +29,7 @@ const statusOptions = [
 
 export function ProductsListView() {
   const searchParams = useSearchParams();
-  const allProducts = useMemo(() => getProducts(), []);
+  const allProducts = useLiveProducts();
   const suppliers = useMemo(
     () => getUniqueSuppliers(allProducts),
     [allProducts],

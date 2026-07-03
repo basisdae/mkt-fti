@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { Inbox } from "lucide-react";
-import { PipelineCard } from "@/components/cards/PipelineCard";
+import { PipelineCard, getPipelineDropHint } from "@/components/cards/PipelineCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   PIPELINE_STAGE_LABELS,
@@ -10,24 +10,22 @@ import {
   PIPELINE_STAGES,
   PIPELINE_TONE_STYLES,
 } from "@/lib/constants";
-import { getNextPipelineStage, initPipelineItems } from "@/lib/pipeline";
-import { getProducts } from "@/lib/mock-data";
+import { isAllowedPipelineMove } from "@/lib/pipeline";
+import {
+  decodePipelineDragPayload,
+  usePipelineStore,
+} from "@/hooks/PipelineStore";
 import { cn } from "@/lib/utils";
-import type { PipelineItem, PipelineStage } from "@/types/product";
-
-function buildInitialStages(): Record<string, PipelineStage> {
-  return Object.fromEntries(
-    getProducts().map((p) => [p.id, p.pipelineStage]),
-  ) as Record<string, PipelineStage>;
-}
+import type { PipelineStage } from "@/types/product";
 
 export function PipelineBoard() {
-  const [items, setItems] = useState<PipelineItem[]>(() =>
-    initPipelineItems(getProducts()),
-  );
-  const [stages, setStages] = useState<Record<string, PipelineStage>>(
-    buildInitialStages,
-  );
+  const { pipelineItems, statuses, moveProduct } = usePipelineStore();
+  const [dragging, setDragging] = useState<{
+    productId: string;
+    fromStage: PipelineStage;
+  } | null>(null);
+  const [hoverStage, setHoverStage] = useState<PipelineStage | null>(null);
+  const [droppedId, setDroppedId] = useState<string | null>(null);
 
   const columns = useMemo(
     () =>
@@ -35,40 +33,65 @@ export function PipelineBoard() {
         id: stage,
         title: PIPELINE_STAGE_LABELS[stage],
         tone: PIPELINE_STAGE_TONES[stage],
-        items: items.filter((item) => stages[item.id] === stage),
+        items: pipelineItems.filter(
+          (item) => statuses[item.productId]?.pipelineStage === stage,
+        ),
       })),
-    [items, stages],
+    [pipelineItems, statuses],
   );
 
-  const handleMoveNext = useCallback((productId: string) => {
-    setStages((prevStages) => {
-      const current = prevStages[productId];
-      const next = getNextPipelineStage(current);
-      if (!next) return prevStages;
+  const handleDragStart = useCallback(
+    (productId: string, fromStage: PipelineStage) => {
+      setDragging({ productId, fromStage });
+    },
+    [],
+  );
 
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === productId
-            ? {
-                ...item,
-                activityNote: `Moved to ${PIPELINE_STAGE_LABELS[next]}`,
-                updatedAt: new Date().toISOString(),
-                justUpdated: true,
-              }
-            : item,
-        ),
-      );
-
-      return { ...prevStages, [productId]: next };
-    });
+  const handleDragEnd = useCallback(() => {
+    setDragging(null);
+    setHoverStage(null);
   }, []);
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, targetStage: PipelineStage) => {
+      if (!dragging) return;
+
+      const allowed = isAllowedPipelineMove(dragging.fromStage, targetStage);
+      if (!allowed || dragging.fromStage === targetStage) return;
+
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      setHoverStage(targetStage);
+    },
+    [dragging],
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent, targetStage: PipelineStage) => {
+      e.preventDefault();
+      setHoverStage(null);
+
+      const raw = e.dataTransfer.getData("application/x-mkt-fti-pipeline-product");
+      const payload = decodePipelineDragPayload(raw);
+      if (!payload) return;
+
+      const moved = moveProduct(payload.productId, targetStage);
+      if (moved) {
+        setDroppedId(payload.productId);
+        window.setTimeout(() => setDroppedId(null), 450);
+      }
+
+      setDragging(null);
+    },
+    [moveProduct],
+  );
 
   return (
     <div className="page-shell flex h-full flex-col">
       <div className="page-header-block shrink-0">
         <h1 className="page-title">Product Pipeline</h1>
         <p className="page-description">
-          Kanban view from factory contact through launch readiness.
+          Drag cards to the previous or next stage — no skipping steps.
         </p>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -96,6 +119,18 @@ export function PipelineBoard() {
         <div className="flex min-w-max gap-4">
           {columns.map((column) => {
             const toneStyles = PIPELINE_TONE_STYLES[column.tone];
+            const isHoverTarget = hoverStage === column.id;
+            const isValidTarget =
+              dragging !== null &&
+              isAllowedPipelineMove(dragging.fromStage, column.id) &&
+              dragging.fromStage !== column.id;
+            const isAdjacentBlocked =
+              dragging !== null &&
+              !isAllowedPipelineMove(dragging.fromStage, column.id);
+            const dropHint = getPipelineDropHint(
+              column.id,
+              dragging?.fromStage ?? null,
+            );
 
             return (
               <div key={column.id} className="flex w-64 shrink-0 flex-col sm:w-72">
@@ -105,8 +140,9 @@ export function PipelineBoard() {
                   </h2>
                   <span
                     className={cn(
-                      "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                      "rounded-full px-2.5 py-0.5 text-xs font-semibold transition-transform duration-200",
                       toneStyles.columnBadge,
+                      isHoverTarget && "scale-110",
                     )}
                   >
                     {column.items.length}
@@ -114,18 +150,47 @@ export function PipelineBoard() {
                 </div>
 
                 <div
+                  onDragOver={(e) => handleDragOver(e, column.id)}
+                  onDragEnter={() => {
+                    if (isValidTarget) setHoverStage(column.id);
+                  }}
+                  onDragLeave={(e) => {
+                    if (
+                      e.currentTarget.contains(e.relatedTarget as Node)
+                    ) {
+                      return;
+                    }
+                    if (hoverStage === column.id) setHoverStage(null);
+                  }}
+                  onDrop={(e) => handleDrop(e, column.id)}
                   className={cn(
-                    "flex min-h-[160px] flex-1 flex-col gap-3 rounded-[20px] border border-gray-100 bg-gray-50/50 p-3 border-t-[3px]",
+                    "pipeline-column flex min-h-[180px] flex-1 flex-col gap-3 rounded-[20px] border border-gray-100 bg-gray-50/50 p-3 border-t-[3px] transition-all duration-300 ease-out",
                     toneStyles.columnBorder,
+                    dragging && isValidTarget && "pipeline-column--valid",
+                    isHoverTarget && "pipeline-column--hover",
+                    dragging && isAdjacentBlocked && "pipeline-column--blocked",
                   )}
                 >
+                  {dropHint && isHoverTarget && (
+                    <p className="pipeline-drop-hint">{dropHint}</p>
+                  )}
+
                   {column.items.length === 0 ? (
                     <EmptyState
                       icon={Inbox}
-                      title="Empty stage"
-                      description="No products here yet."
+                      title={isHoverTarget ? "Drop here" : "Empty stage"}
+                      description={
+                        isHoverTarget
+                          ? dropHint ?? "Release to move product here."
+                          : "Drag a product from an adjacent stage."
+                      }
                       compact
-                      className="rounded-xl border border-dashed border-gray-200 bg-white/60"
+                      className={cn(
+                        "rounded-xl border border-dashed bg-white/60 transition-all duration-300",
+                        isHoverTarget
+                          ? "border-primary/40 bg-light-purple/30"
+                          : "border-gray-200",
+                      )}
                     />
                   ) : (
                     column.items.map((item) => (
@@ -133,7 +198,10 @@ export function PipelineBoard() {
                         key={item.id}
                         item={item}
                         stage={column.id}
-                        onMoveNext={handleMoveNext}
+                        isDragging={dragging?.productId === item.productId}
+                        justDropped={droppedId === item.productId}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
                       />
                     ))
                   )}

@@ -13,31 +13,21 @@ import { QuickFilterChip } from "@/components/search/GlobalSearch";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
-import { PIPELINE_STAGE_LABELS } from "@/lib/constants";
+import { usePipelineStore } from "@/hooks/PipelineStore";
 import {
   DASHBOARD_QUICK_FILTERS,
   filterDashboardProducts,
 } from "@/lib/product-filters";
-import {
-  dashboardMetrics,
-  getPipelineOverview,
-  getProducts,
-  getRecentActivity,
-} from "@/lib/mock-data";
 import { timeAgo } from "@/lib/utils";
 import type { DashboardQuickFilter } from "@/types/product";
 
 export function DashboardView() {
-  const allProducts = useMemo(() => getProducts(), []);
-  const pipelineOverview = useMemo(
-    () =>
-      getPipelineOverview().map((item) => ({
-        ...item,
-        label: PIPELINE_STAGE_LABELS[item.stage],
-      })),
-    [],
-  );
-  const recentActivity = useMemo(() => getRecentActivity(), []);
+  const {
+    products: allProducts,
+    pipelineOverview,
+    recentActivity,
+    dashboardMetrics,
+  } = usePipelineStore();
   const accents = ["purple", "amber", "sky", "green"] as const;
 
   const [quickFilter, setQuickFilter] = useState<DashboardQuickFilter | null>(
