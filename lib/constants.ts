@@ -1,4 +1,5 @@
 import {
+  Clock3,
   LayoutDashboard,
   Package,
   GitBranch,
@@ -35,6 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/products", icon: Package },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
+  { label: "Timeline", href: "/timeline", icon: Clock3 },
   { label: "Simulator", href: "/simulator", icon: Calculator },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

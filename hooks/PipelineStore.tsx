@@ -17,11 +17,16 @@ import {
   statusForPipelineStage,
 } from "@/lib/pipeline";
 import {
+  pipelineStageToTimeline,
+  timelineMovementFromPipelineMove,
+} from "@/lib/product-timeline";
+import {
   pipelineLogs as initialPipelineLogs,
   productPriceOptions,
   productStatuses as initialProductStatuses,
   products,
 } from "@/lib/mock-data";
+import { productTimelineMovements as initialTimelineMovements } from "@/lib/timeline-seed";
 import type {
   ActivityItem,
   DashboardMetric,
@@ -29,6 +34,8 @@ import type {
   PipelineLog,
   PipelineStage,
   ProductStatusEntry,
+  ProductTimelineMovement,
+  ProductTimelineStage,
   ProductView,
 } from "@/types/product";
 
@@ -51,6 +58,10 @@ interface PipelineStoreValue {
   dashboardMetrics: DashboardMetric[];
   moveProduct: (productId: string, targetStage: PipelineStage) => boolean;
   getStageForProduct: (productId: string) => PipelineStage | undefined;
+  getTimelineForProduct: (productId: string) => {
+    movements: ProductTimelineMovement[];
+    currentStage: ProductTimelineStage;
+  };
 }
 
 const PipelineStoreContext = createContext<PipelineStoreValue | null>(null);
@@ -96,6 +107,9 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
   const [itemMeta, setItemMeta] = useState<
     Record<string, { activityNote: string; justUpdated: boolean }>
   >({});
+  const [timelineMovements, setTimelineMovements] = useState<
+    ProductTimelineMovement[]
+  >(() => [...initialTimelineMovements]);
 
   const products = useMemo(() => mergeProductViews(statuses), [statuses]);
 
@@ -170,6 +184,25 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     [statuses],
   );
 
+  const getTimelineForProduct = useCallback(
+    (productId: string) => {
+      const status = statuses[productId];
+      const currentStage = status
+        ? pipelineStageToTimeline(status.pipelineStage)
+        : "factory_contact";
+
+      const movements = timelineMovements
+        .filter((m) => m.productId === productId)
+        .sort(
+          (a, b) =>
+            new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime(),
+        );
+
+      return { movements, currentStage };
+    },
+    [statuses, timelineMovements],
+  );
+
   const moveProduct = useCallback(
     (productId: string, targetStage: PipelineStage): boolean => {
       const current = statuses[productId];
@@ -203,6 +236,16 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
 
       setLogs((prev) => [log, ...prev]);
 
+      setTimelineMovements((prev) => [
+        ...prev,
+        timelineMovementFromPipelineMove(
+          productId,
+          targetStage,
+          log.detail,
+          now,
+        ),
+      ]);
+
       setItemMeta((prev) => ({
         ...prev,
         [productId]: {
@@ -227,6 +270,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       dashboardMetrics,
       moveProduct,
       getStageForProduct,
+      getTimelineForProduct,
     }),
     [
       products,
@@ -238,6 +282,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       dashboardMetrics,
       moveProduct,
       getStageForProduct,
+      getTimelineForProduct,
     ],
   );
 

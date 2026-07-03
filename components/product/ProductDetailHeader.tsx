@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, MessageSquarePlus, X } from "lucide-react";
+import { ArrowLeft, Clock3, MessageSquarePlus, X } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/forms/Textarea";
@@ -90,6 +90,10 @@ export function ProductDetailHeader({
           >
             <MessageSquarePlus className="h-4 w-4" />
             Add Note
+          </Button>
+          <Button href={`/timeline?product=${product.id}`} variant="secondary" size="sm">
+            <Clock3 className="h-4 w-4" />
+            Timeline
           </Button>
           <Button href="/products" variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />

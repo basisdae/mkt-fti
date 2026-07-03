@@ -97,6 +97,28 @@ export interface PipelineLog {
   updatedAt: string;
 }
 
+export type ProductTimelineStage =
+  | "factory_contact"
+  | "moq"
+  | "quotation"
+  | "sample"
+  | "testing"
+  | "certification"
+  | "approval"
+  | "production"
+  | "shipping"
+  | "warehouse"
+  | "launch";
+
+export interface ProductTimelineMovement {
+  id: string;
+  productId: string;
+  stage: ProductTimelineStage;
+  occurredAt: string;
+  user: string;
+  note: string;
+}
+
 /** Assembled product with pricing summary and workflow status for UI. */
 export interface ProductView extends Product {
   status: ProductStatus;
