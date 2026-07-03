@@ -34,6 +34,8 @@ export const PIPELINE_TO_TIMELINE_STAGE: Record<
   PipelineStage,
   ProductTimelineStage
 > = {
+  interested: "factory_contact",
+  researching: "factory_contact",
   contact_factory: "factory_contact",
   waiting_moq: "moq",
   quotation: "quotation",
@@ -44,6 +46,7 @@ export const PIPELINE_TO_TIMELINE_STAGE: Record<
   shipping: "shipping",
   received: "warehouse",
   ready_launch: "launch",
+  launched: "launch",
 };
 
 export function timelineStageIndex(stage: ProductTimelineStage): number {

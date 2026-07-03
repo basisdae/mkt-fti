@@ -57,7 +57,7 @@ function MetricCell({
 export function ProductListRow({ product }: ProductListRowProps) {
   const statusStyle = getStatusColor(product.status);
   const lowGp = isLowProfitMargin(product.gpPercent);
-  const pipelineStep = formatPipelineStep(product.pipelineStage, product.status);
+  const pipelineStep = formatPipelineStep(product.pipelineStage);
 
   return (
     <Link

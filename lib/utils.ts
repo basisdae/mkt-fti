@@ -43,22 +43,62 @@ export function getStatusColor(status: ProductStatus): {
     ProductStatus,
     { bg: string; text: string; badge: "default" | "success" | "warning" | "danger" | "muted" }
   > = {
-    active: {
-      bg: "bg-light-purple",
-      text: "text-primary",
-      badge: "default",
+    interested: {
+      bg: "bg-gray-100",
+      text: "text-gray-600",
+      badge: "muted",
     },
-    waiting_quotation: {
-      bg: "bg-amber-50",
-      text: "text-amber-700",
-      badge: "warning",
-    },
-    in_testing: {
+    researching: {
       bg: "bg-sky-50",
       text: "text-sky-700",
       badge: "default",
     },
-    ready_to_launch: {
+    contact_factory: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      badge: "warning",
+    },
+    waiting_moq: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      badge: "warning",
+    },
+    quotation: {
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      badge: "warning",
+    },
+    sample_testing: {
+      bg: "bg-light-purple",
+      text: "text-primary",
+      badge: "default",
+    },
+    certification: {
+      bg: "bg-light-purple",
+      text: "text-primary",
+      badge: "default",
+    },
+    purchase_approved: {
+      bg: "bg-light-purple",
+      text: "text-primary",
+      badge: "default",
+    },
+    ordered: {
+      bg: "bg-light-purple",
+      text: "text-primary",
+      badge: "default",
+    },
+    shipping: {
+      bg: "bg-green-50",
+      text: "text-success",
+      badge: "success",
+    },
+    received: {
+      bg: "bg-green-50",
+      text: "text-success",
+      badge: "success",
+    },
+    ready_launch: {
       bg: "bg-green-50",
       text: "text-success",
       badge: "success",
@@ -67,11 +107,6 @@ export function getStatusColor(status: ProductStatus): {
       bg: "bg-emerald-50",
       text: "text-emerald-700",
       badge: "success",
-    },
-    on_hold: {
-      bg: "bg-red-50",
-      text: "text-fti-red",
-      badge: "danger",
     },
   };
 

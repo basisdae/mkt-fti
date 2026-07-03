@@ -6,6 +6,7 @@ import { CertificationCard } from "@/components/product/CertificationCard";
 import { OemCustomCard } from "@/components/product/OemCustomCard";
 import { BrandStrategyCard } from "@/components/product/BrandStrategyCard";
 import { EvaluationScorecardCard } from "@/components/product/EvaluationScorecardCard";
+import { ProductLinkedSupplierCard } from "@/components/supplier/ProductLinkedSupplierCard";
 import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
 import { ProfitSummaryCards } from "@/components/product/ProfitSummaryCards";
 import {
@@ -14,7 +15,7 @@ import {
   type ProductImageValue,
 } from "@/components/product/ProductImageUpload";
 import { Card } from "@/components/ui/Card";
-import { getMoqTierById } from "@/lib/mock-data";
+import { getMoqTierById, getSupplierForProduct } from "@/lib/mock-data";
 import { getProfitSummary } from "@/lib/product-detail";
 import type { ProductView } from "@/types/product";
 
@@ -44,6 +45,8 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
     [product.priceOptions],
   );
 
+  const linkedSupplier = getSupplierForProduct(product);
+
   return (
     <div className="page-shell">
       <ProductDetailHeader
@@ -55,6 +58,12 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
       <div className="mb-6">
         <BrandStrategyCard product={product} />
       </div>
+
+      {linkedSupplier && (
+        <div className="mb-6">
+          <ProductLinkedSupplierCard supplier={linkedSupplier} />
+        </div>
+      )}
 
       <div className="mb-6">
         <EvaluationScorecardCard product={product} />

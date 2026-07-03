@@ -1,5 +1,6 @@
 import {
   Clock3,
+  Factory,
   LayoutDashboard,
   Package,
   GitBranch,
@@ -36,6 +37,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/products", icon: Package },
+  { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
   { label: "Timeline", href: "/timeline", icon: Clock3 },
   { label: "Notes", href: "/notes", icon: StickyNote },
@@ -44,15 +46,8 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-  active: "Active",
-  waiting_quotation: "Waiting Quotation",
-  in_testing: "In Testing",
-  ready_to_launch: "Ready to Launch",
-  launched: "Launched",
-  on_hold: "On Hold",
-};
-
-export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
+  interested: "Interested",
+  researching: "Researching",
   contact_factory: "Contact Factory",
   waiting_moq: "Waiting MOQ",
   quotation: "Quotation",
@@ -63,9 +58,28 @@ export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
   shipping: "Shipping",
   received: "Received",
   ready_launch: "Ready Launch",
+  launched: "Launched",
+};
+
+export const PIPELINE_STAGE_LABELS: Record<PipelineStage, string> = {
+  interested: "Interested",
+  researching: "Researching",
+  contact_factory: "Contact Factory",
+  waiting_moq: "Waiting MOQ",
+  quotation: "Quotation",
+  sample_testing: "Sample Testing",
+  certification: "Certification",
+  purchase_approved: "Purchase Approved",
+  ordered: "Ordered",
+  shipping: "Shipping",
+  received: "Received",
+  ready_launch: "Ready Launch",
+  launched: "Launched",
 };
 
 export const PIPELINE_STAGES: PipelineStage[] = [
+  "interested",
+  "researching",
   "contact_factory",
   "waiting_moq",
   "quotation",
@@ -76,9 +90,12 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   "shipping",
   "received",
   "ready_launch",
+  "launched",
 ];
 
 export const PIPELINE_STAGE_TONES: Record<PipelineStage, PipelineStageTone> = {
+  interested: "pending",
+  researching: "pending",
   contact_factory: "pending",
   waiting_moq: "pending",
   quotation: "pending",
@@ -89,6 +106,7 @@ export const PIPELINE_STAGE_TONES: Record<PipelineStage, PipelineStageTone> = {
   shipping: "success",
   received: "success",
   ready_launch: "success",
+  launched: "success",
 };
 
 export const PIPELINE_TONE_STYLES: Record<

@@ -74,7 +74,7 @@ export function ProductTimelineView() {
               </h2>
               <p className="mt-1 text-sm text-gray-500">{product.supplier}</p>
               <p className="mt-2 text-xs font-medium text-primary/80">
-                {formatPipelineStep(product.pipelineStage, product.status)}
+                {formatPipelineStep(product.pipelineStage)}
               </p>
             </div>
           </div>

@@ -15,6 +15,7 @@ export interface ProductSeedInput {
   name: string;
   code: string;
   supplier: string;
+  supplierId?: string | null;
   brand?: string;
   factoryLocation?: string;
   category: string;
@@ -115,6 +116,7 @@ export function createProduct(seed: ProductSeedInput): Product {
         ? formatFtiBrand(strategy.currentBrand)
         : seed.productSystem),
     brandStrategy: strategy,
+    supplierId: seed.supplierId ?? null,
     supplier: seed.supplier,
     factoryLocation: seed.factoryLocation ?? inferFactoryLocation(seed.supplier),
     category: seed.category,

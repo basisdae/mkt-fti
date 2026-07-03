@@ -143,8 +143,8 @@ export const DASHBOARD_QUICK_FILTERS: {
   id: DashboardQuickFilter;
   label: string;
 }[] = [
-  { id: "waiting_quotation", label: "Waiting Quotation" },
-  { id: "in_testing", label: "In Testing" },
+  { id: "quotation", label: "Quotation" },
+  { id: "sample_testing", label: "Sample Testing" },
   { id: "certification", label: "Certification" },
   { id: "ready_launch", label: "Ready Launch" },
 ];
@@ -156,15 +156,15 @@ export function matchesDashboardQuickFilter(
   if (!filter) return true;
 
   switch (filter) {
-    case "waiting_quotation":
-      return product.status === "waiting_quotation";
-    case "in_testing":
-      return product.status === "in_testing";
+    case "quotation":
+      return product.status === "quotation";
+    case "sample_testing":
+      return product.status === "sample_testing";
     case "certification":
       return product.pipelineStage === "certification";
     case "ready_launch":
       return (
-        product.status === "ready_to_launch" ||
+        product.status === "ready_launch" ||
         product.pipelineStage === "ready_launch"
       );
     default:

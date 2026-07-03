@@ -1,12 +1,6 @@
 export type ProductStatus =
-  | "active"
-  | "waiting_quotation"
-  | "in_testing"
-  | "ready_to_launch"
-  | "launched"
-  | "on_hold";
-
-export type PipelineStage =
+  | "interested"
+  | "researching"
   | "contact_factory"
   | "waiting_moq"
   | "quotation"
@@ -16,7 +10,23 @@ export type PipelineStage =
   | "ordered"
   | "shipping"
   | "received"
-  | "ready_launch";
+  | "ready_launch"
+  | "launched";
+
+export type PipelineStage =
+  | "interested"
+  | "researching"
+  | "contact_factory"
+  | "waiting_moq"
+  | "quotation"
+  | "sample_testing"
+  | "certification"
+  | "purchase_approved"
+  | "ordered"
+  | "shipping"
+  | "received"
+  | "ready_launch"
+  | "launched";
 
 export type PipelineStageTone = "pending" | "working" | "success" | "critical";
 
@@ -50,6 +60,8 @@ export interface Product {
   code: string;
   brand: string;
   brandStrategy: ProductBrandStrategy;
+  /** Link to supplier master record when factory is known. */
+  supplierId: string | null;
   supplier: string;
   factoryLocation: string;
   category: string;
@@ -252,8 +264,8 @@ export type ProductSortOption =
   | "highest_evaluation_score";
 
 export type DashboardQuickFilter =
-  | "waiting_quotation"
-  | "in_testing"
+  | "quotation"
+  | "sample_testing"
   | "certification"
   | "ready_launch";
 

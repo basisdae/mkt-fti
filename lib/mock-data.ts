@@ -6,6 +6,8 @@ import { brandStrategyForProduct } from "@/lib/brand-seed";
 import { defaultBrandStrategy, formatFtiBrand } from "@/lib/brand-strategy";
 import { evaluationForProduct } from "@/lib/evaluation-seed";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
+import { supplierIdForProduct, SUPPLIER_SEEDS } from "@/lib/supplier-seed";
+import type { Supplier } from "@/types/supplier";
 import type {
   ActivityItem,
   DashboardMetric,
@@ -28,8 +30,13 @@ function withBrandSeed(product: ReturnType<typeof createProduct>) {
   const seed = brandStrategyForProduct(product.id);
   const evaluation =
     evaluationForProduct(product.id) ?? createEmptyEvaluationScorecard();
+  const supplierId = supplierIdForProduct(product.id);
 
-  const withEval = { ...product, evaluationScorecard: evaluation };
+  const withEval = {
+    ...product,
+    evaluationScorecard: evaluation,
+    supplierId,
+  };
 
   if (!seed) return withEval;
   const brandStrategy = defaultBrandStrategy(seed);
@@ -264,15 +271,15 @@ export const productPriceOptions: ProductPriceOption[] = [
 ];
 
 export const productStatuses: ProductStatusEntry[] = [
-  { productId: "prod-001", status: "ready_to_launch", pipelineStage: "ready_launch", updatedAt: "2026-07-02T09:30:00" },
-  { productId: "prod-002", status: "in_testing", pipelineStage: "sample_testing", updatedAt: "2026-07-01T14:15:00" },
-  { productId: "prod-003", status: "waiting_quotation", pipelineStage: "quotation", updatedAt: "2026-06-30T11:00:00" },
-  { productId: "prod-004", status: "in_testing", pipelineStage: "certification", updatedAt: "2026-06-29T16:45:00" },
-  { productId: "prod-005", status: "waiting_quotation", pipelineStage: "waiting_moq", updatedAt: "2026-06-28T10:20:00" },
-  { productId: "prod-006", status: "active", pipelineStage: "ordered", updatedAt: "2026-07-02T08:00:00" },
-  { productId: "prod-007", status: "launched", pipelineStage: "ready_launch", updatedAt: "2026-06-15T09:00:00" },
-  { productId: "prod-008", status: "on_hold", pipelineStage: "contact_factory", updatedAt: "2026-06-25T13:30:00" },
-  { productId: "prod-009", status: "active", pipelineStage: "shipping", updatedAt: "2026-07-01T07:45:00" },
+  { productId: "prod-001", status: "ready_launch", pipelineStage: "ready_launch", updatedAt: "2026-07-02T09:30:00" },
+  { productId: "prod-002", status: "sample_testing", pipelineStage: "sample_testing", updatedAt: "2026-07-01T14:15:00" },
+  { productId: "prod-003", status: "quotation", pipelineStage: "quotation", updatedAt: "2026-06-30T11:00:00" },
+  { productId: "prod-004", status: "certification", pipelineStage: "certification", updatedAt: "2026-06-29T16:45:00" },
+  { productId: "prod-005", status: "waiting_moq", pipelineStage: "waiting_moq", updatedAt: "2026-06-28T10:20:00" },
+  { productId: "prod-006", status: "ordered", pipelineStage: "ordered", updatedAt: "2026-07-02T08:00:00" },
+  { productId: "prod-007", status: "launched", pipelineStage: "launched", updatedAt: "2026-06-15T09:00:00" },
+  { productId: "prod-008", status: "interested", pipelineStage: "interested", updatedAt: "2026-06-25T13:30:00" },
+  { productId: "prod-009", status: "shipping", pipelineStage: "shipping", updatedAt: "2026-07-01T07:45:00" },
 ];
 
 export const pipelineLogs: PipelineLog[] = [
@@ -345,19 +352,22 @@ export const dashboardMetrics: DashboardMetric[] = [
   },
   {
     label: "Waiting Quotation",
-    value: productStatuses.filter((s) => s.status === "waiting_quotation").length,
+    value: productStatuses.filter((s) => s.status === "quotation").length,
     change: "2 pending factory reply",
     trend: "neutral",
   },
   {
     label: "In Testing",
-    value: productStatuses.filter((s) => s.status === "in_testing").length,
+    value: productStatuses.filter(
+      (s) =>
+        s.status === "sample_testing" || s.status === "certification",
+    ).length,
     change: "Sample & cert review",
     trend: "neutral",
   },
   {
     label: "Ready to Launch",
-    value: productStatuses.filter((s) => s.status === "ready_to_launch").length,
+    value: productStatuses.filter((s) => s.status === "ready_launch").length,
     change: "1 launch this quarter",
     trend: "up",
   },
@@ -429,3 +439,26 @@ export const mockProducts = productViews;
 
 /** @deprecated Use getRecentActivity() */
 export const recentActivity = getRecentActivity();
+
+// ---------------------------------------------------------------------------
+// Suppliers
+// ---------------------------------------------------------------------------
+
+export const suppliers: Supplier[] = SUPPLIER_SEEDS;
+
+const supplierById = new Map(suppliers.map((s) => [s.id, s]));
+
+export function getSuppliers(): Supplier[] {
+  return suppliers;
+}
+
+export function getSupplierById(id: string): Supplier | undefined {
+  return supplierById.get(id);
+}
+
+export function getSupplierForProduct(
+  product: Pick<Product, "supplierId">,
+): Supplier | undefined {
+  if (!product.supplierId) return undefined;
+  return supplierById.get(product.supplierId);
+}

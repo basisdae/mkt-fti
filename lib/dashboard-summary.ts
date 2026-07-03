@@ -7,18 +7,18 @@ export interface TodaySummaryMetrics {
   readyLaunch: number;
 }
 
-const IN_PROGRESS_STATUSES = new Set([
-  "active",
-  "waiting_quotation",
-  "in_testing",
-]);
+const TERMINAL_STATUSES = new Set(["launched"]);
+const READY_STATUSES = new Set(["ready_launch"]);
 
-const IN_PROGRESS_STAGES = new Set([
+const IN_PROGRESS_STATUSES = new Set([
+  "interested",
+  "researching",
   "contact_factory",
   "waiting_moq",
   "quotation",
   "sample_testing",
   "certification",
+  "purchase_approved",
   "ordered",
   "received",
 ]);
@@ -29,11 +29,8 @@ export function computeTodaySummary(
   return {
     productsInProgress: products.filter(
       (p) =>
-        IN_PROGRESS_STATUSES.has(p.status) ||
-        (p.status !== "launched" &&
-          p.status !== "on_hold" &&
-          p.status !== "ready_to_launch" &&
-          IN_PROGRESS_STAGES.has(p.pipelineStage)),
+        IN_PROGRESS_STATUSES.has(p.status) &&
+        !TERMINAL_STATUSES.has(p.status),
     ).length,
     waitingApproval: products.filter(
       (p) => p.pipelineStage === "purchase_approved",
@@ -41,7 +38,7 @@ export function computeTodaySummary(
     shipping: products.filter((p) => p.pipelineStage === "shipping").length,
     readyLaunch: products.filter(
       (p) =>
-        p.status === "ready_to_launch" ||
+        READY_STATUSES.has(p.status) ||
         (p.pipelineStage === "ready_launch" && p.status !== "launched"),
     ).length,
   };

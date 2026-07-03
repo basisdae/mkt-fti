@@ -51,30 +51,10 @@ export function getAdjacentPipelineStages(
   return adjacent;
 }
 
-const STAGE_DEFAULT_STATUS: Record<PipelineStage, ProductView["status"]> = {
-  contact_factory: "active",
-  waiting_moq: "waiting_quotation",
-  quotation: "waiting_quotation",
-  sample_testing: "in_testing",
-  certification: "in_testing",
-  purchase_approved: "active",
-  ordered: "active",
-  shipping: "active",
-  received: "active",
-  ready_launch: "ready_to_launch",
-};
-
 export function statusForPipelineStage(
   stage: PipelineStage,
-  currentStatus?: ProductView["status"],
 ): ProductView["status"] {
-  if (currentStatus === "launched" && stage === "ready_launch") {
-    return "launched";
-  }
-  if (currentStatus === "on_hold" && stage === "contact_factory") {
-    return "on_hold";
-  }
-  return STAGE_DEFAULT_STATUS[stage];
+  return stage;
 }
 
 export function pipelineMoveDirection(
@@ -123,7 +103,6 @@ export function productToPipelineItem(product: ProductView): PipelineItem {
     latestNote: product.latestNote,
     activityNote: "",
     updatedAt: product.updatedAt,
-    justUpdated: false,
   };
 }
 
@@ -131,40 +110,36 @@ export function initPipelineItems(products: ProductView[]): PipelineItem[] {
   return products.map(productToPipelineItem);
 }
 
-export const PIPELINE_STEP_TOTAL = 11;
+export const PIPELINE_STEP_TOTAL = 13;
 
 const PIPELINE_STAGE_STEP_NUMBERS: Record<PipelineStage, number> = {
-  contact_factory: 1,
-  waiting_moq: 2,
-  quotation: 3,
-  sample_testing: 4,
-  certification: 5,
-  purchase_approved: 6,
-  ordered: 7,
-  shipping: 8,
-  received: 9,
-  ready_launch: 10,
+  interested: 1,
+  researching: 2,
+  contact_factory: 3,
+  waiting_moq: 4,
+  quotation: 5,
+  sample_testing: 6,
+  certification: 7,
+  purchase_approved: 8,
+  ordered: 9,
+  shipping: 10,
+  received: 11,
+  ready_launch: 12,
+  launched: 13,
 };
 
 export function getPipelineStepNumber(
   pipelineStage: PipelineStage,
-  status?: ProductView["status"],
 ): number {
-  if (status === "launched") return 11;
   return PIPELINE_STAGE_STEP_NUMBERS[pipelineStage];
 }
 
 export function formatPipelineStep(
   pipelineStage: PipelineStage,
-  status?: ProductView["status"],
 ): string {
-  const step = getPipelineStepNumber(pipelineStage, status);
+  const step = getPipelineStepNumber(pipelineStage);
   const stepLabel = String(step).padStart(2, "0");
   const total = String(PIPELINE_STEP_TOTAL).padStart(2, "0");
-
-  if (status === "launched") {
-    return `STEP ${stepLabel}/${total} • Launched`;
-  }
 
   return `STEP ${stepLabel}/${total} • ${PIPELINE_STAGE_LABELS[pipelineStage]}`;
 }

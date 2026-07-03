@@ -160,20 +160,22 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       },
       {
         label: "Waiting Quotation",
-        value: statusList.filter((s) => s.status === "waiting_quotation")
-          .length,
+        value: statusList.filter((s) => s.status === "quotation").length,
         change: "2 pending factory reply",
         trend: "neutral",
       },
       {
         label: "In Testing",
-        value: statusList.filter((s) => s.status === "in_testing").length,
+        value: statusList.filter(
+          (s) =>
+            s.status === "sample_testing" || s.status === "certification",
+        ).length,
         change: "Sample & cert review",
         trend: "neutral",
       },
       {
         label: "Ready to Launch",
-        value: statusList.filter((s) => s.status === "ready_to_launch").length,
+        value: statusList.filter((s) => s.status === "ready_launch").length,
         change: "1 launch this quarter",
         trend: "up",
       },
@@ -228,10 +230,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       if (current.pipelineStage === targetStage) return false;
 
       const now = new Date().toISOString();
-      const nextStatus = statusForPipelineStage(
-        targetStage,
-        current.status,
-      );
+      const nextStatus = statusForPipelineStage(targetStage);
       const log = createPipelineMoveLog(
         productId,
         current.pipelineStage,

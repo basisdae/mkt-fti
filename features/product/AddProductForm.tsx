@@ -10,6 +10,8 @@ import { Select } from "@/components/forms/Select";
 import { Textarea } from "@/components/forms/Textarea";
 import { Checkbox } from "@/components/forms/Checkbox";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { SupplierSearchPicker } from "@/components/supplier/SupplierSearchPicker";
+import { LinkedSupplierSummaryCard } from "@/components/supplier/LinkedSupplierSummaryCard";
 import {
   createEmptyProductImageValue,
   ProductImageUpload,
@@ -20,6 +22,7 @@ import {
   PRODUCT_STATUS_LABELS,
 } from "@/lib/constants";
 import { calculatePricing } from "@/lib/pricing";
+import { getSupplierById } from "@/lib/mock-data";
 import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import {
   CERTIFICATION_OPTIONS,
@@ -141,14 +144,29 @@ export function AddProductForm() {
     }));
   }
 
+  function handleSupplierChange(supplierId: string | null) {
+    const supplier = supplierId ? getSupplierById(supplierId) : undefined;
+    setForm((prev) => ({
+      ...prev,
+      supplierId,
+      supplier: supplier?.factoryName ?? "",
+      factoryLocation: supplier
+        ? [supplier.cityDistrict, supplier.provinceRegion, supplier.country]
+            .filter(Boolean)
+            .join(", ")
+        : prev.factoryLocation,
+    }));
+  }
+
+  const selectedSupplier = form.supplierId
+    ? getSupplierById(form.supplierId)
+    : undefined;
+
   function validate(): boolean {
     const next: Record<string, string> = {};
 
     if (!form.productName.trim()) {
       next.productName = "Product name is required";
-    }
-    if (!form.supplier.trim()) {
-      next.supplier = "Supplier is required";
     }
     if (!form.category) {
       next.category = "Select a category";
@@ -269,20 +287,20 @@ export function AddProductForm() {
                 value={form.brand}
                 onChange={(e) => updateField("brand", e.target.value)}
               />
-              <div>
-                <Input
-                  label="Supplier *"
-                  placeholder="e.g. Guangzhou CleanTech Co."
-                  value={form.supplier}
-                  onChange={(e) => updateField("supplier", e.target.value)}
+              <div className="sm:col-span-2">
+                <SupplierSearchPicker
+                  value={form.supplierId}
+                  onChange={handleSupplierChange}
                 />
-                {errors.supplier && (
-                  <p className="mt-1 text-xs text-fti-red">{errors.supplier}</p>
-                )}
               </div>
+              {selectedSupplier && (
+                <div className="sm:col-span-2">
+                  <LinkedSupplierSummaryCard supplier={selectedSupplier} />
+                </div>
+              )}
               <Input
                 label="Factory Location"
-                placeholder="e.g. Guangzhou, China"
+                placeholder="Auto-filled when supplier selected"
                 value={form.factoryLocation}
                 onChange={(e) => updateField("factoryLocation", e.target.value)}
               />

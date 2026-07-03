@@ -9,6 +9,7 @@ export interface MoqOptionRow {
 export interface NewProductFormData {
   productName: string;
   brand: string;
+  supplierId: string | null;
   supplier: string;
   factoryLocation: string;
   category: string;
@@ -40,6 +41,7 @@ export function createMoqRow(): MoqOptionRow {
 export const INITIAL_FORM_DATA: NewProductFormData = {
   productName: "",
   brand: "",
+  supplierId: null,
   supplier: "",
   factoryLocation: "",
   category: "",
