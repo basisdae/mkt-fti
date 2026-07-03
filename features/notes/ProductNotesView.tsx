@@ -19,7 +19,6 @@ export function ProductNotesView() {
   const initialProductId = searchParams.get("product");
 
   const products = useLiveProducts();
-  const { getNotesForProduct } = useProductNotesStore();
   const [productId, setProductId] = useState(initialProductId ?? "");
 
   useEffect(() => {

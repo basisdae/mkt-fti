@@ -10,6 +10,8 @@ import { BrandStoreProvider } from "@/hooks/BrandStore";
 import { SupplierStoreProvider } from "@/hooks/SupplierStore";
 import { ProductNotesStoreProvider } from "@/hooks/ProductNotesStore";
 
+import { SettingsStoreProvider } from "@/hooks/SettingsStore";
+
 interface AppShellProps {
   children: React.ReactNode;
 }
@@ -18,6 +20,7 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   return (
+    <SettingsStoreProvider>
     <PipelineStoreProvider>
       <BrandStoreProvider>
       <SupplierStoreProvider>
@@ -49,5 +52,6 @@ export function AppShell({ children }: AppShellProps) {
       </SupplierStoreProvider>
       </BrandStoreProvider>
     </PipelineStoreProvider>
+    </SettingsStoreProvider>
   );
 }

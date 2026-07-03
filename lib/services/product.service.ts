@@ -29,14 +29,14 @@ export function buildProductBundleFromForm(
     imageAlt?: string;
     supplierName: string;
     supplierId: string | null;
+    exchangeRate: number;
   },
 ): ProductCreateBundle {
   const now = new Date().toISOString();
   const productId = `prod-${Date.now()}`;
   const code = slugCode(form.productName);
   const status = (form.status || "interested") as ProductStatus;
-  const usdCost = parseFloat(form.usdCost) || 0;
-  const exchangeRate = parseFloat(form.exchangeRate) || 36;
+  const exchangeRate = options.exchangeRate;
   const wholesaleGp = (parseFloat(form.wholesaleGp) || 42) / 100;
   const dealerGp = (parseFloat(form.dealerGp) || 14) / 100;
   const leadTime = form.leadTime.trim() || "—";
@@ -81,13 +81,13 @@ export function buildProductBundleFromForm(
   };
 
   const priceOptions = form.moqOptions
-    .filter((row) => row.quantity.trim())
+    .filter((row) => row.quantity.trim() && row.usdPerUnit.trim())
     .map((row, index) =>
       priceOption(
         row.id || `moq-${productId}-${index}`,
         productId,
         parseInt(row.quantity, 10) || 0,
-        usdCost,
+        parseFloat(row.usdPerUnit) || 0,
         exchangeRate,
         wholesaleGp,
         dealerGp,
@@ -112,7 +112,7 @@ export function buildProductBundleFromForm(
               `moq-${productId}-default`,
               productId,
               500,
-              usdCost || 25,
+              25,
               exchangeRate,
               wholesaleGp,
               dealerGp,

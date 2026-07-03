@@ -19,6 +19,7 @@ export function canSaveWithoutSupplier(status: ProductStatus | ""): boolean {
 export interface MoqOptionRow {
   id: string;
   quantity: string;
+  usdPerUnit: string;
   label: string;
 }
 
@@ -29,8 +30,6 @@ export interface NewProductFormData {
   category: string;
   status: ProductStatus | "";
   moqOptions: MoqOptionRow[];
-  usdCost: string;
-  exchangeRate: string;
   wholesaleGp: string;
   dealerGp: string;
   leadTime: string;
@@ -48,6 +47,7 @@ export function createMoqRow(): MoqOptionRow {
   return {
     id: `moq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     quantity: "",
+    usdPerUnit: "",
     label: "",
   };
 }
@@ -59,8 +59,6 @@ export const INITIAL_FORM_DATA: NewProductFormData = {
   category: "",
   status: "",
   moqOptions: [createMoqRow()],
-  usdCost: "",
-  exchangeRate: "36.00",
   wholesaleGp: "42",
   dealerGp: "14",
   leadTime: "",

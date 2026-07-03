@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/forms/Input";
 import { Button } from "@/components/ui/Button";
 
+import { ExchangeRateSettings } from "@/features/settings/ExchangeRateSettings";
+
 export const metadata = {
   title: "Settings",
 };
@@ -17,6 +19,8 @@ export default function SettingsPage() {
       </div>
 
       <div className="max-w-2xl space-y-6">
+        <ExchangeRateSettings />
+
         <Card interactive>
           <h2 className="mb-4 text-base font-semibold text-gray-900">
             General

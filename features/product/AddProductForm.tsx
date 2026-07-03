@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
@@ -21,18 +21,18 @@ import {
   PRODUCT_CATEGORY_LABELS,
   PRODUCT_STATUS_LABELS,
 } from "@/lib/constants";
-import { calculatePricing } from "@/lib/pricing";
+import { MoqPricingSpreadsheet } from "@/components/product/MoqPricingSpreadsheet";
+import { computeMoqRowPreview } from "@/lib/moq-pricing-table";
 import { buildProductBundleFromForm } from "@/lib/services/product.service";
 import { usePipelineStore } from "@/hooks/PipelineStore";
+import { useSettingsStore } from "@/hooks/SettingsStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import {
   CERTIFICATION_OPTIONS,
-  createMoqRow,
   INITIAL_FORM_DATA,
   isStatusBeyondContactFactory,
   PRODUCT_SYSTEM_OPTIONS,
-  type MoqOptionRow,
   type NewProductFormData,
 } from "@/types/product-form";
 
@@ -74,6 +74,7 @@ function FormSection({
 export function AddProductForm() {
   const { addProduct } = usePipelineStore();
   const { getSupplier } = useSupplierStore();
+  const { exchangeRate } = useSettingsStore();
   const [form, setForm] = useState<NewProductFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -83,24 +84,28 @@ export function AddProductForm() {
   );
 
   const pricingPreview = useMemo(() => {
-    const usd = parseFloat(form.usdCost);
-    const rate = parseFloat(form.exchangeRate);
-    const wholesale = parseFloat(form.wholesaleGp) / 100;
-    const dealer = parseFloat(form.dealerGp) / 100;
+    const firstRow = form.moqOptions.find(
+      (row) => row.quantity.trim() && row.usdPerUnit.trim(),
+    );
+    if (!firstRow) return null;
 
-    if (!usd || !rate || wholesale >= 1 || dealer >= 1) return null;
+    const preview = computeMoqRowPreview(
+      firstRow,
+      exchangeRate,
+      parseFloat(form.wholesaleGp) || 42,
+      parseFloat(form.dealerGp) || 14,
+    );
+    if (!preview) return null;
 
-    return calculatePricing({
-      id: "preview",
-      productId: "preview",
-      moq: 0,
-      usdCost: usd,
-      exchangeRate: rate,
-      wholesaleGp: wholesale,
-      dealerGp: dealer,
-      leadTime: "—",
-    });
-  }, [form.usdCost, form.exchangeRate, form.wholesaleGp, form.dealerGp]);
+    return {
+      costThb: preview.thbPerUnit,
+      ftiSellingPrice: preview.ftiSellingPrice,
+      ftiProfit: preview.ftiSellingPrice - preview.thbPerUnit,
+      wholesaleGpPercent:
+        ((preview.ftiSellingPrice - preview.thbPerUnit) / preview.ftiSellingPrice) *
+        100,
+    };
+  }, [form.moqOptions, form.wholesaleGp, form.dealerGp, exchangeRate]);
 
   function updateField<K extends keyof NewProductFormData>(
     key: K,
@@ -112,32 +117,6 @@ export function AddProductForm() {
       delete next[key as string];
       return next;
     });
-  }
-
-  function updateMoqRow(id: string, field: keyof MoqOptionRow, value: string) {
-    setForm((prev) => ({
-      ...prev,
-      moqOptions: prev.moqOptions.map((row) =>
-        row.id === id ? { ...row, [field]: value } : row,
-      ),
-    }));
-  }
-
-  function addMoqRow() {
-    setForm((prev) => ({
-      ...prev,
-      moqOptions: [...prev.moqOptions, createMoqRow()],
-    }));
-  }
-
-  function removeMoqRow(id: string) {
-    setForm((prev) => ({
-      ...prev,
-      moqOptions:
-        prev.moqOptions.length > 1
-          ? prev.moqOptions.filter((row) => row.id !== id)
-          : prev.moqOptions,
-    }));
   }
 
   function toggleCertification(cert: string) {
@@ -180,9 +159,11 @@ export function AddProductForm() {
       next.status = "Select a status";
     }
 
-    const validMoq = form.moqOptions.some((row) => row.quantity.trim());
+    const validMoq = form.moqOptions.some(
+      (row) => row.quantity.trim() && row.usdPerUnit.trim(),
+    );
     if (!validMoq) {
-      next.moqOptions = "Add at least one MOQ quantity";
+      next.moqOptions = "Add at least one MOQ with quantity and USD / Unit";
     }
 
     setErrors(next);
@@ -198,6 +179,7 @@ export function AddProductForm() {
       imageAlt: imageValue.alt,
       supplierName: selectedSupplier?.factoryName ?? "",
       supplierId: form.supplierId,
+      exchangeRate,
     });
     addProduct(bundle);
 
@@ -368,83 +350,18 @@ export function AddProductForm() {
 
           <FormSection
             title="MOQ & Pricing"
-            description="Quantity tiers and margin inputs"
+            description="Spreadsheet-style MOQ tiers — each row has its own unit cost"
           >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">MOQ Options *</p>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={addMoqRow}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add MOQ
-                </Button>
-              </div>
-              {errors.moqOptions && (
-                <p className="text-xs text-fti-red">{errors.moqOptions}</p>
-              )}
-              <div className="space-y-2">
-                {form.moqOptions.map((row, index) => (
-                  <div
-                    key={row.id}
-                    className="flex items-end gap-3 rounded-xl border border-gray-100 bg-gray-50/60 p-3"
-                  >
-                    <div className="flex-1">
-                      <Input
-                        label={index === 0 ? "Quantity" : undefined}
-                        type="number"
-                        placeholder="500"
-                        value={row.quantity}
-                        onChange={(e) =>
-                          updateMoqRow(row.id, "quantity", e.target.value)
-                        }
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <Input
-                        label={index === 0 ? "Label (optional)" : undefined}
-                        placeholder="e.g. 1K volume"
-                        value={row.label}
-                        onChange={(e) =>
-                          updateMoqRow(row.id, "label", e.target.value)
-                        }
-                      />
-                    </div>
-                    {form.moqOptions.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeMoqRow(row.id)}
-                        className="mb-2.5 rounded-lg p-2 text-gray-400 hover:bg-gray-200 hover:text-fti-red"
-                        aria-label="Remove MOQ row"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <MoqPricingSpreadsheet
+              rows={form.moqOptions}
+              exchangeRate={exchangeRate}
+              wholesaleGpPercent={parseFloat(form.wholesaleGp) || 42}
+              dealerGpPercent={parseFloat(form.dealerGp) || 14}
+              onChange={(rows) => updateField("moqOptions", rows)}
+              error={errors.moqOptions}
+            />
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <Input
-                label="USD Cost"
-                type="number"
-                step="0.01"
-                placeholder="80.00"
-                value={form.usdCost}
-                onChange={(e) => updateField("usdCost", e.target.value)}
-              />
-              <Input
-                label="Exchange Rate"
-                type="number"
-                step="0.01"
-                placeholder="36.00"
-                value={form.exchangeRate}
-                onChange={(e) => updateField("exchangeRate", e.target.value)}
-              />
               <Input
                 label="Wholesale GP (%)"
                 type="number"
@@ -466,7 +383,7 @@ export function AddProductForm() {
             {pricingPreview && (
               <div className="mt-5 rounded-xl border border-primary/20 bg-light-purple/30 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                  Live Preview
+                  First MOQ Preview
                 </p>
                 <div className="mt-2 grid gap-2 text-sm sm:grid-cols-3">
                   <span>
