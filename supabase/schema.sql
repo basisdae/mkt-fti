@@ -1,12 +1,33 @@
--- MKT-FTI Phase 1 schema
--- Run in Supabase SQL Editor after creating a project.
+-- MKT-FTI Phase 1 — Supabase schema
+-- Run in the Supabase SQL Editor on a new project (Dashboard → SQL → New query).
+--
+-- Notes:
+-- • Primary keys are UUID (default gen_random_uuid()).
+-- • RLS is disabled for MVP testing — enable + policies before production.
+-- • Client code should pass UUID strings or omit id to use the default.
+
+create extension if not exists "pgcrypto";
 
 -- ---------------------------------------------------------------------------
--- Suppliers
+-- Shared: auto-update updated_at
+-- ---------------------------------------------------------------------------
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Suppliers (matches types/supplier.ts → Supplier)
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.suppliers (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   factory_name text not null,
   display_name text not null default '',
   country text not null default 'China',
@@ -23,9 +44,16 @@ create table if not exists public.suppliers (
   updated_at timestamptz not null default now()
 );
 
+create index if not exists suppliers_updated_at_idx
+  on public.suppliers (updated_at desc);
+
+-- ---------------------------------------------------------------------------
+-- Supplier contacts (matches types/supplier.ts → SupplierContact)
+-- ---------------------------------------------------------------------------
+
 create table if not exists public.supplier_contacts (
-  id text primary key,
-  supplier_id text not null references public.suppliers (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+  supplier_id uuid not null references public.suppliers (id) on delete cascade,
   contact_name text not null,
   position text not null default '',
   sales_rep_code text not null default '',
@@ -45,16 +73,20 @@ create table if not exists public.supplier_contacts (
 create index if not exists supplier_contacts_supplier_id_idx
   on public.supplier_contacts (supplier_id);
 
+create index if not exists supplier_contacts_primary_idx
+  on public.supplier_contacts (supplier_id, is_primary)
+  where is_primary = true;
+
 -- ---------------------------------------------------------------------------
--- Products
+-- Products (matches types/product.ts → Product + workflow fields)
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.products (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null,
   code text not null default '',
   brand text not null default '',
-  supplier_id text references public.suppliers (id) on delete set null,
+  supplier_id uuid references public.suppliers (id) on delete set null,
   supplier text not null default '',
   factory_location text not null default '',
   category text not null default '',
@@ -79,13 +111,25 @@ create table if not exists public.products (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists products_supplier_id_idx on public.products (supplier_id);
-create index if not exists products_status_idx on public.products (status);
-create index if not exists products_pipeline_stage_idx on public.products (pipeline_stage);
+create index if not exists products_supplier_id_idx
+  on public.products (supplier_id);
+
+create index if not exists products_status_idx
+  on public.products (status);
+
+create index if not exists products_pipeline_stage_idx
+  on public.products (pipeline_stage);
+
+create index if not exists products_updated_at_idx
+  on public.products (updated_at desc);
+
+-- ---------------------------------------------------------------------------
+-- Product MOQ prices (matches types/product.ts → ProductPriceOption)
+-- ---------------------------------------------------------------------------
 
 create table if not exists public.product_moq_prices (
-  id text primary key,
-  product_id text not null references public.products (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products (id) on delete cascade,
   moq integer not null,
   label text,
   usd_cost numeric not null default 0,
@@ -100,9 +144,16 @@ create table if not exists public.product_moq_prices (
 create index if not exists product_moq_prices_product_id_idx
   on public.product_moq_prices (product_id);
 
+create index if not exists product_moq_prices_moq_idx
+  on public.product_moq_prices (product_id, moq);
+
+-- ---------------------------------------------------------------------------
+-- Product scorecards (matches types/product.ts → ProductEvaluationScorecard)
+-- ---------------------------------------------------------------------------
+
 create table if not exists public.product_scorecards (
-  id text primary key,
-  product_id text not null references public.products (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products (id) on delete cascade,
   criteria jsonb not null default '{}'::jsonb,
   evaluated_at timestamptz,
   evaluator text not null default '',
@@ -111,12 +162,15 @@ create table if not exists public.product_scorecards (
   unique (product_id)
 );
 
+create index if not exists product_scorecards_product_id_idx
+  on public.product_scorecards (product_id);
+
 -- ---------------------------------------------------------------------------
--- Ideas
+-- Product ideas (matches types/idea.ts → ProductIdea)
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.product_ideas (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   product_name text not null,
   source_link text not null default '',
   source_platform text not null default 'other',
@@ -126,29 +180,35 @@ create table if not exists public.product_ideas (
   estimated_price_range text not null default '',
   tags text[] not null default '{}',
   status text not null default 'interested',
-  converted_product_id text references public.products (id) on delete set null,
+  converted_product_id uuid references public.products (id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
+create index if not exists product_ideas_status_idx
+  on public.product_ideas (status);
+
+create index if not exists product_ideas_updated_at_idx
+  on public.product_ideas (updated_at desc);
+
 -- ---------------------------------------------------------------------------
--- Simulator
+-- Simulator (matches lib/pricing.ts → ScenarioRow)
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.simulator_scenarios (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   name text not null default 'Untitled scenario',
-  product_id text references public.products (id) on delete set null,
+  product_id uuid references public.products (id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create table if not exists public.simulator_scenario_items (
-  id text primary key,
-  scenario_id text not null references public.simulator_scenarios (id) on delete cascade,
-  product_id text not null,
+  id uuid primary key default gen_random_uuid(),
+  scenario_id uuid not null references public.simulator_scenarios (id) on delete cascade,
+  product_id uuid not null references public.products (id) on delete cascade,
   product_name text not null default '',
-  moq_tier_id text not null default '',
+  moq_tier_id uuid references public.product_moq_prices (id) on delete set null,
   moq integer not null default 0,
   qty integer not null default 0,
   selling_price numeric not null default 0,
@@ -166,24 +226,35 @@ create table if not exists public.simulator_scenario_items (
 create index if not exists simulator_scenario_items_scenario_id_idx
   on public.simulator_scenario_items (scenario_id);
 
+create index if not exists simulator_scenario_items_sort_idx
+  on public.simulator_scenario_items (scenario_id, sort_order);
+
 -- ---------------------------------------------------------------------------
--- Pipeline & notes
+-- Pipeline logs (matches types/product.ts → PipelineLog)
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.pipeline_logs (
-  id text primary key,
-  product_id text not null references public.products (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products (id) on delete cascade,
   action text not null,
   detail text not null default '',
+  created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
 
 create index if not exists pipeline_logs_product_id_idx
   on public.pipeline_logs (product_id);
 
+create index if not exists pipeline_logs_updated_at_idx
+  on public.pipeline_logs (updated_at desc);
+
+-- ---------------------------------------------------------------------------
+-- Notes (matches types/product.ts → ProductNote)
+-- ---------------------------------------------------------------------------
+
 create table if not exists public.notes (
-  id text primary key,
-  product_id text not null references public.products (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.products (id) on delete cascade,
   type text not null default 'rich',
   title text not null default '',
   body text not null default '',
@@ -193,21 +264,15 @@ create table if not exists public.notes (
   updated_at timestamptz not null default now()
 );
 
-create index if not exists notes_product_id_idx on public.notes (product_id);
+create index if not exists notes_product_id_idx
+  on public.notes (product_id);
+
+create index if not exists notes_updated_at_idx
+  on public.notes (updated_at desc);
 
 -- ---------------------------------------------------------------------------
 -- updated_at triggers
 -- ---------------------------------------------------------------------------
-
-create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
 
 do $$
 declare
@@ -222,6 +287,7 @@ begin
     'product_ideas',
     'simulator_scenarios',
     'simulator_scenario_items',
+    'pipeline_logs',
     'notes'
   ]
   loop
@@ -236,46 +302,22 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- Row Level Security (permissive for Phase 1 — tighten when auth lands)
+-- Row Level Security — disabled for MVP testing
 -- ---------------------------------------------------------------------------
 
-alter table public.suppliers enable row level security;
-alter table public.supplier_contacts enable row level security;
-alter table public.products enable row level security;
-alter table public.product_moq_prices enable row level security;
-alter table public.product_scorecards enable row level security;
-alter table public.product_ideas enable row level security;
-alter table public.simulator_scenarios enable row level security;
-alter table public.simulator_scenario_items enable row level security;
-alter table public.pipeline_logs enable row level security;
-alter table public.notes enable row level security;
+alter table public.suppliers disable row level security;
+alter table public.supplier_contacts disable row level security;
+alter table public.products disable row level security;
+alter table public.product_moq_prices disable row level security;
+alter table public.product_scorecards disable row level security;
+alter table public.product_ideas disable row level security;
+alter table public.simulator_scenarios disable row level security;
+alter table public.simulator_scenario_items disable row level security;
+alter table public.pipeline_logs disable row level security;
+alter table public.notes disable row level security;
 
-create policy "phase1_public_all_suppliers"
-  on public.suppliers for all using (true) with check (true);
-
-create policy "phase1_public_all_supplier_contacts"
-  on public.supplier_contacts for all using (true) with check (true);
-
-create policy "phase1_public_all_products"
-  on public.products for all using (true) with check (true);
-
-create policy "phase1_public_all_product_moq_prices"
-  on public.product_moq_prices for all using (true) with check (true);
-
-create policy "phase1_public_all_product_scorecards"
-  on public.product_scorecards for all using (true) with check (true);
-
-create policy "phase1_public_all_product_ideas"
-  on public.product_ideas for all using (true) with check (true);
-
-create policy "phase1_public_all_simulator_scenarios"
-  on public.simulator_scenarios for all using (true) with check (true);
-
-create policy "phase1_public_all_simulator_scenario_items"
-  on public.simulator_scenario_items for all using (true) with check (true);
-
-create policy "phase1_public_all_pipeline_logs"
-  on public.pipeline_logs for all using (true) with check (true);
-
-create policy "phase1_public_all_notes"
-  on public.notes for all using (true) with check (true);
+-- Optional: open policies instead of disabling RLS (uncomment if preferred)
+--
+-- alter table public.suppliers enable row level security;
+-- create policy "mvp_all_suppliers" on public.suppliers for all using (true) with check (true);
+-- … repeat for each table …
