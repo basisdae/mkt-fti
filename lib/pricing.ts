@@ -69,6 +69,7 @@ export interface ScenarioRowDraft {
   moqTierId: string;
   qty: number;
   sellingPrice: number;
+  unitCost: number;
   targetRevenue: number;
 }
 
@@ -162,7 +163,7 @@ export function recalculateScenarioRow(
   const tier = resolveTier(draft.productId, draft.moqTierId);
   const qty = Math.max(0, draft.qty);
   const sellingPrice = Math.max(0, draft.sellingPrice);
-  const unitCost = tier.unitCost;
+  const unitCost = Math.max(0, draft.unitCost);
   const revenue = sellingPrice * qty;
   const totalCost = unitCost * qty;
   const grossProfit = revenue - totalCost;

@@ -74,6 +74,7 @@ function rowToDraft(row: ScenarioRow): ScenarioRowDraft {
     moqTierId: row.moqTierId,
     qty: row.qty,
     sellingPrice: row.sellingPrice,
+    unitCost: row.unitCost,
     targetRevenue: row.targetRevenue,
   };
 }
@@ -170,6 +171,7 @@ export function ScenarioTable({
         next.productId = productId;
         next.moqTierId = tierInfo.moqTierId;
         next.sellingPrice = tierInfo.defaultSellingPrice;
+        next.unitCost = tierInfo.unitCost;
       }
 
       return next;
@@ -191,10 +193,13 @@ export function ScenarioTable({
 
   return (
     <Card padding="none" interactive>
-      <div className="flex flex-col gap-1 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <h2 className="text-base font-semibold text-gray-900">
-          {t.scenarioTitle}
-        </h2>
+      <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">
+            {t.scenarioTitle}
+          </h2>
+          <p className="mt-1 text-xs text-amber-700/90">{t.simulationDisclaimer}</p>
+        </div>
         <p className="text-xs text-gray-400">{t.editRowHint}</p>
       </div>
 
@@ -236,6 +241,9 @@ export function ScenarioTable({
               <th className="px-3 py-3 text-right font-medium">{t.tableQty}</th>
               <th className="px-3 py-3 text-right font-medium">
                 {t.tableUnitPrice}
+              </th>
+              <th className="px-3 py-3 text-right font-medium">
+                {t.tableUnitCost}
               </th>
               <th className="px-3 py-3 text-right font-medium">
                 {t.tableTargetRevenue}
@@ -461,6 +469,27 @@ function ScenarioRowItem({
           <input
             type="number"
             min={0}
+            step={1}
+            value={Math.round(draft.unitCost)}
+            onChange={(e) =>
+              onDraftChange({
+                unitCost: Number(e.target.value) || 0,
+              })
+            }
+            className={cn(compactField, "text-right")}
+          />
+        ) : (
+          <span className="text-gray-700">
+            {formatCurrencyTHB(row.unitCost)}
+          </span>
+        )}
+      </td>
+
+      <td className="px-3 py-3 text-right">
+        {isEditing && draft ? (
+          <input
+            type="number"
+            min={0}
             step={1000}
             value={draft.targetRevenue}
             onChange={(e) =>
@@ -502,8 +531,11 @@ function ScenarioRowItem({
       <td className="px-3 py-3">
         <div className="flex items-center justify-end gap-1">
           {isDeleting ? (
-            <div className="flex flex-col items-end gap-2 rounded-xl border border-red-100 bg-red-50/80 p-2 opacity-100 transition-opacity duration-200 sm:flex-row sm:items-center">
-              <p className="max-w-[140px] text-right text-[11px] leading-snug text-gray-600">
+            <div className="flex flex-col items-end gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 shadow-sm sm:min-w-[220px]">
+              <p className="text-[11px] font-semibold text-fti-red">
+                {t.deleteConfirmTitle}
+              </p>
+              <p className="max-w-[180px] text-right text-[11px] leading-snug text-gray-600">
                 {t.deleteConfirmMessage}
               </p>
               <div className="flex gap-1">
@@ -526,33 +558,35 @@ function ScenarioRowItem({
               </div>
             </div>
           ) : isEditing ? (
-            <>
-              <button
+            <div className="flex items-center justify-end gap-1">
+              <Button
                 type="button"
+                size="sm"
+                variant="secondary"
                 onClick={onSave}
-                className="rounded-lg p-2 text-success transition-colors hover:bg-green-50"
-                aria-label={t.saveRow}
-                title={t.saveRow}
+                className="gap-1 px-2.5"
               >
-                <Check className="h-4 w-4" />
-              </button>
-              <button
+                <Check className="h-3.5 w-3.5" />
+                {t.saveRow}
+              </Button>
+              <Button
                 type="button"
+                size="sm"
+                variant="ghost"
                 onClick={onCancel}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                aria-label={t.cancelEdit}
-                title={t.cancelEdit}
+                className="gap-1 px-2.5"
               >
-                <X className="h-4 w-4" />
-              </button>
-            </>
+                <X className="h-3.5 w-3.5" />
+                {t.cancelEdit}
+              </Button>
+            </div>
           ) : (
             <>
               <button
                 type="button"
                 onClick={onStartEdit}
                 disabled={editingLocked}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-light-purple/60 hover:text-primary disabled:opacity-40"
+                className="rounded-lg p-2 text-primary/70 transition-colors hover:bg-light-purple/60 hover:text-primary disabled:opacity-40"
                 aria-label={t.editRow}
                 title={t.editRow}
               >

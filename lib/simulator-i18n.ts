@@ -71,7 +71,10 @@ export const SIMULATOR_COPY = {
   deleteConfirmMessage: "ต้องการลบแถวนี้ออกจากแผนจำลองหรือไม่?",
   confirmDelete: "ลบ",
   cancelDelete: "ยกเลิก",
-  editRowHint: "ดับเบิลคลิกเพื่อแก้ไข",
+  editRowHint: "คลิกไอคอนดินสอเพื่อแก้ไขแถว",
+  simulationDisclaimer:
+    "ตัวเลขนี้เป็นการจำลองเบื้องต้น ไม่ใช่ราคาขายที่อนุมัติแล้ว",
+  tableUnitCost: "ต้นทุน",
   undoRedoToolbar: "เลิกทำ / ทำซ้ำ",
   undo: "เลิกทำ",
   redo: "ทำซ้ำ",
