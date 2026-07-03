@@ -23,8 +23,15 @@ export const SIMULATOR_COPY = {
   summaryRevenue: "ยอดขายรวม",
   summaryTotalCost: "ต้นทุนรวม",
   summaryGrossProfit: "กำไรรวม",
-  summaryProfitPercent: "กำไรเฉลี่ย (%)",
+  summaryProfitPercent: "กำไร (%)",
+  summaryExcessTarget: "ยอดที่เกินเป้าหมาย",
+  summaryQtyRequired: "จำนวนที่ต้องขาย",
   summaryQtyFor100M: "จำนวนที่ต้องขายเพื่อถึง 100 ล้านบาท",
+
+  excessAboveTarget: "เกินเป้าหมายยอดขาย",
+  excessBelowTarget: "ต่ำกว่าเป้าหมายยอดขาย",
+  qtyRequiredHint: (price: string) => `เพื่อให้ถึงเป้าหมายที่ราคา ${price} ต่อชิ้น`,
+  qtyRequiredGapHint: (qty: string) => `ต้องขายเพิ่มอีก ${qty} ชิ้น`,
 
   revenueCalcHint: (qty: string, price: string) =>
     `${qty} ชิ้น × ${price} ต่อชิ้น`,

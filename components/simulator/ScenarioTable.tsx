@@ -1,17 +1,25 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Button } from "@/components/ui/Button";
 import {
+  SimulatorKpiCard,
+  SimulatorKpiGrid,
+} from "@/components/simulator/SimulatorKpiCard";
+import {
+  CircleDollarSign,
   Check,
   Copy,
   ListPlus,
   Pencil,
+  Percent,
+  Receipt,
   Trash2,
+  TrendingUp,
   X,
 } from "lucide-react";
-import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Button } from "@/components/ui/Button";
 import {
   calculatePricing,
   duplicateScenarioRow,
@@ -177,30 +185,33 @@ export function ScenarioTable({ rows, onChange }: ScenarioTableProps) {
         <p className="text-xs text-gray-400">{t.editRowHint}</p>
       </div>
 
-      <div
-        className="grid grid-cols-2 gap-4 border-b border-gray-100 bg-light-purple/30 px-5 py-4 transition-all duration-300 sm:grid-cols-4 sm:px-6"
-        key={`${totals.revenue}-${totals.grossProfit}`}
-      >
-        <SummaryTile
-          label={t.summaryRevenue}
-          value={formatCurrencyTHB(totals.revenue)}
-        />
-        <SummaryTile
-          label={t.summaryTotalCost}
-          value={formatCurrencyTHB(totals.totalCost)}
-        />
-        <SummaryTile
-          label={t.summaryGrossProfit}
-          value={formatCurrencyTHB(totals.grossProfit)}
-          profit
-          lowMargin={totalsLow}
-        />
-        <SummaryTile
-          label={t.summaryProfitPercent}
-          value={formatPercent(totals.grossProfitPercent)}
-          profit
-          lowMargin={totalsLow}
-        />
+      <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+        <SimulatorKpiGrid className="sm:grid-cols-2 lg:grid-cols-4">
+          <SimulatorKpiCard
+            label={t.summaryRevenue}
+            value={formatCurrencyTHB(totals.revenue)}
+            icon={TrendingUp}
+            variant="neutral"
+          />
+          <SimulatorKpiCard
+            label={t.summaryTotalCost}
+            value={formatCurrencyTHB(totals.totalCost)}
+            icon={Receipt}
+            variant="neutral"
+          />
+          <SimulatorKpiCard
+            label={t.summaryGrossProfit}
+            value={formatCurrencyTHB(totals.grossProfit)}
+            icon={CircleDollarSign}
+            variant={totalsLow ? "profit-warn" : "profit"}
+          />
+          <SimulatorKpiCard
+            label={t.summaryProfitPercent}
+            value={formatPercent(totals.grossProfitPercent)}
+            icon={Percent}
+            variant={totalsLow ? "profit-warn" : "profit"}
+          />
+        </SimulatorKpiGrid>
       </div>
 
       <div className="overflow-x-auto">
@@ -537,35 +548,5 @@ function ScenarioRowItem({
         </div>
       </td>
     </tr>
-  );
-}
-
-function SummaryTile({
-  label,
-  value,
-  profit,
-  lowMargin,
-}: {
-  label: string;
-  value: string;
-  profit?: boolean;
-  lowMargin?: boolean;
-}) {
-  return (
-    <div className="transition-all duration-300">
-      <p className="text-xs font-medium text-gray-500">{label}</p>
-      <p
-        className={cn(
-          "mt-1 text-lg font-bold transition-colors duration-300",
-          profit
-            ? lowMargin
-              ? "text-fti-red"
-              : "text-green-800"
-            : "text-gray-900",
-        )}
-      >
-        {value}
-      </p>
-    </div>
   );
 }

@@ -1,11 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Plus } from "lucide-react";
+import {
+  AlertTriangle,
+  CircleDollarSign,
+  Hash,
+  Percent,
+  Plus,
+  Receipt,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/forms/Input";
 import { Select } from "@/components/forms/Select";
 import { Button } from "@/components/ui/Button";
+import {
+  SimulatorKpiCard,
+  SimulatorKpiGrid,
+} from "@/components/simulator/SimulatorKpiCard";
 import { ScenarioTable } from "@/components/simulator/ScenarioTable";
 import {
   buildScenarioRow,
@@ -59,7 +72,20 @@ export function SimulatorView() {
 
   const lowMargin = isLowProfitMargin(result.grossProfitPercent);
   const revenueGap = targetRevenue - result.revenue;
+  const exceedsTarget = revenueGap <= 0;
   const qtyLabel = expectedQty.toLocaleString("th-TH");
+  const sellingPrice = pricing.ftiSellingPrice;
+
+  const qtyForTarget = useMemo(
+    () =>
+      sellingPrice > 0 ? Math.ceil(targetRevenue / sellingPrice) : 0,
+    [targetRevenue, sellingPrice],
+  );
+
+  const additionalQtyNeeded = useMemo(() => {
+    if (exceedsTarget || sellingPrice <= 0) return 0;
+    return Math.ceil(revenueGap / sellingPrice);
+  }, [exceedsTarget, revenueGap, sellingPrice]);
 
   const productOptions = getProducts().map((p) => ({
     value: p.id,
@@ -197,80 +223,69 @@ export function SimulatorView() {
           </div>
         </Card>
 
-        <div className="space-y-4 lg:col-span-3">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ResultCard
+        <div className="lg:col-span-3">
+          <SimulatorKpiGrid>
+            <SimulatorKpiCard
               label={t.summaryRevenue}
               value={formatCurrencyTHB(result.revenue)}
-            >
-              {t.revenueCalcHint(
+              subtitle={t.revenueCalcHint(
                 qtyLabel,
-                formatCurrencyTHB(pricing.ftiSellingPrice),
+                formatCurrencyTHB(sellingPrice),
               )}
-            </ResultCard>
-            <ResultCard
+              icon={TrendingUp}
+              variant="neutral"
+            />
+            <SimulatorKpiCard
               label={t.summaryTotalCost}
               value={formatCurrencyTHB(result.totalCost)}
-            >
-              {t.costCalcHint(qtyLabel, formatCurrencyTHB(pricing.costThb))}
-            </ResultCard>
-            <ResultCard
+              subtitle={t.costCalcHint(
+                qtyLabel,
+                formatCurrencyTHB(pricing.costThb),
+              )}
+              icon={Receipt}
+              variant="neutral"
+            />
+            <SimulatorKpiCard
               label={t.summaryGrossProfit}
               value={formatCurrencyTHB(result.grossProfit)}
-              profit
-              lowMargin={lowMargin}
-            >
-              {t.profitMarginHint(formatPercent(result.grossProfitPercent))}
-            </ResultCard>
-            <ResultCard
-              label={t.summaryQtyFor100M}
-              value={t.qtyUnits(result.requiredQtyFor100M)}
-              accent
-            >
-              {t.qtyFor100MHint(formatCurrencyTHB(pricing.ftiSellingPrice))}
-            </ResultCard>
-          </div>
-
-          <Card interactive>
-            <h2 className="mb-4 text-base font-semibold text-gray-900">
-              {t.targetVsExpectedTitle}
-            </h2>
-            <dl className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <dt className="text-xs font-medium text-gray-500">
-                  {t.targetRevenueLabel}
-                </dt>
-                <dd className="mt-1 text-sm font-semibold text-gray-900">
-                  {formatCurrencyTHB(targetRevenue)}
-                </dd>
-              </div>
-              <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <dt className="text-xs font-medium text-gray-500">
-                  {t.projectedRevenueLabel}
-                </dt>
-                <dd className="mt-1 text-sm font-semibold text-primary">
-                  {formatCurrencyTHB(result.revenue)}
-                </dd>
-              </div>
-              <div className="rounded-xl bg-gray-50 px-4 py-3">
-                <dt className="text-xs font-medium text-gray-500">
-                  {t.gapLabel}
-                </dt>
-                <dd
-                  className={cn(
-                    "mt-1 text-sm font-semibold",
-                    revenueGap > 0 ? "text-fti-red" : "text-green-800",
-                  )}
-                >
-                  {revenueGap > 0 ? "−" : "+"}
-                  {formatCurrencyTHB(Math.abs(revenueGap))}
-                  <span className="mt-0.5 block text-[11px] font-normal text-gray-400">
-                    {revenueGap > 0 ? t.gapBelow : t.gapAbove}
-                  </span>
-                </dd>
-              </div>
-            </dl>
-          </Card>
+              subtitle={t.profitMarginHint(
+                formatPercent(result.grossProfitPercent),
+              )}
+              icon={CircleDollarSign}
+              variant={lowMargin ? "profit-warn" : "profit"}
+            />
+            <SimulatorKpiCard
+              label={t.summaryProfitPercent}
+              value={formatPercent(result.grossProfitPercent)}
+              subtitle={t.profitMarginHint(
+                formatPercent(result.grossProfitPercent),
+              )}
+              icon={Percent}
+              variant={lowMargin ? "profit-warn" : "profit"}
+            />
+            <SimulatorKpiCard
+              label={t.summaryExcessTarget}
+              value={formatCurrencyTHB(Math.abs(revenueGap))}
+              subtitle={
+                exceedsTarget ? t.excessAboveTarget : t.excessBelowTarget
+              }
+              icon={Target}
+              variant={exceedsTarget ? "goal" : "warn"}
+            />
+            <SimulatorKpiCard
+              label={t.summaryQtyRequired}
+              value={t.qtyUnits(qtyForTarget)}
+              subtitle={
+                exceedsTarget
+                  ? t.qtyRequiredHint(formatCurrencyTHB(sellingPrice))
+                  : t.qtyRequiredGapHint(
+                      additionalQtyNeeded.toLocaleString("th-TH"),
+                    )
+              }
+              icon={Hash}
+              variant="goal"
+            />
+          </SimulatorKpiGrid>
         </div>
       </div>
 
@@ -278,49 +293,5 @@ export function SimulatorView() {
         <ScenarioTable rows={scenarioRows} onChange={handleScenarioChange} />
       </div>
     </div>
-  );
-}
-
-function ResultCard({
-  label,
-  value,
-  children,
-  profit,
-  lowMargin,
-  accent,
-}: {
-  label: string;
-  value: string;
-  children?: React.ReactNode;
-  profit?: boolean;
-  lowMargin?: boolean;
-  accent?: boolean;
-}) {
-  return (
-    <Card
-      interactive
-      className={cn(
-        profit && !lowMargin && "bg-gradient-to-br from-green-50/80 to-card",
-        profit && lowMargin && "border-red-200 bg-red-50/50",
-        accent && "border-primary/20 bg-light-purple/30",
-        !profit && !accent && "bg-gradient-to-br from-light-purple/40 to-card",
-      )}
-    >
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p
-        className={cn(
-          "mt-2 text-2xl font-bold",
-          profit && !lowMargin && "text-green-800",
-          profit && lowMargin && "text-fti-red",
-          accent && "text-primary",
-          !profit && !accent && "text-gray-900",
-        )}
-      >
-        {value}
-      </p>
-      {children && (
-        <p className="mt-1 text-xs leading-relaxed text-gray-400">{children}</p>
-      )}
-    </Card>
   );
 }
