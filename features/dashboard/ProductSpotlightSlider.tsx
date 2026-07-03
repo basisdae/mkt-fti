@@ -6,6 +6,7 @@ import { useRef } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { BrandContextStack } from "@/components/product/BrandContextStack";
+import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { Card } from "@/components/ui/Card";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import { getUnitProfit } from "@/lib/product-filters";
@@ -99,6 +100,12 @@ function SpotlightCard({ product, rank, featured = false }: SpotlightCardProps) 
           </div>
 
           <div className="mt-auto space-y-2.5 pt-3">
+            <EvaluationScoreBadge
+              scorecard={product.evaluationScorecard}
+              compact
+              showStatus
+            />
+
             <div
               className={cn(
                 "rounded-xl bg-light-purple/40 px-3 py-2.5",

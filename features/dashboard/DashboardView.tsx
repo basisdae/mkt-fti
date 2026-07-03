@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 import { BrandFilterBar } from "@/features/dashboard/BrandFilterBar";
 import { ProductSpotlightSlider } from "@/features/dashboard/ProductSpotlightSlider";
 import { RecentActivitiesPanel } from "@/features/dashboard/RecentActivitiesPanel";
-import { TopScoredProductsCard } from "@/features/dashboard/TopScoredProductsCard";
+import { TopCandidateProductsCard } from "@/features/dashboard/TopCandidateProductsCard";
 import { TodaySummary } from "@/features/dashboard/TodaySummary";
 import { usePipelineStore } from "@/hooks/PipelineStore";
 import type { DashboardBrandFilter } from "@/lib/brand-strategy";
@@ -88,7 +88,7 @@ export function DashboardView() {
           )}
         </div>
         <div>
-          <TopScoredProductsCard products={filteredProducts} />
+          <TopCandidateProductsCard products={filteredProducts} />
         </div>
       </div>
 

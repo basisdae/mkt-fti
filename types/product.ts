@@ -261,7 +261,8 @@ export type ProductSortOption =
   | "highest_profit"
   | "lowest_moq"
   | "highest_selling_price"
-  | "highest_evaluation_score";
+  | "highest_evaluation_score"
+  | "lowest_evaluation_score";
 
 export type DashboardQuickFilter =
   | "quotation"

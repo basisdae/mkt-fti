@@ -90,6 +90,48 @@ export function getEvaluationTotalScore(
   return computeEvaluationResult(scorecard).totalScore;
 }
 
+export type EvaluationStatusTier =
+  | "strong_candidate"
+  | "need_review"
+  | "low_priority"
+  | "not_recommended";
+
+export const EVALUATION_STATUS_LABELS: Record<EvaluationStatusTier, string> = {
+  strong_candidate: "Strong Candidate",
+  need_review: "Need Review",
+  low_priority: "Low Priority",
+  not_recommended: "Not Recommended",
+};
+
+export function getEvaluationStatusTier(
+  totalScore: number,
+): EvaluationStatusTier {
+  if (totalScore >= 85) return "strong_candidate";
+  if (totalScore >= 70) return "need_review";
+  if (totalScore >= 50) return "low_priority";
+  return "not_recommended";
+}
+
+export function getEvaluationStatusLabel(totalScore: number): string {
+  return EVALUATION_STATUS_LABELS[getEvaluationStatusTier(totalScore)];
+}
+
+export function getEvaluationStatusBadgeClasses(
+  totalScore: number,
+): string {
+  const tier = getEvaluationStatusTier(totalScore);
+  switch (tier) {
+    case "strong_candidate":
+      return "bg-green-50 text-green-800 border-green-200";
+    case "need_review":
+      return "bg-light-purple text-primary border-primary/20";
+    case "low_priority":
+      return "bg-amber-50 text-amber-800 border-amber-200";
+    case "not_recommended":
+      return "bg-red-50 text-fti-red border-red-200";
+  }
+}
+
 export function getEvaluationRecommendation(totalScore: number): {
   tier: EvaluationRecommendationTier;
   label: string;

@@ -35,7 +35,8 @@ export const PRODUCT_SORT_OPTIONS: {
   { value: "highest_profit", label: "Highest Profit" },
   { value: "lowest_moq", label: "Lowest MOQ" },
   { value: "highest_selling_price", label: "Highest Selling Price" },
-  { value: "highest_evaluation_score", label: "Highest Evaluation Score" },
+  { value: "highest_evaluation_score", label: "Highest Score" },
+  { value: "lowest_evaluation_score", label: "Lowest Score" },
 ];
 
 export function getUnitProfit(product: ProductView): number {
@@ -110,6 +111,12 @@ export function sortProducts(
         (a, b) =>
           getEvaluationTotalScore(b.evaluationScorecard) -
           getEvaluationTotalScore(a.evaluationScorecard),
+      );
+    case "lowest_evaluation_score":
+      return sorted.sort(
+        (a, b) =>
+          getEvaluationTotalScore(a.evaluationScorecard) -
+          getEvaluationTotalScore(b.evaluationScorecard),
       );
     default:
       return sorted;

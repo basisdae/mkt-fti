@@ -36,6 +36,7 @@ export function BrandBoardCard({
         <EvaluationScoreBadge
           scorecard={product.evaluationScorecard}
           compact
+          showStatus
         />
       </div>
 

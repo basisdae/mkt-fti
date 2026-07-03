@@ -89,6 +89,7 @@ export function ProductListRow({ product }: ProductListRowProps) {
               <EvaluationScoreBadge
                 scorecard={product.evaluationScorecard}
                 compact
+                showStatus
               />
               <Badge
                 variant={statusStyle.badge}

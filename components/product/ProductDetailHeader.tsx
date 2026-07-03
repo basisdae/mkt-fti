@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock3, StickyNote } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
+import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { timeAgo } from "@/lib/utils";
 import type { ProductView } from "@/types/product";
@@ -33,6 +34,10 @@ export function ProductDetailHeader({
           <div className="flex-1">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <StatusBadge status={product.status} />
+              <EvaluationScoreBadge
+                scorecard={product.evaluationScorecard}
+                showStatus
+              />
               <span className="text-xs text-gray-400">{product.code}</span>
             </div>
 
