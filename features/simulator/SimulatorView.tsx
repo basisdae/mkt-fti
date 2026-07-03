@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   CircleDollarSign,
   Hash,
+  Package,
   Percent,
   Plus,
   Receipt,
   Target,
   TrendingUp,
 } from "lucide-react";
+import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/forms/Input";
 import { Select } from "@/components/forms/Select";
@@ -30,7 +33,7 @@ import {
   calculateSimulator,
   isLowProfitMargin,
 } from "@/lib/pricing";
-import { getProducts, simulatorDefaults } from "@/lib/mock-data";
+import { useLiveProducts } from "@/hooks/PipelineStore";
 import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
 import { resolveProductImageAlt } from "@/lib/product-image";
 import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
@@ -58,14 +61,24 @@ function SimulatorDivider() {
 }
 
 export function SimulatorView() {
-  const [productId, setProductId] = useState(simulatorDefaults.productId);
+  const catalogProducts = useLiveProducts();
+  const [productId, setProductId] = useState("");
   const [tierId, setTierId] = useState("");
-  const [targetRevenue, setTargetRevenue] = useState(
-    simulatorDefaults.targetRevenue,
-  );
-  const [expectedQty, setExpectedQty] = useState(
-    simulatorDefaults.expectedQty,
-  );
+  const [targetRevenue, setTargetRevenue] = useState(50_000_000);
+  const [expectedQty, setExpectedQty] = useState(0);
+
+  useEffect(() => {
+    if (catalogProducts.length === 0) {
+      setProductId("");
+      setTierId("");
+      return;
+    }
+    if (!productId || !catalogProducts.some((p) => p.id === productId)) {
+      const first = catalogProducts[0]!;
+      setProductId(first.id);
+      setTierId(first.priceOptions[0]?.id ?? "");
+    }
+  }, [catalogProducts, productId]);
 
   const {
     state: scenarioRows,
@@ -78,38 +91,46 @@ export function SimulatorView() {
   } = useUndoRedo<ScenarioRow[]>([]);
 
   const product = useMemo(
-    () => getProducts().find((p) => p.id === productId) ?? getProducts()[0],
-    [productId],
+    () => catalogProducts.find((p) => p.id === productId),
+    [catalogProducts, productId],
   );
 
-  const activeTierId = tierId || product.priceOptions[0].id;
+  const activeTierId = tierId || product?.priceOptions[0]?.id || "";
   const selectedTier = useMemo(
     () =>
-      product.priceOptions.find((tier) => tier.id === activeTierId) ??
-      product.priceOptions[0],
+      product?.priceOptions.find((tier) => tier.id === activeTierId) ??
+      product?.priceOptions[0],
     [product, activeTierId],
   );
 
   const pricing = useMemo(
-    () => calculatePricing(selectedTier),
+    () => (selectedTier ? calculatePricing(selectedTier) : null),
     [selectedTier],
   );
 
   const result = useMemo(
     () =>
-      calculateSimulator({
-        pricing,
-        expectedQty,
-        targetRevenue,
-      }),
+      pricing
+        ? calculateSimulator({
+            pricing,
+            expectedQty,
+            targetRevenue,
+          })
+        : {
+            revenue: 0,
+            totalCost: 0,
+            grossProfit: 0,
+            grossProfitPercent: 0,
+            requiredQtyFor100M: 0,
+          },
     [pricing, expectedQty, targetRevenue],
   );
 
-  const lowMargin = isLowProfitMargin(result.grossProfitPercent);
+  const lowMargin = pricing ? isLowProfitMargin(result.grossProfitPercent) : false;
   const revenueGap = targetRevenue - result.revenue;
   const exceedsTarget = revenueGap <= 0;
   const qtyLabel = expectedQty.toLocaleString("th-TH");
-  const sellingPrice = pricing.ftiSellingPrice;
+  const sellingPrice = pricing?.ftiSellingPrice ?? 0;
 
   const qtyForTarget = useMemo(
     () =>
@@ -122,24 +143,25 @@ export function SimulatorView() {
     return Math.ceil(revenueGap / sellingPrice);
   }, [exceedsTarget, revenueGap, sellingPrice]);
 
-  const productOptions = getProducts().map((p) => ({
+  const productOptions = catalogProducts.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  const moqOptions = product.priceOptions.map((tier) => ({
-    value: tier.id,
-    label: `${tier.moq.toLocaleString("th-TH")} ชิ้น${tier.label ? ` · ${tier.label}` : ""}`,
-  }));
+  const moqOptions =
+    product?.priceOptions.map((tier) => ({
+      value: tier.id,
+      label: `${tier.moq.toLocaleString("th-TH")} ชิ้น${tier.label ? ` · ${tier.label}` : ""}`,
+    })) ?? [];
 
   function handleProductChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const nextProduct = getProducts().find((p) => p.id === e.target.value);
+    const nextProduct = catalogProducts.find((p) => p.id === e.target.value);
     setProductId(e.target.value);
-    setTierId(nextProduct?.priceOptions[0].id ?? "");
+    setTierId(nextProduct?.priceOptions[0]?.id ?? "");
   }
 
   function handleAddToScenario() {
-    if (expectedQty <= 0) return;
+    if (!product || !pricing || expectedQty <= 0 || !selectedTier) return;
 
     commitScenarioRows([
       ...scenarioRows,
@@ -208,6 +230,22 @@ export function SimulatorView() {
         <p className="page-description text-[#667085]">{t.pageSubtitle}</p>
       </div>
 
+      {catalogProducts.length === 0 ? (
+        <>
+          <PageEmptyState
+            icon={Package}
+            title="ยังไม่มีสินค้าสำหรับจำลอง"
+            description="เพิ่มสินค้าก่อน แล้วจึงสร้างแผนจำลองยอดขายและกำไร"
+          >
+            <Link href="/products/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                เพิ่มสินค้า
+              </Button>
+            </Link>
+          </PageEmptyState>
+        </>
+      ) : (
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-2" interactive>
           <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
@@ -217,17 +255,17 @@ export function SimulatorView() {
           <SimulatorSection title={t.sectionProductSelection}>
             <div className="flex items-center gap-4 rounded-xl border border-[#EEF0F6] bg-[#FBFBFD] p-3">
               <ProductImageDisplay
-                src={product.imageUrl}
-                alt={resolveProductImageAlt(product)}
+                src={product?.imageUrl}
+                alt={product ? resolveProductImageAlt(product) : "—"}
                 size="md"
                 className="p-1.5"
               />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-[#1F2937]">
-                  {product.name}
+                  {product?.name}
                 </p>
                 <p className="truncate text-xs text-[#8A94A6]">
-                  {product.supplier}
+                  {product?.supplier}
                 </p>
               </div>
             </div>
@@ -274,7 +312,7 @@ export function SimulatorView() {
           <SimulatorDivider />
 
           <SimulatorSection title={t.sectionResultPreview}>
-            <SimulatorUnitPreview pricing={pricing} />
+            {pricing && <SimulatorUnitPreview pricing={pricing} />}
 
             {lowMargin && (
               <div className="warning-banner">
@@ -315,7 +353,7 @@ export function SimulatorView() {
               value={formatCurrencyTHB(result.totalCost)}
               subtitle={t.costCalcHint(
                 qtyLabel,
-                formatCurrencyTHB(pricing.costThb),
+                formatCurrencyTHB(pricing?.costThb ?? 0),
               )}
               icon={Receipt}
               variant="neutral"
@@ -363,6 +401,7 @@ export function SimulatorView() {
           </SimulatorKpiGrid>
         </div>
       </div>
+      )}
 
       <div className="mt-8">
         <ScenarioTable

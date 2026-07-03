@@ -10,6 +10,8 @@ import { Textarea } from "@/components/forms/Textarea";
 import { Checkbox } from "@/components/forms/Checkbox";
 import { SupplierHighlightSection } from "@/components/supplier/SupplierHighlightSection";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/constants";
+import { buildSupplierFromForm } from "@/lib/services/supplier.service";
+import { useSupplierStore } from "@/hooks/SupplierStore";
 import {
   createEmptyContactInput,
   INITIAL_SUPPLIER_FORM,
@@ -44,6 +46,7 @@ function FormSection({
 }
 
 export function AddSupplierForm() {
+  const { addSupplier } = useSupplierStore();
   const [form, setForm] = useState<NewSupplierFormData>(INITIAL_SUPPLIER_FORM);
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
@@ -100,6 +103,8 @@ export function AddSupplierForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const supplier = buildSupplierFromForm(form);
+    addSupplier(supplier);
     setSavedName(form.factoryName.trim() || form.displayName.trim() || "New Supplier");
     setSubmitted(true);
   }
@@ -110,11 +115,11 @@ export function AddSupplierForm() {
         <Card padding="lg" className="mx-auto max-w-lg text-center">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
           <h1 className="mt-4 text-xl font-semibold text-gray-900">
-            Supplier saved (mock)
+            Supplier registered
           </h1>
           <p className="mt-2 text-sm text-gray-500">
             <span className="font-medium text-gray-800">{savedName}</span> has
-            been registered. Data is mock-only until Supabase is connected.
+            been added to your supplier directory.
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <Button variant="secondary" onClick={() => setSubmitted(false)}>

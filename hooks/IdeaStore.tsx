@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { buildProductFromIdea } from "@/lib/idea";
-import { IDEA_SEEDS } from "@/lib/idea-seed";
+import { localIdeaRepository } from "@/lib/repositories";
 import { usePipelineStore } from "@/hooks/PipelineStore";
 import type { IdeaStatus, NewIdeaInput, ProductIdea } from "@/types/idea";
 
@@ -25,10 +25,7 @@ const IdeaStoreContext = createContext<IdeaStoreValue | null>(null);
 export function IdeaStoreProvider({ children }: { children: ReactNode }) {
   const { addProduct } = usePipelineStore();
   const [ideas, setIdeas] = useState<ProductIdea[]>(() =>
-    [...IDEA_SEEDS].sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    ),
+    localIdeaRepository.listInitial(),
   );
 
   const addIdea = useCallback((input: NewIdeaInput): ProductIdea => {

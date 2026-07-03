@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createSupplierContact } from "@/lib/supplier-builder";
-import { SUPPLIER_SEEDS } from "@/lib/supplier-seed";
+import { localSupplierRepository } from "@/lib/repositories";
 import type {
   Supplier,
   SupplierContact,
@@ -19,6 +19,7 @@ import type {
 interface SupplierStoreValue {
   suppliers: Supplier[];
   getSupplier: (id: string) => Supplier | undefined;
+  addSupplier: (supplier: Supplier) => void;
   updateContact: (
     supplierId: string,
     contactId: string,
@@ -36,13 +37,17 @@ function touchSupplier(supplier: Supplier): Supplier {
 
 export function SupplierStoreProvider({ children }: { children: ReactNode }) {
   const [suppliers, setSuppliers] = useState<Supplier[]>(() =>
-    SUPPLIER_SEEDS.map((s) => ({ ...s, contacts: [...s.contacts] })),
+    localSupplierRepository.listInitial(),
   );
 
   const getSupplier = useCallback(
     (id: string) => suppliers.find((s) => s.id === id),
     [suppliers],
   );
+
+  const addSupplier = useCallback((supplier: Supplier) => {
+    setSuppliers((prev) => [supplier, ...prev]);
+  }, []);
 
   const updateContact = useCallback(
     (supplierId: string, contactId: string, input: SupplierContactInput) => {
@@ -118,11 +123,12 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
     (): SupplierStoreValue => ({
       suppliers,
       getSupplier,
+      addSupplier,
       updateContact,
       setPrimaryContact,
       addContact,
     }),
-    [suppliers, getSupplier, updateContact, setPrimaryContact, addContact],
+    [suppliers, getSupplier, addSupplier, updateContact, setPrimaryContact, addContact],
   );
 
   return (

@@ -12,7 +12,7 @@ import {
   filterNotesByType,
   type ProductNoteTypeFilter,
 } from "@/lib/product-notes";
-import { productNotes as initialNotes } from "@/lib/notes-seed";
+import { localNoteRepository } from "@/lib/repositories";
 import type { ProductNote, ProductNoteAttachment } from "@/types/product";
 
 interface AddProductNoteInput {
@@ -40,10 +40,7 @@ const ProductNotesStoreContext = createContext<ProductNotesStoreValue | null>(
 
 export function ProductNotesStoreProvider({ children }: { children: ReactNode }) {
   const [notes, setNotes] = useState<ProductNote[]>(() =>
-    [...initialNotes].sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    ),
+    localNoteRepository.listInitial(),
   );
 
   const getNotesForProduct = useCallback(

@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/Badge";
 import { SupplierContactsSection } from "@/components/supplier/SupplierContactsSection";
 import { formatSupplierLocation } from "@/lib/supplier";
 import { formatDate } from "@/lib/utils";
-import { getProducts } from "@/lib/mock-data";
+import { useLiveProducts } from "@/hooks/PipelineStore";
 import type { Supplier } from "@/types/supplier";
 
 interface SupplierDetailViewProps {
@@ -26,7 +26,8 @@ export function SupplierDetailView({
   supplier,
   linkedProductCount,
 }: SupplierDetailViewProps) {
-  const linkedProducts = getProducts().filter(
+  const products = useLiveProducts();
+  const linkedProducts = products.filter(
     (p) => p.supplierId === supplier.id,
   );
 

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Building2, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useSupplierStore } from "@/hooks/SupplierStore";
 import { cn } from "@/lib/utils";
 import { searchSuppliers, supplierDisplayName } from "@/lib/supplier";
-import { getSuppliers } from "@/lib/mock-data";
 import type { Supplier } from "@/types/supplier";
 
 interface SupplierSearchPickerProps {
@@ -24,7 +24,7 @@ export function SupplierSearchPicker({
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const suppliers = useMemo(() => getSuppliers(), []);
+  const { suppliers } = useSupplierStore();
 
   const selected = useMemo(
     () => suppliers.find((s) => s.id === value),

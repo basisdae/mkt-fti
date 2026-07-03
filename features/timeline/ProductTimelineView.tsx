@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Clock3 } from "lucide-react";
+import { ArrowRight, Clock3, Package } from "lucide-react";
+import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { Select } from "@/components/forms/Select";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { ProductTimeline } from "@/components/product/ProductTimeline";
@@ -11,37 +12,68 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { usePipelineStore } from "@/hooks/PipelineStore";
-import {
-  PRODUCT_TIMELINE_LABELS,
-} from "@/lib/product-timeline";
+import { PRODUCT_TIMELINE_LABELS } from "@/lib/product-timeline";
 import { resolveProductImageAlt } from "@/lib/product-image";
 import { formatPipelineStep } from "@/lib/pipeline";
 
 export function ProductTimelineView() {
   const searchParams = useSearchParams();
-  const initialProductId = searchParams.get("product") ?? "prod-001";
+  const initialProductId = searchParams.get("product");
 
   const { products, getTimelineForProduct } = usePipelineStore();
-  const [productId, setProductId] = useState(initialProductId);
+  const [productId, setProductId] = useState(initialProductId ?? "");
+
+  useEffect(() => {
+    if (!productId && products.length > 0) {
+      setProductId(products[0]!.id);
+    }
+  }, [products, productId]);
 
   const product = useMemo(
-    () => products.find((p) => p.id === productId) ?? products[0],
+    () => products.find((p) => p.id === productId),
     [products, productId],
   );
 
   const { movements, currentStage } = useMemo(
-    () => getTimelineForProduct(product.id),
-    [getTimelineForProduct, product.id],
+    () =>
+      product
+        ? getTimelineForProduct(product.id)
+        : { movements: [], currentStage: "factory_contact" as const },
+    [getTimelineForProduct, product],
   );
+
+  if (products.length === 0) {
+    return (
+      <div className="page-shell">
+        <div className="page-header-block">
+          <h1 className="page-title">Product Timeline</h1>
+          <p className="page-description">
+            Full sourcing journey from factory contact through launch — every
+            movement with date, time, user, and note.
+          </p>
+        </div>
+        <PageEmptyState
+          icon={Clock3}
+          title="ยังไม่มี Timeline"
+          description="เพิ่มสินค้าและย้ายขั้นตอนใน Pipeline เพื่อบันทึกประวัติการทำงาน"
+        >
+          <Link href="/products/new">
+            <Button className="gap-2">
+              <Package className="h-4 w-4" />
+              เพิ่มสินค้า
+            </Button>
+          </Link>
+        </PageEmptyState>
+      </div>
+    );
+  }
+
+  if (!product) return null;
 
   const productOptions = products.map((p) => ({
     value: p.id,
     label: p.name,
   }));
-
-  if (!product) {
-    return null;
-  }
 
   const currentStageLabel = PRODUCT_TIMELINE_LABELS[currentStage];
 
@@ -118,10 +150,13 @@ export function ProductTimelineView() {
           </div>
         </div>
 
-        <ProductTimeline
-          movements={movements}
-          currentStage={currentStage}
-        />
+        {movements.length === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-400">
+            ยังไม่มีการเคลื่อนไหว — ลากสินค้าใน Pipeline เพื่อบันทึก Timeline
+          </p>
+        ) : (
+          <ProductTimeline movements={movements} currentStage={currentStage} />
+        )}
       </Card>
 
       <p className="mt-6 text-center text-xs text-gray-400">

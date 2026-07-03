@@ -22,7 +22,9 @@ import {
   PRODUCT_STATUS_LABELS,
 } from "@/lib/constants";
 import { calculatePricing } from "@/lib/pricing";
-import { getSupplierById } from "@/lib/mock-data";
+import { buildProductBundleFromForm } from "@/lib/services/product.service";
+import { usePipelineStore } from "@/hooks/PipelineStore";
+import { useSupplierStore } from "@/hooks/SupplierStore";
 import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import {
   CERTIFICATION_OPTIONS,
@@ -70,6 +72,8 @@ function FormSection({
 }
 
 export function AddProductForm() {
+  const { addProduct } = usePipelineStore();
+  const { getSupplier } = useSupplierStore();
   const [form, setForm] = useState<NewProductFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -155,7 +159,7 @@ export function AddProductForm() {
   }
 
   const selectedSupplier = form.supplierId
-    ? getSupplierById(form.supplierId)
+    ? getSupplier(form.supplierId)
     : undefined;
 
   const showSupplierWarning =
@@ -189,6 +193,14 @@ export function AddProductForm() {
     e.preventDefault();
     if (!validate()) return;
 
+    const bundle = buildProductBundleFromForm(form, {
+      imageUrl: imageValue.previewUrl,
+      imageAlt: imageValue.alt,
+      supplierName: selectedSupplier?.factoryName ?? "",
+      supplierId: form.supplierId,
+    });
+    addProduct(bundle);
+
     setSavedName(form.productName.trim());
     setSubmitted(true);
   }
@@ -211,7 +223,7 @@ export function AddProductForm() {
           <h1 className="text-2xl font-bold text-gray-900">Product Created</h1>
           <p className="mt-2 text-sm text-gray-500">
             <span className="font-medium text-gray-800">{savedName}</span> has
-            been saved locally. Database connection coming soon.
+            been added to your product catalog.
           </p>
           {imageValue.previewUrl && (
             <div className="mx-auto mt-6 flex max-w-xs flex-col items-center gap-2">

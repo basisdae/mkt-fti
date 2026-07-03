@@ -15,8 +15,9 @@ import {
   type ProductImageValue,
 } from "@/components/product/ProductImageUpload";
 import { Card } from "@/components/ui/Card";
-import { getMoqTierById, getSupplierForProduct } from "@/lib/mock-data";
+import { getPriceOptionById } from "@/lib/assemble-product";
 import { getProfitSummary } from "@/lib/product-detail";
+import { useSupplierStore } from "@/hooks/SupplierStore";
 import type { ProductView } from "@/types/product";
 
 interface ProductDetailViewProps {
@@ -24,8 +25,9 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({ product }: ProductDetailViewProps) {
+  const { getSupplier } = useSupplierStore();
   const [selectedTierId, setSelectedTierId] = useState(
-    product.priceOptions[0].id,
+    product.priceOptions[0]?.id ?? "",
   );
   const [imageValue, setImageValue] = useState<ProductImageValue>(() =>
     createProductImageValueFromProduct(
@@ -36,7 +38,8 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   );
 
   const selectedTier = useMemo(
-    () => getMoqTierById(product, selectedTierId) ?? product.priceOptions[0],
+    () =>
+      getPriceOptionById(product, selectedTierId) ?? product.priceOptions[0],
     [product, selectedTierId],
   );
 
@@ -45,7 +48,9 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
     [product.priceOptions],
   );
 
-  const linkedSupplier = getSupplierForProduct(product);
+  const linkedSupplier = product.supplierId
+    ? getSupplier(product.supplierId)
+    : undefined;
 
   return (
     <div className="page-shell">

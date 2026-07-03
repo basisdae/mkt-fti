@@ -1,6 +1,4 @@
-import { notFound } from "next/navigation";
-import { getProductById } from "@/lib/mock-data";
-import { ProductDetailView } from "@/features/product/ProductDetailView";
+import { ProductDetailClient } from "@/features/product/ProductDetailClient";
 
 interface ProductDetailPageProps {
   params: Promise<{ id: string }>;
@@ -8,19 +6,12 @@ interface ProductDetailPageProps {
 
 export async function generateMetadata({ params }: ProductDetailPageProps) {
   const { id } = await params;
-  const product = getProductById(id);
-  return { title: product?.name ?? "Product Not Found" };
+  return { title: `Product ${id} | MKT-FTI` };
 }
 
 export default async function ProductDetailPage({
   params,
 }: ProductDetailPageProps) {
   const { id } = await params;
-  const product = getProductById(id);
-
-  if (!product) {
-    notFound();
-  }
-
-  return <ProductDetailView product={product} />;
+  return <ProductDetailClient productId={id} />;
 }

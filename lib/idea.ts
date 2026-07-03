@@ -74,7 +74,7 @@ export function buildProductFromIdea(idea: ProductIdea): ConvertedProductBundle 
     brand: idea.possibleBrand !== "—" ? idea.possibleBrand : "FTI Lifestyle",
     category: inferCategory(idea.tags),
     description: idea.whyInteresting,
-    opportunityScore: 75,
+    opportunityScore: 0,
     latestNote: `Converted from idea inbox · Source: ${platform}`,
     updatedAt: now,
     businessType: "Online Sourcing Idea",

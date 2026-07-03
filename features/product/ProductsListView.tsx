@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PackageSearch, Search, SlidersHorizontal } from "lucide-react";
+import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { ProductListHeader, ProductListRow } from "@/components/cards/ProductListRow";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -166,7 +168,19 @@ export function ProductsListView() {
         </div>
       </Card>
 
-      {filteredProducts.length === 0 ? (
+      {allProducts.length === 0 ? (
+        <PageEmptyState
+          icon={PackageSearch}
+          title="ยังไม่มีสินค้า"
+          description="เพิ่มสินค้าแรกเพื่อเริ่มติดตาม pipeline และการประเมิน"
+        >
+          <Link href="/products/new">
+            <Button className="gap-2">
+              เพิ่มสินค้า
+            </Button>
+          </Link>
+        </PageEmptyState>
+      ) : filteredProducts.length === 0 ? (
         <Card className="border-dashed">
           <EmptyState
             icon={PackageSearch}

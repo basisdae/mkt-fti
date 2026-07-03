@@ -8,7 +8,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { assembleProductView } from "@/lib/assemble-product";
 import { PIPELINE_STAGE_LABELS, PIPELINE_STAGES } from "@/lib/constants";
 import {
   createPipelineMoveLog,
@@ -21,15 +20,13 @@ import {
   timelineMovementFromPipelineMove,
 } from "@/lib/product-timeline";
 import {
-  pipelineLogs as initialPipelineLogs,
-  productPriceOptions as initialProductPriceOptions,
-  productStatuses as initialProductStatuses,
-  products as seedProducts,
-} from "@/lib/mock-data";
-import { productTimelineMovements as initialTimelineMovements } from "@/lib/timeline-seed";
+  localPipelineLogRepository,
+  localProductRepository,
+  localTimelineRepository,
+  type ProductCreateBundle,
+} from "@/lib/repositories";
 import type {
   ActivityItem,
-  DashboardMetric,
   PipelineItem,
   PipelineLog,
   PipelineStage,
@@ -57,13 +54,8 @@ interface PipelineStoreValue {
   logs: PipelineLog[];
   recentActivity: ActivityItem[];
   pipelineOverview: { stage: PipelineStage; label: string; count: number }[];
-  dashboardMetrics: DashboardMetric[];
   moveProduct: (productId: string, targetStage: PipelineStage) => boolean;
-  addProduct: (input: {
-    product: Product;
-    status: ProductStatusEntry;
-    priceOptions: ProductPriceOption[];
-  }) => string;
+  addProduct: (input: ProductCreateBundle) => string;
   getStageForProduct: (productId: string) => PipelineStage | undefined;
   getTimelineForProduct: (productId: string) => {
     movements: ProductTimelineMovement[];
@@ -74,63 +66,30 @@ interface PipelineStoreValue {
 
 const PipelineStoreContext = createContext<PipelineStoreValue | null>(null);
 
-function buildInitialStatuses(): Record<string, ProductStatusEntry> {
-  return Object.fromEntries(
-    initialProductStatuses.map((entry) => [entry.productId, { ...entry }]),
-  ) as Record<string, ProductStatusEntry>;
-}
-
-function mergeProductViews(
-  statuses: Record<string, ProductStatusEntry>,
-  extraProducts: Product[],
-  extraPriceOptions: ProductPriceOption[],
-): ProductView[] {
-  const allProducts = [...seedProducts, ...extraProducts];
-  const allOptions = [...initialProductPriceOptions, ...extraPriceOptions];
-
-  const optionsByProduct = allOptions.reduce<
-    Record<string, ProductPriceOption[]>
-  >((acc, option) => {
-    acc[option.productId] ??= [];
-    acc[option.productId]!.push(option);
-    return acc;
-  }, {});
-
-  return allProducts.map((product) => {
-    const status = statuses[product.id];
-    if (!status) {
-      throw new Error(`Missing pipeline status for product ${product.id}`);
-    }
-    const options = optionsByProduct[product.id] ?? [];
-    if (options.length === 0) {
-      throw new Error(`Missing price options for product ${product.id}`);
-    }
-    return assembleProductView(product, status, options);
-  });
-}
-
 export function PipelineStoreProvider({ children }: { children: ReactNode }) {
-  const [statuses, setStatuses] = useState(buildInitialStatuses);
-  const [extraProducts, setExtraProducts] = useState<Product[]>([]);
-  const [extraPriceOptions, setExtraPriceOptions] = useState<ProductPriceOption[]>(
-    [],
+  const [productRecords, setProductRecords] = useState<Product[]>([]);
+  const [statuses, setStatuses] = useState<Record<string, ProductStatusEntry>>(
+    {},
   );
+  const [priceOptions, setPriceOptions] = useState<ProductPriceOption[]>([]);
   const [logs, setLogs] = useState<PipelineLog[]>(() =>
-    [...initialPipelineLogs].sort(
-      (a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    ),
+    localPipelineLogRepository.listInitial(),
   );
   const [itemMeta, setItemMeta] = useState<
     Record<string, { activityNote: string; justUpdated: boolean }>
   >({});
   const [timelineMovements, setTimelineMovements] = useState<
     ProductTimelineMovement[]
-  >(() => [...initialTimelineMovements]);
+  >(() => localTimelineRepository.listInitial());
 
   const products = useMemo(
-    () => mergeProductViews(statuses, extraProducts, extraPriceOptions),
-    [statuses, extraProducts, extraPriceOptions],
+    () =>
+      localProductRepository.listViews(
+        productRecords,
+        statuses,
+        priceOptions,
+      ),
+    [productRecords, statuses, priceOptions],
   );
 
   const pipelineItems = useMemo(() => {
@@ -167,39 +126,6 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       })),
     [statuses],
   );
-
-  const dashboardMetrics = useMemo((): DashboardMetric[] => {
-    const statusList = Object.values(statuses);
-    return [
-      {
-        label: "Total Products",
-        value: products.length,
-        change: "+2 this month",
-        trend: "up",
-      },
-      {
-        label: "Waiting Quotation",
-        value: statusList.filter((s) => s.status === "quotation").length,
-        change: "2 pending factory reply",
-        trend: "neutral",
-      },
-      {
-        label: "In Testing",
-        value: statusList.filter(
-          (s) =>
-            s.status === "sample_testing" || s.status === "certification",
-        ).length,
-        change: "Sample & cert review",
-        trend: "neutral",
-      },
-      {
-        label: "Ready to Launch",
-        value: statusList.filter((s) => s.status === "ready_launch").length,
-        change: "1 launch this quarter",
-        trend: "up",
-      },
-    ];
-  }, [products.length, statuses]);
 
   const getStageForProduct = useCallback(
     (productId: string) => statuses[productId]?.pipelineStage,
@@ -239,33 +165,29 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       }));
   }, [timelineMovements, products]);
 
-  const addProduct = useCallback(
-    (input: {
-      product: Product;
-      status: ProductStatusEntry;
-      priceOptions: ProductPriceOption[];
-    }): string => {
-      const now = new Date().toISOString();
-      setExtraProducts((prev) => [...prev, input.product]);
-      setExtraPriceOptions((prev) => [...prev, ...input.priceOptions]);
-      setStatuses((prev) => ({
-        ...prev,
-        [input.product.id]: { ...input.status, updatedAt: now },
-      }));
-      setLogs((prev) => [
-        {
-          id: `log-${input.product.id}-${Date.now()}`,
-          productId: input.product.id,
-          action: "Product created",
-          detail: `Converted from idea inbox: ${input.product.name}`,
-          updatedAt: now,
-        },
-        ...prev,
-      ]);
-      return input.product.id;
-    },
-    [],
-  );
+  const addProduct = useCallback((input: ProductCreateBundle): string => {
+    const bundle = localProductRepository.createBundle(input);
+    const now = new Date().toISOString();
+
+    setProductRecords((prev) => [...prev, bundle.product]);
+    setPriceOptions((prev) => [...prev, ...bundle.priceOptions]);
+    setStatuses((prev) => ({
+      ...prev,
+      [bundle.product.id]: { ...bundle.status, updatedAt: now },
+    }));
+    setLogs((prev) => [
+      {
+        id: `log-${bundle.product.id}-${Date.now()}`,
+        productId: bundle.product.id,
+        action: "Product created",
+        detail: `Added product: ${bundle.product.name}`,
+        updatedAt: now,
+      },
+      ...prev,
+    ]);
+
+    return bundle.product.id;
+  }, []);
 
   const moveProduct = useCallback(
     (productId: string, targetStage: PipelineStage): boolean => {
@@ -328,7 +250,6 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       logs,
       recentActivity,
       pipelineOverview,
-      dashboardMetrics,
       moveProduct,
       addProduct,
       getStageForProduct,
@@ -342,7 +263,6 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       logs,
       recentActivity,
       pipelineOverview,
-      dashboardMetrics,
       moveProduct,
       addProduct,
       getStageForProduct,

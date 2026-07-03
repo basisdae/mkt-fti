@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Lightbulb, Plus, Search } from "lucide-react";
+import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
@@ -213,6 +214,19 @@ export function IdeasInboxView() {
         </Card>
       )}
 
+      {ideas.length === 0 ? (
+        <PageEmptyState
+          icon={Lightbulb}
+          title="ยังไม่มี Product Idea"
+          description="บันทึกไอเดียสินค้าที่พบออนไลน์ก่อนติดต่อโรงงาน"
+        >
+          <Button className="gap-2" onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4" />
+            เพิ่ม Product Idea
+          </Button>
+        </PageEmptyState>
+      ) : (
+        <>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-md flex-1">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -260,6 +274,8 @@ export function IdeasInboxView() {
             />
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );

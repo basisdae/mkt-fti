@@ -29,7 +29,7 @@ import {
   type ScenarioRow,
   type ScenarioRowDraft,
 } from "@/lib/pricing";
-import { getProducts } from "@/lib/mock-data";
+import { useLiveProducts } from "@/hooks/PipelineStore";
 import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
 import { resolveProductImageAlt } from "@/lib/product-image";
 import { cn, formatCurrencyTHB, formatPercent } from "@/lib/utils";
@@ -84,7 +84,7 @@ export function ScenarioTable({
   onChange,
   historyRevision = 0,
 }: ScenarioTableProps) {
-  const products = useMemo(() => getProducts(), []);
+  const products = useLiveProducts();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ScenarioRowDraft | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);

@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
+import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { BrandBoardView } from "@/features/brand/BrandBoardView";
 import { useBrandStore } from "@/hooks/BrandStore";
 
@@ -23,7 +24,15 @@ export function BrandBoardPageView() {
         </p>
       </div>
 
-      <BrandBoardView products={productsWithBrand} />
+      {productsWithBrand.length === 0 ? (
+        <PageEmptyState
+          icon={Sparkles}
+          title="ยังไม่มีสินค้าใน Brand Board"
+          description="เพิ่มสินค้าเพื่อจัดกลุ่มและตัดสินใจแบรนด์"
+        />
+      ) : (
+        <BrandBoardView products={productsWithBrand} />
+      )}
     </div>
   );
 }
