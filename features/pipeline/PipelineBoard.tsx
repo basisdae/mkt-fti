@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Inbox } from "lucide-react";
 import { PipelineCard, getPipelineDropHint } from "@/components/cards/PipelineCard";
+import { PipelineStageHeader } from "@/components/pipeline/PipelineStageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   PIPELINE_STAGE_LABELS,
@@ -10,11 +11,7 @@ import {
   PIPELINE_STAGES,
   PIPELINE_TONE_STYLES,
 } from "@/lib/constants";
-import {
-  formatPipelineColumnTitle,
-  formatPipelineProductCount,
-  isAllowedPipelineMove,
-} from "@/lib/pipeline";
+import { isAllowedPipelineMove } from "@/lib/pipeline";
 import {
   decodePipelineDragPayload,
   usePipelineStore,
@@ -138,14 +135,10 @@ export function PipelineBoard() {
 
             return (
               <div key={column.id} className="flex w-64 shrink-0 flex-col sm:w-72">
-                <div className="mb-3 flex items-baseline justify-between gap-2 px-0.5">
-                  <h2 className="text-[13px] font-semibold leading-snug text-gray-800">
-                    {formatPipelineColumnTitle(column.id)}
-                  </h2>
-                  <span className="shrink-0 text-xs text-gray-400">
-                    {formatPipelineProductCount(column.items.length)}
-                  </span>
-                </div>
+                <PipelineStageHeader
+                  stage={column.id}
+                  productCount={column.items.length}
+                />
 
                 <div
                   onDragOver={(e) => handleDragOver(e, column.id)}

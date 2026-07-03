@@ -144,26 +144,8 @@ export function formatPipelineStep(
   return `STEP ${stepLabel}/${total} • ${PIPELINE_STAGE_LABELS[pipelineStage]}`;
 }
 
-const PIPELINE_CIRCLED_STEP = [
-  "①",
-  "②",
-  "③",
-  "④",
-  "⑤",
-  "⑥",
-  "⑦",
-  "⑧",
-  "⑨",
-  "⑩",
-  "⑪",
-  "⑫",
-  "⑬",
-] as const;
-
-export function formatPipelineColumnTitle(stage: PipelineStage): string {
-  const step = getPipelineStepNumber(stage);
-  const circled = PIPELINE_CIRCLED_STEP[step - 1] ?? String(step);
-  return `${circled} ${PIPELINE_STAGE_LABELS[stage]}`;
+export function formatPipelineStepBadge(stage: PipelineStage): string {
+  return String(getPipelineStepNumber(stage)).padStart(2, "0");
 }
 
 export function formatPipelineProductCount(count: number): string {

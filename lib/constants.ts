@@ -118,6 +118,8 @@ export const PIPELINE_TONE_STYLES: Record<
   {
     columnAccent: string;
     columnBadge: string;
+    stepBadgeBg: string;
+    stepBadgeText: string;
     dot: string;
     label: string;
   }
@@ -125,24 +127,32 @@ export const PIPELINE_TONE_STYLES: Record<
   pending: {
     columnAccent: "bg-amber-400",
     columnBadge: "bg-amber-50 text-amber-700",
+    stepBadgeBg: "bg-amber-400/15",
+    stepBadgeText: "text-amber-800",
     dot: "bg-amber-400",
     label: "Pending",
   },
   working: {
     columnAccent: "bg-primary",
     columnBadge: "bg-light-purple text-primary",
+    stepBadgeBg: "bg-primary/12",
+    stepBadgeText: "text-primary",
     dot: "bg-primary",
     label: "Working",
   },
   success: {
     columnAccent: "bg-success",
     columnBadge: "bg-green-50 text-green-700",
+    stepBadgeBg: "bg-success/15",
+    stepBadgeText: "text-green-800",
     dot: "bg-success",
     label: "Success",
   },
   critical: {
     columnAccent: "bg-fti-red",
     columnBadge: "bg-red-50 text-fti-red",
+    stepBadgeBg: "bg-fti-red/12",
+    stepBadgeText: "text-fti-red",
     dot: "bg-fti-red",
     label: "Critical",
   },
