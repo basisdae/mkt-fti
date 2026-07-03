@@ -164,4 +164,30 @@ body {
   .note-card {
     animation: timeline-fade-in 0.35s ease-out both;
   }
+
+  .dashboard-premium {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgb(243 241 255 / 0.55), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(105 92 255 / 0.04), transparent);
+  }
+
+  .dashboard-hero {
+    animation: timeline-fade-in 0.4s ease-out both;
+  }
+
+  .dashboard-today-summary {
+    animation: timeline-fade-in 0.45s ease-out both;
+  }
+
+  .dashboard-summary-card {
+    backdrop-filter: blur(8px);
+  }
+
+  .dashboard-activities {
+    animation: timeline-fade-in 0.5s ease-out both;
+  }
+
+  .spotlight-card {
+    backdrop-filter: blur(4px);
+  }
 }

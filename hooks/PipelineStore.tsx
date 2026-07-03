@@ -62,6 +62,7 @@ interface PipelineStoreValue {
     movements: ProductTimelineMovement[];
     currentStage: ProductTimelineStage;
   };
+  recentTimelineFeed: (ProductTimelineMovement & { productName: string })[];
 }
 
 const PipelineStoreContext = createContext<PipelineStoreValue | null>(null);
@@ -203,6 +204,20 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     [statuses, timelineMovements],
   );
 
+  const recentTimelineFeed = useMemo(() => {
+    const nameById = new Map(products.map((p) => [p.id, p.name]));
+    return [...timelineMovements]
+      .sort(
+        (a, b) =>
+          new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+      )
+      .slice(0, 10)
+      .map((movement) => ({
+        ...movement,
+        productName: nameById.get(movement.productId) ?? "Unknown product",
+      }));
+  }, [timelineMovements, products]);
+
   const moveProduct = useCallback(
     (productId: string, targetStage: PipelineStage): boolean => {
       const current = statuses[productId];
@@ -271,6 +286,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       moveProduct,
       getStageForProduct,
       getTimelineForProduct,
+      recentTimelineFeed,
     }),
     [
       products,
@@ -283,6 +299,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       moveProduct,
       getStageForProduct,
       getTimelineForProduct,
+      recentTimelineFeed,
     ],
   );
 
