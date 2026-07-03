@@ -16,8 +16,9 @@ import {
   PRODUCT_SORT_OPTIONS,
   type ProductFilterState,
 } from "@/lib/product-filters";
+import { FTI_BRAND_OPTIONS, getUniqueBusinessUnits } from "@/lib/brand-strategy";
 import { useLiveProducts } from "@/hooks/PipelineStore";
-import type { ProductStatus } from "@/types/product";
+import type { FtiBrand, ProductStatus } from "@/types/product";
 
 const statusOptions = [
   { value: "", label: "All statuses" },
@@ -32,6 +33,10 @@ export function ProductsListView() {
   const allProducts = useLiveProducts();
   const suppliers = useMemo(
     () => getUniqueSuppliers(allProducts),
+    [allProducts],
+  );
+  const businessUnits = useMemo(
+    () => getUniqueBusinessUnits(allProducts),
     [allProducts],
   );
 
@@ -55,6 +60,8 @@ export function ProductsListView() {
     filters.query !== "" ||
     filters.status !== "" ||
     filters.supplier !== "" ||
+    filters.brand !== "" ||
+    filters.businessUnit !== "" ||
     filters.sort !== "latest_updated";
 
   function updateFilter<K extends keyof ProductFilterState>(
@@ -82,7 +89,7 @@ export function ProductsListView() {
           <SlidersHorizontal className="h-4 w-4 text-primary" />
           Search & Filters
         </div>
-        <div className="grid gap-4 lg:grid-cols-4">
+        <div className="grid gap-4 lg:grid-cols-6">
           <div className="relative lg:col-span-2">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
@@ -109,6 +116,26 @@ export function ProductsListView() {
             ]}
             value={filters.supplier}
             onChange={(e) => updateFilter("supplier", e.target.value)}
+          />
+          <Select
+            label="Brand"
+            options={[
+              { value: "", label: "All brands" },
+              ...FTI_BRAND_OPTIONS,
+            ]}
+            value={filters.brand}
+            onChange={(e) =>
+              updateFilter("brand", e.target.value as FtiBrand | "")
+            }
+          />
+          <Select
+            label="Business Unit"
+            options={[
+              { value: "", label: "All units" },
+              ...businessUnits.map((u) => ({ value: u, label: u })),
+            ]}
+            value={filters.businessUnit}
+            onChange={(e) => updateFilter("businessUnit", e.target.value)}
           />
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

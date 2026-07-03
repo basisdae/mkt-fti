@@ -1,14 +1,19 @@
 import type {
   DashboardQuickFilter,
+  FtiBrand,
   ProductSortOption,
   ProductStatus,
   ProductView,
 } from "@/types/product";
+import type { DashboardBrandFilter } from "@/lib/brand-strategy";
+import { matchesBrandFilter } from "@/lib/brand-strategy";
 
 export interface ProductFilterState {
   query: string;
   status: ProductStatus | "";
   supplier: string;
+  brand: FtiBrand | "";
+  businessUnit: string;
   sort: ProductSortOption;
 }
 
@@ -16,6 +21,8 @@ export const DEFAULT_PRODUCT_FILTERS: ProductFilterState = {
   query: "",
   status: "",
   supplier: "",
+  brand: "",
+  businessUnit: "",
   sort: "latest_updated",
 };
 
@@ -45,6 +52,9 @@ export function matchesProductSearch(
     product.code,
     product.supplier,
     product.brand,
+    product.brandStrategy.factory,
+    product.brandStrategy.internalProjectName,
+    product.brandStrategy.businessUnit,
     product.factoryLocation,
     product.factoryContact,
   ]
@@ -62,6 +72,15 @@ export function filterProducts(
     if (!matchesProductSearch(product, filters.query)) return false;
     if (filters.status && product.status !== filters.status) return false;
     if (filters.supplier && product.supplier !== filters.supplier) return false;
+    if (filters.brand && !matchesBrandFilter(product, filters.brand)) {
+      return false;
+    }
+    if (
+      filters.businessUnit &&
+      product.brandStrategy.businessUnit !== filters.businessUnit
+    ) {
+      return false;
+    }
     return true;
   });
 }
@@ -149,10 +168,12 @@ export function filterDashboardProducts(
   products: ProductView[],
   query: string,
   quickFilter: DashboardQuickFilter | null,
+  brandFilter: DashboardBrandFilter = "all",
 ): ProductView[] {
   return products.filter(
     (product) =>
       matchesProductSearch(product, query) &&
-      matchesDashboardQuickFilter(product, quickFilter),
+      matchesDashboardQuickFilter(product, quickFilter) &&
+      matchesBrandFilter(product, brandFilter),
   );
 }

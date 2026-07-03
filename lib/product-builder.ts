@@ -1,7 +1,9 @@
 import { evalExtras } from "@/lib/product-detail-defaults";
+import { defaultBrandStrategy, formatFtiBrand } from "@/lib/brand-strategy";
 import type {
   OemType,
   Product,
+  ProductBrandStrategy,
   ProductCertification,
   ProductCustomOptions,
   ProductPriceOption,
@@ -31,6 +33,11 @@ export interface ProductSeedInput {
   certifications: string[];
   customOptions?: Partial<ProductCustomOptions>;
   certification?: Partial<Omit<ProductCertification, "certifications">>;
+  brandStrategy?: Partial<ProductBrandStrategy> & {
+    factory?: string;
+    internalProjectName?: string;
+    businessUnit?: string;
+  };
 }
 
 function oemTypeDefaults(oemType: OemType): ProductCustomOptions {
@@ -84,11 +91,29 @@ function inferFactoryLocation(supplier: string): string {
 export function createProduct(seed: ProductSeedInput): Product {
   const typeDefaults = oemTypeDefaults(seed.oemType);
 
+  const strategy = defaultBrandStrategy({
+    factory: seed.brandStrategy?.factory ?? seed.supplier,
+    internalProjectName:
+      seed.brandStrategy?.internalProjectName ?? `Project ${seed.code}`,
+    businessUnit: seed.brandStrategy?.businessUnit ?? seed.productSystem,
+    currentBrand: seed.brandStrategy?.currentBrand ?? null,
+    candidateBrands: seed.brandStrategy?.candidateBrands ?? [],
+    reason: seed.brandStrategy?.reason ?? "",
+    decisionDate: seed.brandStrategy?.decisionDate ?? null,
+    owner: seed.brandStrategy?.owner ?? "",
+    brandFitScore: seed.brandStrategy?.brandFitScore ?? null,
+  });
+
   return {
     id: seed.id,
     name: seed.name,
     code: seed.code,
-    brand: seed.brand ?? seed.productSystem,
+    brand:
+      seed.brand ??
+      (strategy.currentBrand
+        ? formatFtiBrand(strategy.currentBrand)
+        : seed.productSystem),
+    brandStrategy: strategy,
     supplier: seed.supplier,
     factoryLocation: seed.factoryLocation ?? inferFactoryLocation(seed.supplier),
     category: seed.category,

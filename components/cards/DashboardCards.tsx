@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { BrandContextStack } from "@/components/product/BrandContextStack";
 import { Card } from "@/components/ui/Card";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import {
@@ -123,6 +124,11 @@ export function DashboardProductCard({ product }: DashboardProductCardProps) {
           className="p-3 sm:p-4"
         />
         <div className="px-1 pb-1">
+          <BrandContextStack
+            strategy={product.brandStrategy}
+            compact
+            className="mb-3 border-0 bg-transparent px-0 py-0"
+          />
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-primary">

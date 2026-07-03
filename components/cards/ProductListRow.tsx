@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { BrandContextStack } from "@/components/product/BrandContextStack";
 import { isLowProfitMargin } from "@/lib/pricing";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import { formatPipelineStep } from "@/lib/pipeline";
@@ -94,7 +95,9 @@ export function ProductListRow({ product }: ProductListRowProps) {
             <p className="mt-1.5 text-xs font-medium text-primary/80">
               {pipelineStep}
             </p>
-            <p className="mt-1 text-xs text-gray-400">{product.code}</p>
+            <div className="mt-2 max-w-xs">
+              <BrandContextStack strategy={product.brandStrategy} compact />
+            </div>
           </div>
         </div>
       </div>

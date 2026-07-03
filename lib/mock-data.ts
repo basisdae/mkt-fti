@@ -2,6 +2,8 @@ import { PIPELINE_STAGES, PIPELINE_STAGE_LABELS } from "@/lib/constants";
 import { assembleProductViews, getPriceOptionById as findPriceOption } from "@/lib/assemble-product";
 import { calculatePricing, calculateSimulator } from "@/lib/pricing";
 import { createProduct, priceOption } from "@/lib/product-builder";
+import { brandStrategyForProduct } from "@/lib/brand-seed";
+import { defaultBrandStrategy, formatFtiBrand } from "@/lib/brand-strategy";
 import type {
   ActivityItem,
   DashboardMetric,
@@ -20,7 +22,20 @@ import type {
 // Source-of-truth mock collections
 // ---------------------------------------------------------------------------
 
-export const products: Product[] = [
+function withBrandSeed(product: ReturnType<typeof createProduct>) {
+  const seed = brandStrategyForProduct(product.id);
+  if (!seed) return product;
+  const brandStrategy = defaultBrandStrategy(seed);
+  return {
+    ...product,
+    brandStrategy,
+    brand: brandStrategy.currentBrand
+      ? formatFtiBrand(brandStrategy.currentBrand)
+      : product.brand,
+  };
+}
+
+const productSeeds = [
   createProduct({
     id: "prod-001",
     name: "Smart Air Purifier Pro",
@@ -211,6 +226,8 @@ export const products: Product[] = [
     certifications: ["TISI", "CE"],
   }),
 ];
+
+export const products: Product[] = productSeeds.map(withBrandSeed);
 
 export const productPriceOptions: ProductPriceOption[] = [
   priceOption("moq-001-a", "prod-001", 500, 80, 36.125, 0.42, 0.14, undefined, "45 days"),

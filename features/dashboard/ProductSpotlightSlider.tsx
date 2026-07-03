@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useRef } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { BrandContextStack } from "@/components/product/BrandContextStack";
 import { Card } from "@/components/ui/Card";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import { getUnitProfit } from "@/lib/product-filters";
@@ -92,6 +93,10 @@ function SpotlightCard({ product, rank, featured = false }: SpotlightCardProps) 
             {product.name}
           </h3>
           <p className="mt-1 truncate text-xs text-gray-500">{product.supplier}</p>
+
+          <div className="mt-3">
+            <BrandContextStack strategy={product.brandStrategy} compact />
+          </div>
 
           <div className="mt-auto space-y-2.5 pt-3">
             <div

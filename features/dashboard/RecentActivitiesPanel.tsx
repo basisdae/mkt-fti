@@ -75,10 +75,16 @@ function FeedRow({
 
 function TimelineTab({
   items,
+  productIds,
 }: {
   items: (ProductTimelineMovement & { productName: string })[];
+  productIds?: Set<string>;
 }) {
-  if (items.length === 0) {
+  const filtered = productIds
+    ? items.filter((item) => productIds.has(item.productId))
+    : items;
+
+  if (filtered.length === 0) {
     return (
       <p className="px-6 py-8 text-center text-sm text-gray-400">
         No timeline movements yet.
@@ -88,7 +94,7 @@ function TimelineTab({
 
   return (
     <ul className="divide-y divide-gray-50/80">
-      {items.map((item) => (
+      {filtered.map((item) => (
         <li key={item.id}>
           <FeedRow
             title={PRODUCT_TIMELINE_LABELS[item.stage]}
@@ -103,14 +109,24 @@ function TimelineTab({
   );
 }
 
-function FactoryTab({ notes }: { notes: ProductNote[] }) {
+function FactoryTab({
+  notes,
+  productIds,
+}: {
+  notes: ProductNote[];
+  productIds?: Set<string>;
+}) {
   const { products } = usePipelineStore();
   const nameById = useMemo(
     () => new Map(products.map((p) => [p.id, p.name])),
     [products],
   );
 
-  if (notes.length === 0) {
+  const filtered = productIds
+    ? notes.filter((n) => productIds.has(n.productId))
+    : notes;
+
+  if (filtered.length === 0) {
     return (
       <p className="px-6 py-8 text-center text-sm text-gray-400">
         No factory updates recorded.
@@ -120,7 +136,7 @@ function FactoryTab({ notes }: { notes: ProductNote[] }) {
 
   return (
     <ul className="divide-y divide-gray-50/80">
-      {notes.map((note) => (
+      {filtered.map((note) => (
         <li key={note.id}>
           <FeedRow
             title={note.title}
@@ -138,15 +154,23 @@ function FactoryTab({ notes }: { notes: ProductNote[] }) {
 function CertificationTab({
   timelineItems,
   products,
+  productIds,
 }: {
   timelineItems: (ProductTimelineMovement & { productName: string })[];
   products: ReturnType<typeof usePipelineStore>["products"];
+  productIds?: Set<string>;
 }) {
-  const certProducts = products.filter(
+  const scopedProducts = productIds
+    ? products.filter((p) => productIds.has(p.id))
+    : products;
+
+  const certProducts = scopedProducts.filter(
     (p) => p.pipelineStage === "certification",
   );
   const certTimeline = timelineItems.filter(
-    (m) => m.stage === "certification",
+    (m) =>
+      m.stage === "certification" &&
+      (!productIds || productIds.has(m.productId)),
   );
 
   const rows = [
@@ -199,10 +223,15 @@ function CertificationTab({
 
 function LatestProductsTab({
   products,
+  productIds,
 }: {
   products: ReturnType<typeof usePipelineStore>["products"];
+  productIds?: Set<string>;
 }) {
-  const latest = getLatestProducts(products, 6);
+  const scoped = productIds
+    ? products.filter((p) => productIds.has(p.id))
+    : products;
+  const latest = getLatestProducts(scoped, 6);
 
   return (
     <ul className="divide-y divide-gray-50/80">
@@ -242,7 +271,11 @@ function LatestProductsTab({
   );
 }
 
-export function RecentActivitiesPanel() {
+export function RecentActivitiesPanel({
+  productIds,
+}: {
+  productIds?: Set<string>;
+} = {}) {
   const [tab, setTab] = useState<ActivityTab>("timeline");
   const { products, recentTimelineFeed } = usePipelineStore();
   const { notes } = useProductNotesStore();
@@ -303,15 +336,22 @@ export function RecentActivitiesPanel() {
         </div>
 
         <div role="tabpanel">
-          {tab === "timeline" && <TimelineTab items={recentTimelineFeed} />}
-          {tab === "factory" && <FactoryTab notes={factoryNotes} />}
+          {tab === "timeline" && (
+            <TimelineTab items={recentTimelineFeed} productIds={productIds} />
+          )}
+          {tab === "factory" && (
+            <FactoryTab notes={factoryNotes} productIds={productIds} />
+          )}
           {tab === "certification" && (
             <CertificationTab
               timelineItems={recentTimelineFeed}
               products={products}
+              productIds={productIds}
             />
           )}
-          {tab === "latest" && <LatestProductsTab products={products} />}
+          {tab === "latest" && (
+            <LatestProductsTab products={products} productIds={productIds} />
+          )}
         </div>
       </Card>
     </section>

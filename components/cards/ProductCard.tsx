@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { BrandContextStack } from "@/components/product/BrandContextStack";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import {
   formatCurrencyTHB,
@@ -50,6 +51,9 @@ export function ProductCard({ product, compact }: ProductCardProps) {
 
       {!compact && (
         <>
+          <div className="mt-3">
+            <BrandContextStack strategy={product.brandStrategy} compact />
+          </div>
           <p className="mt-3 line-clamp-2 text-sm text-gray-500">
             {product.description}
           </p>

@@ -22,12 +22,34 @@ export type PipelineStageTone = "pending" | "working" | "success" | "critical";
 
 export type OemType = "OEM" | "ODM" | "Custom";
 
+export type FtiBrand =
+  | "aquatek"
+  | "variia"
+  | "fastpure"
+  | "uni_pure"
+  | "treatton";
+
+export interface ProductBrandStrategy {
+  factory: string;
+  internalProjectName: string;
+  /** Null when brand decision is still open. */
+  currentBrand: FtiBrand | null;
+  candidateBrands: FtiBrand[];
+  businessUnit: string;
+  reason: string;
+  decisionDate: string | null;
+  owner: string;
+  /** Reserved for future Brand Fit Score (0–100). */
+  brandFitScore: number | null;
+}
+
 /** Core product record (no pricing summary or workflow status). */
 export interface Product {
   id: string;
   name: string;
   code: string;
   brand: string;
+  brandStrategy: ProductBrandStrategy;
   supplier: string;
   factoryLocation: string;
   category: string;
