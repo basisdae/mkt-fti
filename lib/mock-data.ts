@@ -4,6 +4,8 @@ import { calculatePricing, calculateSimulator } from "@/lib/pricing";
 import { createProduct, priceOption } from "@/lib/product-builder";
 import { brandStrategyForProduct } from "@/lib/brand-seed";
 import { defaultBrandStrategy, formatFtiBrand } from "@/lib/brand-strategy";
+import { evaluationForProduct } from "@/lib/evaluation-seed";
+import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
 import type {
   ActivityItem,
   DashboardMetric,
@@ -24,10 +26,15 @@ import type {
 
 function withBrandSeed(product: ReturnType<typeof createProduct>) {
   const seed = brandStrategyForProduct(product.id);
-  if (!seed) return product;
+  const evaluation =
+    evaluationForProduct(product.id) ?? createEmptyEvaluationScorecard();
+
+  const withEval = { ...product, evaluationScorecard: evaluation };
+
+  if (!seed) return withEval;
   const brandStrategy = defaultBrandStrategy(seed);
   return {
-    ...product,
+    ...withEval,
     brandStrategy,
     brand: brandStrategy.currentBrand
       ? formatFtiBrand(brandStrategy.currentBrand)

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { BrandContextStack } from "@/components/product/BrandContextStack";
+import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { isLowProfitMargin } from "@/lib/pricing";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import { formatPipelineStep } from "@/lib/pipeline";
@@ -85,6 +86,10 @@ export function ProductListRow({ product }: ProductListRowProps) {
               <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
                 {product.name}
               </p>
+              <EvaluationScoreBadge
+                scorecard={product.evaluationScorecard}
+                compact
+              />
               <Badge
                 variant={statusStyle.badge}
                 className={cn("shrink-0", statusStyle.bg)}

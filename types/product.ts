@@ -68,6 +68,30 @@ export interface Product {
   imageAlt: string;
   customOptions: ProductCustomOptions;
   certification: ProductCertification;
+  evaluationScorecard: ProductEvaluationScorecard;
+}
+
+export type EvaluationScore = 1 | 2 | 3 | 4 | 5;
+
+export type EvaluationCriterionId =
+  | "market_potential"
+  | "innovation_interest"
+  | "product_quality"
+  | "price_competitiveness"
+  | "oem_opportunity"
+  | "brand_fit"
+  | "marketing_potential"
+  | "supplier_reliability";
+
+export interface EvaluationCriterionInput {
+  score: EvaluationScore;
+  note: string;
+}
+
+export interface ProductEvaluationScorecard {
+  criteria: Record<EvaluationCriterionId, EvaluationCriterionInput>;
+  evaluatedAt: string;
+  evaluator: string;
 }
 
 export interface ProductPriceOption {
@@ -224,7 +248,8 @@ export type ProductSortOption =
   | "latest_updated"
   | "highest_profit"
   | "lowest_moq"
-  | "highest_selling_price";
+  | "highest_selling_price"
+  | "highest_evaluation_score";
 
 export type DashboardQuickFilter =
   | "waiting_quotation"

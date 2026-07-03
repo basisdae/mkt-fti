@@ -1,5 +1,6 @@
 import { evalExtras } from "@/lib/product-detail-defaults";
 import { defaultBrandStrategy, formatFtiBrand } from "@/lib/brand-strategy";
+import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
 import type {
   OemType,
   Product,
@@ -143,6 +144,7 @@ export function createProduct(seed: ProductSeedInput): Product {
       productSystems: defaultProductSystems(seed.category, seed.name),
       ...seed.certification,
     },
+    evaluationScorecard: createEmptyEvaluationScorecard(),
   };
 }
 

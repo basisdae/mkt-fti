@@ -7,6 +7,7 @@ import type {
 } from "@/types/product";
 import type { DashboardBrandFilter } from "@/lib/brand-strategy";
 import { matchesBrandFilter } from "@/lib/brand-strategy";
+import { getEvaluationTotalScore } from "@/lib/evaluation-scorecard";
 
 export interface ProductFilterState {
   query: string;
@@ -34,6 +35,7 @@ export const PRODUCT_SORT_OPTIONS: {
   { value: "highest_profit", label: "Highest Profit" },
   { value: "lowest_moq", label: "Lowest MOQ" },
   { value: "highest_selling_price", label: "Highest Selling Price" },
+  { value: "highest_evaluation_score", label: "Highest Evaluation Score" },
 ];
 
 export function getUnitProfit(product: ProductView): number {
@@ -103,6 +105,12 @@ export function sortProducts(
       return sorted.sort((a, b) => a.moq - b.moq);
     case "highest_selling_price":
       return sorted.sort((a, b) => b.ftiSellingPrice - a.ftiSellingPrice);
+    case "highest_evaluation_score":
+      return sorted.sort(
+        (a, b) =>
+          getEvaluationTotalScore(b.evaluationScorecard) -
+          getEvaluationTotalScore(a.evaluationScorecard),
+      );
     default:
       return sorted;
   }

@@ -5,6 +5,7 @@ import { BusinessMoqPriceTable } from "@/components/product/BusinessMoqPriceTabl
 import { CertificationCard } from "@/components/product/CertificationCard";
 import { OemCustomCard } from "@/components/product/OemCustomCard";
 import { BrandStrategyCard } from "@/components/product/BrandStrategyCard";
+import { EvaluationScorecardCard } from "@/components/product/EvaluationScorecardCard";
 import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
 import { ProfitSummaryCards } from "@/components/product/ProfitSummaryCards";
 import {
@@ -53,6 +54,10 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
 
       <div className="mb-6">
         <BrandStrategyCard product={product} />
+      </div>
+
+      <div className="mb-6">
+        <EvaluationScorecardCard product={product} />
       </div>
 
       <Card className="mb-6" padding="lg">

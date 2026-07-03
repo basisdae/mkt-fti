@@ -147,7 +147,7 @@ export function ProductSpotlightSlider({
   if (products.length === 0) return null;
 
   return (
-    <section className={cn("mb-6 sm:mb-8", className)}>
+    <section className={cn(className)}>
       <Card
         padding="none"
         className="overflow-hidden border-primary/10 bg-gradient-to-br from-light-purple/25 via-card to-white shadow-[0_12px_40px_-20px_rgb(105_92_255_0.25)]"
