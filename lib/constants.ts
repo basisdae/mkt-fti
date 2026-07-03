@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Package,
   GitBranch,
+  StickyNote,
   Calculator,
   Settings,
   type LucideIcon,
@@ -37,6 +38,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Products", href: "/products", icon: Package },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
   { label: "Timeline", href: "/timeline", icon: Clock3 },
+  { label: "Notes", href: "/notes", icon: StickyNote },
   { label: "Simulator", href: "/simulator", icon: Calculator },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

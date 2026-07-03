@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
 import { AppFooter } from "./AppFooter";
 import { PipelineStoreProvider } from "@/hooks/PipelineStore";
+import { ProductNotesStoreProvider } from "@/hooks/ProductNotesStore";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <PipelineStoreProvider>
+      <ProductNotesStoreProvider>
       <div className="flex h-dvh overflow-hidden bg-background">
       <Sidebar
         mobileOpen={mobileNavOpen}
@@ -36,6 +38,7 @@ export function AppShell({ children }: AppShellProps) {
         <AppFooter />
       </div>
     </div>
+      </ProductNotesStoreProvider>
     </PipelineStoreProvider>
   );
 }

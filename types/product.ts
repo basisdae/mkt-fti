@@ -119,6 +119,36 @@ export interface ProductTimelineMovement {
   note: string;
 }
 
+export type ProductNoteType =
+  | "rich"
+  | "factory_comment"
+  | "negotiation"
+  | "meeting_summary";
+
+export type ProductNoteFileType = "pdf" | "excel" | "image";
+
+export interface ProductNoteAttachment {
+  id: string;
+  name: string;
+  fileType: ProductNoteFileType;
+  mimeType: string;
+  sizeBytes: number;
+  /** Mock path or blob URL for local preview. */
+  url: string;
+}
+
+export interface ProductNote {
+  id: string;
+  productId: string;
+  type: ProductNoteType;
+  title: string;
+  body: string;
+  author: string;
+  createdAt: string;
+  updatedAt: string;
+  attachments: ProductNoteAttachment[];
+}
+
 /** Assembled product with pricing summary and workflow status for UI. */
 export interface ProductView extends Product {
   status: ProductStatus;

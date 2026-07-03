@@ -156,4 +156,12 @@ body {
       transform: translateY(0);
     }
   }
+
+  .notes-file-drop--active {
+    transform: scale(1.01);
+  }
+
+  .note-card {
+    animation: timeline-fade-in 0.35s ease-out both;
+  }
 }
