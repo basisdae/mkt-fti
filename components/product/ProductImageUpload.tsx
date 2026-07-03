@@ -36,7 +36,6 @@ export function ProductImageUpload({
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const storage = getProductImageStorage();
-  const storageReady = storage.isConnected();
 
   const revokeIfBlob = useCallback((url: string | null) => {
     storage.revokePreviewUrl(url);
@@ -171,19 +170,6 @@ export function ProductImageUpload({
           {error && (
             <p className="text-xs font-medium text-fti-red">{error}</p>
           )}
-
-          <div className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 text-xs text-gray-500">
-            {storageReady ? (
-              <span className="text-success">
-                Supabase Storage connected — uploads will sync when saved.
-              </span>
-            ) : (
-              <span>
-                Preview only — Supabase Storage not connected. Image stays in
-                local state until backend is wired.
-              </span>
-            )}
-          </div>
         </div>
       </div>
 

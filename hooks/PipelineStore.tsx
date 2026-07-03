@@ -16,6 +16,8 @@ import {
   savePipelineSnapshot,
 } from "@/lib/pipeline-storage";
 import { syncCoverFields } from "@/lib/product-gallery";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { listAllProductGalleryGrouped } from "@/lib/services/product-images";
 import {
   createPipelineMoveLog,
   initPipelineItems,
@@ -108,6 +110,42 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     if (!pipelineHydrated) return;
     savePipelineSnapshot({ productRecords, statuses, priceOptions });
   }, [pipelineHydrated, productRecords, statuses, priceOptions]);
+
+  useEffect(() => {
+    if (!pipelineHydrated || !isSupabaseConfigured()) return;
+
+    let cancelled = false;
+
+    async function hydrateGalleryFromSupabase() {
+      try {
+        const grouped = await listAllProductGalleryGrouped();
+        if (cancelled || grouped.size === 0) return;
+
+        setProductRecords((prev) =>
+          prev.map((product) => {
+            const images = grouped.get(product.id);
+            if (!images?.length) return product;
+
+            const cover = syncCoverFields(images, product.name);
+            return {
+              ...product,
+              images,
+              imageUrl: cover.imageUrl,
+              imageAlt: cover.imageAlt,
+            };
+          }),
+        );
+      } catch (error) {
+        console.warn("[PipelineStore] Failed to hydrate product gallery", error);
+      }
+    }
+
+    void hydrateGalleryFromSupabase();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pipelineHydrated]);
 
   const products = useMemo(
     () =>

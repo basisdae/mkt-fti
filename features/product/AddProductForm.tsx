@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -18,7 +18,27 @@ import {
 import type { ProductGalleryItem } from "@/lib/product-gallery";
 import { SupplierSearchPicker } from "@/components/supplier/SupplierSearchPicker";
 import { LinkedSupplierSummaryCard } from "@/components/supplier/LinkedSupplierSummaryCard";
-import { getCoverImageUrl, prepareGalleryForPersistence, galleryItemsFromProduct } from "@/lib/product-gallery";
+import { getCoverImageUrl, galleryItemsFromProduct, syncCoverFields } from "@/lib/product-gallery";
+import {
+  createProductInSupabase,
+  isProductSupabaseEnabled,
+  updateProductInSupabase,
+} from "@/lib/services/product-persist";
+import {
+  gallerySchemaSetupMessage,
+  isGallerySchemaMissingError,
+} from "@/lib/supabase/gallery-setup-error";
+import { deleteProduct } from "@/lib/services/products";
+import {
+  galleryItemsNeedUpload,
+  hasInvalidGalleryItems,
+  loadGalleryItemsForProduct,
+  markGalleryItemsFailed,
+  markGalleryItemsSaved,
+  markGalleryItemsUploading,
+  syncProductGallery,
+  uploadProductGallery,
+} from "@/lib/services/product-gallery-persist";
 import {
   PRODUCT_CATEGORY_LABELS,
   PRODUCT_STATUS_LABELS,
@@ -84,6 +104,8 @@ export interface ProductFormProps {
   initialProduct?: ProductView;
 }
 
+const CREATE_PRODUCT_FORM_ID = "create-product-form";
+
 export function ProductForm({
   mode = "create",
   productId,
@@ -111,6 +133,40 @@ export function ProductForm({
     }
     return createEmptyGalleryItems();
   });
+  const [galleryLoading, setGalleryLoading] = useState(isEdit);
+
+  useEffect(() => {
+    if (!isEdit || !productId || !initialProduct) {
+      setGalleryLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadGallery() {
+      setGalleryLoading(true);
+      try {
+        const items = await loadGalleryItemsForProduct(productId!, {
+          images: initialProduct!.images,
+          imageUrl: initialProduct!.imageUrl,
+          imageAlt: initialProduct!.imageAlt,
+          name: initialProduct!.name,
+        });
+        if (!cancelled) {
+          setGalleryItems(
+            items.length > 0 ? items : createEmptyGalleryItems(),
+          );
+        }
+      } finally {
+        if (!cancelled) setGalleryLoading(false);
+      }
+    }
+
+    void loadGallery();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, productId, initialProduct]);
 
   const detailHref =
     isEdit && productId ? `/products/${productId}` : "/products";
@@ -178,7 +234,7 @@ export function ProductForm({
     form.status !== "" &&
     isStatusBeyondContactFactory(form.status);
 
-  function validate(): boolean {
+  function getValidationErrors(): Record<string, string> {
     const next: Record<string, string> = {};
 
     if (!form.productName.trim()) {
@@ -198,53 +254,145 @@ export function ProductForm({
       next.moqOptions = "Add at least one MOQ with quantity and USD / Unit";
     }
 
-    setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!validate()) return;
+
+    const validationErrors = getValidationErrors();
+    const validationOk = Object.keys(validationErrors).length === 0;
+    setErrors(validationErrors);
+
+    if (!validationOk) {
+      setSubmitError(
+        `Validation failed: ${Object.values(validationErrors).join(" · ")}`,
+      );
+      return;
+    }
+
+    if (hasInvalidGalleryItems(galleryItems)) {
+      setSubmitError(
+        "Some images could not be uploaded. Remove them and add the files again.",
+      );
+      return;
+    }
+
+    const hasImages = galleryItems.length > 0;
+    const needsUpload = galleryItemsNeedUpload(galleryItems);
+    if (hasImages && needsUpload && !isProductSupabaseEnabled()) {
+      setSubmitError(
+        "Image upload requires Supabase. Configure storage or remove images to continue.",
+      );
+      return;
+    }
 
     setSubmitting(true);
     setSubmitError(null);
+    if (needsUpload) {
+      setGalleryItems((prev) => markGalleryItemsUploading(prev));
+    }
 
     try {
-      const images = await prepareGalleryForPersistence(galleryItems);
+      const productName = form.productName.trim();
+
       if (isEdit && productId && initialProduct) {
-        const bundle = updateProductBundleFromForm(
+        let bundle = updateProductBundleFromForm(
           productId,
           initialProduct,
           form,
           {
-            images,
+            images: initialProduct.images ?? [],
             supplierName: selectedSupplier?.factoryName ?? "",
             supplierId: form.supplierId,
             exchangeRate,
           },
         );
+
+        await updateProductInSupabase(bundle);
+
+        let images = bundle.product.images;
+        if (galleryItems.length > 0) {
+          images = await syncProductGallery(
+            productId,
+            productName,
+            galleryItems,
+          );
+          setGalleryItems(markGalleryItemsSaved(images));
+        } else if (isProductSupabaseEnabled()) {
+          images = await syncProductGallery(productId, productName, []);
+          setGalleryItems([]);
+        }
+
+        const cover = syncCoverFields(images, productName);
+        bundle = {
+          ...bundle,
+          product: {
+            ...bundle.product,
+            images,
+            imageUrl: cover.imageUrl,
+            imageAlt: cover.imageAlt,
+          },
+        };
+
         updateProduct(bundle);
         router.push(detailHref);
         return;
       }
 
-      const bundle = buildProductBundleFromForm(form, {
-        images,
+      let bundle = buildProductBundleFromForm(form, {
+        images: [],
         supplierName: selectedSupplier?.factoryName ?? "",
         supplierId: form.supplierId,
         exchangeRate,
       });
-      addProduct(bundle);
-      setSavedName(form.productName.trim());
-      setSubmitted(true);
+
+      await createProductInSupabase(bundle);
+
+      let images = bundle.product.images;
+      try {
+        if (galleryItems.length > 0) {
+          images = await uploadProductGallery(
+            bundle.product.id,
+            productName,
+            galleryItems,
+          );
+          setGalleryItems(markGalleryItemsSaved(images));
+        }
+      } catch (uploadError) {
+        if (isProductSupabaseEnabled()) {
+          await deleteProduct(bundle.product.id).catch(() => undefined);
+        }
+        throw uploadError;
+      }
+
+      const cover = syncCoverFields(images, productName);
+      bundle = {
+        ...bundle,
+        product: {
+          ...bundle.product,
+          images,
+          imageUrl: cover.imageUrl,
+          imageAlt: cover.imageAlt,
+        },
+      };
+
+      if (isProductSupabaseEnabled() && images.length > 0) {
+        await updateProductInSupabase(bundle);
+      }
+
+      const newProductId = addProduct(bundle);
+      router.push(`/products/${newProductId}`);
     } catch (err) {
-      setSubmitError(
-        err instanceof Error
-          ? err.message
-          : isEdit
-            ? "Failed to update product"
-            : "Failed to create product",
-      );
+      if (galleryItemsNeedUpload(galleryItems)) {
+        setGalleryItems((prev) => markGalleryItemsFailed(prev));
+      }
+      let message =
+        err instanceof Error ? err.message : "Failed to save product";
+      if (isGallerySchemaMissingError(message)) {
+        message = gallerySchemaSetupMessage();
+      }
+      setSubmitError(message);
     } finally {
       setSubmitting(false);
     }
@@ -322,7 +470,12 @@ export function ProductForm({
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mx-auto max-w-3xl space-y-6">
+        <form
+          id={CREATE_PRODUCT_FORM_ID}
+          noValidate
+          onSubmit={handleSubmit}
+          className="mx-auto max-w-3xl space-y-6"
+        >
           <FormSection
             title="Basic Information"
             description="Core product and supplier details"
@@ -408,8 +561,11 @@ export function ProductForm({
               items={galleryItems}
               onChange={setGalleryItems}
               productName={form.productName}
-              mode={isEdit ? "edit" : "create"}
+              persistHint={isEdit ? "saved" : "created"}
             />
+            {galleryLoading && (
+              <p className="mt-2 text-xs text-gray-500">Loading gallery…</p>
+            )}
             {submitError && (
               <p className="mt-3 text-xs font-medium text-fti-red">{submitError}</p>
             )}
@@ -563,16 +719,26 @@ export function ProductForm({
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-gray-400">
-              * Required fields · Saved locally only (no database yet)
+              * Required fields · Images upload to Supabase when Product is saved
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col items-end gap-2">
+              {submitError && (
+                <p className="max-w-md text-right text-xs font-medium text-fti-red">
+                  {submitError}
+                </p>
+              )}
+              <div className="flex gap-3">
               <Link
                 href={detailHref}
                 className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
               >
                 Cancel
               </Link>
-              <Button type="submit" disabled={submitting}>
+              <Button
+                type="submit"
+                form={CREATE_PRODUCT_FORM_ID}
+                aria-busy={submitting}
+              >
                 {submitting
                   ? isEdit
                     ? "Saving…"
@@ -581,6 +747,7 @@ export function ProductForm({
                     ? "Save Product"
                     : "Create Product"}
               </Button>
+              </div>
             </div>
           </div>
         </form>

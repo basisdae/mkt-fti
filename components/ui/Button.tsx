@@ -29,6 +29,7 @@ export function Button({
   size = "md",
   className,
   href,
+  type = "button",
   children,
   ...props
 }: ButtonProps) {
@@ -48,7 +49,7 @@ export function Button({
   }
 
   return (
-    <button className={classes} {...props}>
+    <button type={type} className={classes} {...props}>
       {children}
     </button>
   );

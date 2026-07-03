@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { ImagePlus, Star, Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,9 +11,8 @@ import { generateId } from "@/lib/generate-id";
 import type { ProductGalleryImage } from "@/types/product";
 import {
   appendGalleryFiles,
-  galleryStatusLabel,
-  galleryStatusTone,
-  galleryStorageConnected,
+  galleryItemStatusLabel,
+  galleryItemStatusTone,
   normalizeGalleryItems,
   removeGalleryItem,
   setGalleryCover,
@@ -27,28 +26,16 @@ interface ProductGalleryEditorProps {
   items: ProductGalleryItem[];
   onChange: (items: ProductGalleryItem[]) => void;
   productName?: string;
-  mode?: "create" | "edit";
-  onSave?: () => void | Promise<void>;
-  saving?: boolean;
-  saveError?: string | null;
+  /** Wording for the footer hint — create vs edit product form. */
+  persistHint?: "created" | "saved";
   className?: string;
 }
-
-const statusToneClasses = {
-  neutral: "border-gray-100 bg-gray-50 text-gray-500",
-  warning: "border-amber-200 bg-amber-50 text-amber-800",
-  success: "border-green-200 bg-green-50 text-green-800",
-  error: "border-red-200 bg-red-50 text-fti-red",
-} as const;
 
 export function ProductGalleryEditor({
   items,
   onChange,
   productName = "",
-  mode = "create",
-  onSave,
-  saving = false,
-  saveError = null,
+  persistHint = "created",
   className,
 }: ProductGalleryEditorProps) {
   const inputId = useId();
@@ -57,9 +44,6 @@ export function ProductGalleryEditor({
   const [fileErrors, setFileErrors] = useState<string[]>([]);
 
   const sortedItems = sortGalleryImages(items);
-  const storageReady = galleryStorageConnected();
-  const statusTone = galleryStatusTone(items);
-  const statusLabel = galleryStatusLabel(items);
 
   const handleFiles = useCallback(
     (files: FileList | null) => {
@@ -138,34 +122,6 @@ export function ProductGalleryEditor({
         </div>
       )}
 
-      {saveError && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-fti-red">
-          {saveError}
-        </div>
-      )}
-
-      <div
-        className={cn(
-          "rounded-xl border px-3 py-2.5 text-xs font-medium",
-          statusToneClasses[statusTone],
-        )}
-      >
-        <span className="font-semibold">Status: </span>
-        {statusLabel}
-        {!storageReady && items.length > 0 && (
-          <span className="mt-1 block font-normal text-gray-600">
-            Images are stored locally in your browser until Supabase Storage is
-            connected. They persist after refresh on this device.
-          </span>
-        )}
-        {storageReady && (
-          <span className="mt-1 block font-normal text-gray-600">
-            Supabase Storage is configured but upload is not wired yet — images
-            save locally for now.
-          </span>
-        )}
-      </div>
-
       {sortedItems.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {sortedItems.map((item) => (
@@ -189,16 +145,20 @@ export function ProductGalleryEditor({
                     Cover
                   </Badge>
                 )}
-                {item.saveStatus === "unsaved" && (
-                  <Badge className="absolute right-2 top-2 bg-amber-100 text-amber-800">
-                    Unsaved
-                  </Badge>
-                )}
-                {item.saveStatus === "failed" && (
-                  <Badge variant="danger" className="absolute right-2 top-2">
-                    Failed
-                  </Badge>
-                )}
+                <Badge
+                  variant={
+                    galleryItemStatusTone(item) === "success"
+                      ? "success"
+                      : galleryItemStatusTone(item) === "danger"
+                        ? "danger"
+                        : galleryItemStatusTone(item) === "info"
+                          ? "default"
+                          : "muted"
+                  }
+                  className="absolute right-2 top-2 shadow-sm"
+                >
+                  {galleryItemStatusLabel(item)}
+                </Badge>
               </div>
 
               <Input
@@ -242,7 +202,7 @@ export function ProductGalleryEditor({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
           variant="secondary"
@@ -252,25 +212,11 @@ export function ProductGalleryEditor({
           <Upload className="h-4 w-4" />
           Add more images
         </Button>
-
-        {mode === "edit" && onSave && (
-          <Button
-            type="button"
-            size="sm"
-            onClick={() => void onSave()}
-            disabled={saving || !items.some((item) => item.saveStatus === "unsaved")}
-          >
-            {saving ? "Saving…" : "Save gallery"}
-          </Button>
-        )}
       </div>
 
-      {mode === "create" && (
-        <p className="text-xs text-gray-500">
-          Gallery images are saved when you click{" "}
-          <span className="font-medium text-gray-700">Create Product</span> below.
-        </p>
-      )}
+      <p className="text-xs text-gray-500">
+        Images will be uploaded automatically when Product is {persistHint}.
+      </p>
     </div>
   );
 }

@@ -59,6 +59,8 @@ export interface ProductGalleryImage {
   alt: string;
   sortOrder: number;
   isCover: boolean;
+  /** Supabase Storage object path — used for delete on edit. */
+  imagePath?: string | null;
 }
 
 /** Core product record (no pricing summary or workflow status). */

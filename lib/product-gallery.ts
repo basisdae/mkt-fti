@@ -4,10 +4,9 @@ import {
   revokeProductImagePreviewUrl,
   validateProductImageFile,
 } from "@/lib/product-image";
-import { isSupabaseStorageConnected } from "@/lib/product-image-storage";
 import type { ProductGalleryImage } from "@/types/product";
 
-export type GallerySaveStatus = "unsaved" | "saved" | "failed";
+export type GallerySaveStatus = "unsaved" | "uploading" | "saved" | "failed";
 
 /** Gallery item in the editor — may include a pending File before persistence. */
 export interface ProductGalleryItem extends ProductGalleryImage {
@@ -120,7 +119,10 @@ export function setGalleryCover(
     items.map((item) => ({
       ...item,
       isCover: item.id === imageId,
-      saveStatus: item.id === imageId ? "unsaved" : item.saveStatus,
+      saveStatus:
+        item.id === imageId || item.isCover
+          ? ("unsaved" as const)
+          : item.saveStatus,
     })),
   );
 }
@@ -183,72 +185,34 @@ export function revokeGalleryPreviewUrls(items: ProductGalleryItem[]) {
   }
 }
 
-export function hasUnsavedGalleryItems(items: ProductGalleryItem[]): boolean {
-  return items.some((item) => item.saveStatus === "unsaved");
-}
+export type GalleryStatusTone = "neutral" | "info" | "success" | "danger";
 
-export function hasFailedGalleryItems(items: ProductGalleryItem[]): boolean {
-  return items.some((item) => item.saveStatus === "failed");
-}
-
-export function galleryStorageConnected(): boolean {
-  return isSupabaseStorageConnected();
-}
-
-export function galleryStatusLabel(items: ProductGalleryItem[]): string {
-  if (hasFailedGalleryItems(items)) return "Upload failed";
-  if (hasUnsavedGalleryItems(items)) return "Unsaved images";
-  if (items.length === 0) return "No images";
-  if (galleryStorageConnected()) return "Saved";
-  return "Saved locally";
-}
-
-export function galleryStatusTone(
-  items: ProductGalleryItem[],
-): "neutral" | "warning" | "success" | "error" {
-  if (hasFailedGalleryItems(items)) return "error";
-  if (hasUnsavedGalleryItems(items)) return "warning";
-  if (items.length === 0) return "neutral";
-  return "success";
-}
-
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
-    reader.readAsDataURL(file);
-  });
-}
-
-/** Convert pending files to persistable URLs (data URL locally until Supabase Storage). */
-export async function prepareGalleryForPersistence(
-  items: ProductGalleryItem[],
-): Promise<ProductGalleryImage[]> {
-  const normalized = normalizeGalleryItems(items);
-  const prepared: ProductGalleryImage[] = [];
-
-  for (const item of normalized) {
-    let url = item.url;
-
-    if (item.file) {
-      if (galleryStorageConnected()) {
-        throw new Error("Supabase Storage upload is not implemented yet.");
-      }
-      url = await fileToDataUrl(item.file);
-      revokeProductImagePreviewUrl(item.url);
-    }
-
-    prepared.push({
-      id: item.id,
-      url,
-      alt: item.alt,
-      sortOrder: item.sortOrder,
-      isCover: item.isCover,
-    });
+export function galleryItemStatusLabel(item: ProductGalleryItem): string {
+  switch (item.saveStatus) {
+    case "uploading":
+      return "Uploading...";
+    case "saved":
+      return "Saved";
+    case "failed":
+      return "Upload failed";
+    case "unsaved":
+    default:
+      return "Ready to upload";
   }
+}
 
-  return prepared;
+export function galleryItemStatusTone(item: ProductGalleryItem): GalleryStatusTone {
+  switch (item.saveStatus) {
+    case "uploading":
+      return "info";
+    case "saved":
+      return "success";
+    case "failed":
+      return "danger";
+    case "unsaved":
+    default:
+      return "neutral";
+  }
 }
 
 export function itemsFromPersistedImages(

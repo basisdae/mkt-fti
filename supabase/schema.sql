@@ -131,6 +131,7 @@ create table if not exists public.product_images (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references public.products (id) on delete cascade,
   image_url text not null,
+  image_path text,
   alt_text text not null default '',
   sort_order integer not null default 0,
   is_cover boolean not null default false,
@@ -342,6 +343,34 @@ alter table public.simulator_scenarios disable row level security;
 alter table public.simulator_scenario_items disable row level security;
 alter table public.pipeline_logs disable row level security;
 alter table public.notes disable row level security;
+
+-- ---------------------------------------------------------------------------
+-- Storage: product-images bucket (public read)
+-- ---------------------------------------------------------------------------
+
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do update set public = excluded.public;
+
+drop policy if exists "product_images_public_read" on storage.objects;
+create policy "product_images_public_read"
+  on storage.objects for select
+  using (bucket_id = 'product-images');
+
+drop policy if exists "product_images_insert" on storage.objects;
+create policy "product_images_insert"
+  on storage.objects for insert
+  with check (bucket_id = 'product-images');
+
+drop policy if exists "product_images_update" on storage.objects;
+create policy "product_images_update"
+  on storage.objects for update
+  using (bucket_id = 'product-images');
+
+drop policy if exists "product_images_delete" on storage.objects;
+create policy "product_images_delete"
+  on storage.objects for delete
+  using (bucket_id = 'product-images');
 
 -- Optional: open policies instead of disabling RLS (uncomment if preferred)
 --

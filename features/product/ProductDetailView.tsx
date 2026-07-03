@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Star } from "lucide-react";
 import { BusinessMoqPriceTable } from "@/components/product/BusinessMoqPriceTable";
 import { CertificationCard } from "@/components/product/CertificationCard";
 import { OemCustomCard } from "@/components/product/OemCustomCard";
@@ -9,19 +10,11 @@ import { EvaluationScorecardCard } from "@/components/product/EvaluationScorecar
 import { ProductLinkedSupplierCard } from "@/components/supplier/ProductLinkedSupplierCard";
 import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
 import { ProfitSummaryCards } from "@/components/product/ProfitSummaryCards";
-import {
-  createGalleryItemsFromProduct,
-  ProductGalleryEditor,
-} from "@/components/product/ProductGalleryEditor";
-import type { ProductGalleryItem } from "@/lib/product-gallery";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { usePipelineStore } from "@/hooks/PipelineStore";
 import { getPriceOptionById } from "@/lib/assemble-product";
-import {
-  getCoverImageUrl,
-  itemsFromPersistedImages,
-  prepareGalleryForPersistence,
-} from "@/lib/product-gallery";
+import { sortGalleryImages } from "@/lib/product-gallery";
 import { getProfitSummary } from "@/lib/product-detail";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import type { ProductView } from "@/types/product";
@@ -31,26 +24,35 @@ interface ProductDetailViewProps {
 }
 
 export function ProductDetailView({ product }: ProductDetailViewProps) {
-  const { updateProductGallery } = usePipelineStore();
   const { getSupplier } = useSupplierStore();
   const [selectedTierId, setSelectedTierId] = useState(
     product.priceOptions[0]?.id ?? "",
   );
-  const [galleryItems, setGalleryItems] = useState<ProductGalleryItem[]>(() =>
-    createGalleryItemsFromProduct(
-      product.images,
-      product.imageUrl,
-      product.imageAlt,
-      product.name,
-    ),
-  );
-  const [savingGallery, setSavingGallery] = useState(false);
-  const [gallerySaveError, setGallerySaveError] = useState<string | null>(null);
 
-  const coverPreviewUrl =
-    getCoverImageUrl(galleryItems) ?? product.imageUrl ?? null;
+  const galleryImages = useMemo(() => {
+    if (product.images && product.images.length > 0) {
+      return sortGalleryImages(product.images);
+    }
+    if (product.imageUrl) {
+      return [
+        {
+          id: product.id,
+          url: product.imageUrl,
+          alt: product.imageAlt,
+          sortOrder: 0,
+          isCover: true,
+        },
+      ];
+    }
+    return [];
+  }, [product]);
+
+  const coverPreviewUrl = galleryImages.find((img) => img.isCover)?.url
+    ?? galleryImages[0]?.url
+    ?? product.imageUrl
+    ?? null;
   const coverAlt =
-    galleryItems.find((item) => item.isCover)?.alt ?? product.imageAlt;
+    galleryImages.find((img) => img.isCover)?.alt ?? product.imageAlt;
 
   const selectedTier = useMemo(
     () =>
@@ -66,23 +68,6 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   const linkedSupplier = product.supplierId
     ? getSupplier(product.supplierId)
     : undefined;
-
-  async function handleSaveGallery() {
-    setSavingGallery(true);
-    setGallerySaveError(null);
-
-    try {
-      const images = await prepareGalleryForPersistence(galleryItems);
-      updateProductGallery(product.id, images);
-      setGalleryItems(itemsFromPersistedImages(images));
-    } catch (err) {
-      setGallerySaveError(
-        err instanceof Error ? err.message : "Failed to save gallery",
-      );
-    } finally {
-      setSavingGallery(false);
-    }
-  }
 
   return (
     <div className="page-shell">
@@ -115,15 +100,41 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
             Multiple images supported · cover image appears on product lists
           </p>
         </div>
-        <ProductGalleryEditor
-          items={galleryItems}
-          onChange={setGalleryItems}
-          productName={product.name}
-          mode="edit"
-          onSave={handleSaveGallery}
-          saving={savingGallery}
-          saveError={gallerySaveError}
-        />
+        {galleryImages.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {galleryImages.map((image) => (
+              <div
+                key={image.id}
+                className="rounded-[20px] border border-gray-100 bg-white p-3 shadow-sm"
+              >
+                <div className="relative flex justify-center">
+                  <ProductImageDisplay
+                    src={image.url}
+                    alt={image.alt || product.name}
+                    size="lg"
+                    className="p-2"
+                  />
+                  {image.isCover && (
+                    <Badge
+                      variant="success"
+                      className="absolute left-2 top-2 gap-1 shadow-sm"
+                    >
+                      <Star className="h-3 w-3 fill-current" />
+                      Cover
+                    </Badge>
+                  )}
+                </div>
+                {image.alt && (
+                  <p className="mt-3 text-xs text-gray-500">{image.alt}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-[20px] border border-dashed border-gray-200 bg-white/60 px-6 py-10 text-center">
+            <p className="text-sm text-gray-500">No gallery images yet</p>
+          </div>
+        )}
       </Card>
 
       <Card className="mb-6" padding="lg">
