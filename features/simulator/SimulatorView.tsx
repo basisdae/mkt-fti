@@ -21,6 +21,7 @@ import {
 } from "@/components/simulator/SimulatorKpiCard";
 import { ScenarioTable } from "@/components/simulator/ScenarioTable";
 import { SimulatorUndoToolbar } from "@/components/simulator/SimulatorUndoToolbar";
+import { SimulatorUnitPreview } from "@/components/simulator/SimulatorUnitPreview";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import {
@@ -32,8 +33,29 @@ import {
 import { getProducts, simulatorDefaults } from "@/lib/mock-data";
 import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
 import { resolveProductImageAlt } from "@/lib/product-image";
-import { cn, formatCurrencyTHB, formatPercent } from "@/lib/utils";
+import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import type { ScenarioRow } from "@/lib/pricing";
+
+const fieldLabelClass = "text-sm font-semibold text-[#1F2937]";
+
+function SimulatorSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <h3 className="mb-3 text-sm font-semibold text-[#1F2937]">{title}</h3>
+      <div className="space-y-4">{children}</div>
+    </section>
+  );
+}
+
+function SimulatorDivider() {
+  return <div className="my-5 h-px bg-[#EEF0F6]" role="separator" />;
+}
 
 export function SimulatorView() {
   const [productId, setProductId] = useState(simulatorDefaults.productId);
@@ -182,17 +204,18 @@ export function SimulatorView() {
       />
 
       <div className="page-header-block">
-        <h1 className="page-title">{t.pageTitle}</h1>
-        <p className="page-description">{t.pageSubtitle}</p>
+        <h1 className="page-title font-bold text-gray-900">{t.pageTitle}</h1>
+        <p className="page-description text-[#667085]">{t.pageSubtitle}</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-2" interactive>
-          <h2 className="mb-5 text-base font-semibold text-gray-900">
+          <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
             {t.inputsTitle}
           </h2>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 rounded-xl border border-gray-100 bg-light-purple/30 p-3">
+
+          <SimulatorSection title={t.sectionProductSelection}>
+            <div className="flex items-center gap-4 rounded-xl border border-[#EEF0F6] bg-[#FBFBFD] p-3">
               <ProductImageDisplay
                 src={product.imageUrl}
                 alt={resolveProductImageAlt(product)}
@@ -200,10 +223,10 @@ export function SimulatorView() {
                 className="p-1.5"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-gray-900">
+                <p className="truncate text-sm font-semibold text-[#1F2937]">
                   {product.name}
                 </p>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-xs text-[#8A94A6]">
                   {product.supplier}
                 </p>
               </div>
@@ -211,18 +234,26 @@ export function SimulatorView() {
 
             <Select
               label={t.selectProduct}
+              labelClassName={fieldLabelClass}
               options={productOptions}
               value={productId}
               onChange={handleProductChange}
             />
             <Select
               label={t.moqTier}
+              labelClassName={fieldLabelClass}
               options={moqOptions}
               value={activeTierId}
               onChange={(e) => setTierId(e.target.value)}
             />
+          </SimulatorSection>
+
+          <SimulatorDivider />
+
+          <SimulatorSection title={t.sectionSalesTarget}>
             <Input
               label={t.targetRevenue}
+              labelClassName={fieldLabelClass}
               type="number"
               min={0}
               value={targetRevenue}
@@ -232,45 +263,18 @@ export function SimulatorView() {
             />
             <Input
               label={t.expectedQty}
+              labelClassName={fieldLabelClass}
               type="number"
               min={0}
               value={expectedQty}
               onChange={(e) => setExpectedQty(Number(e.target.value) || 0)}
             />
+          </SimulatorSection>
 
-            <div className="rounded-xl bg-light-purple/50 px-4 py-3">
-              <p className="text-xs font-medium text-gray-500">
-                {t.unitPricingTitle}
-              </p>
-              <p className="mt-2 text-xs text-gray-500">{t.sellingPrice}</p>
-              <p className="text-lg font-bold text-primary">
-                {formatCurrencyTHB(pricing.ftiSellingPrice)}
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <p className="text-gray-400">{t.costPerUnit}</p>
-                  <p className="font-medium text-gray-700">
-                    {formatCurrencyTHB(pricing.costThb)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-400">{t.profitPerUnit}</p>
-                  <p
-                    className={cn(
-                      "font-semibold",
-                      isLowProfitMargin(pricing.wholesaleGpPercent)
-                        ? "text-fti-red"
-                        : "text-green-800",
-                    )}
-                  >
-                    {formatCurrencyTHB(pricing.ftiProfit)}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-2 text-[11px] text-gray-400">
-                {t.profitMargin}: {formatPercent(pricing.wholesaleGpPercent)}
-              </p>
-            </div>
+          <SimulatorDivider />
+
+          <SimulatorSection title={t.sectionResultPreview}>
+            <SimulatorUnitPreview pricing={pricing} />
 
             {lowMargin && (
               <div className="warning-banner">
@@ -278,7 +282,9 @@ export function SimulatorView() {
                 {t.lowMarginWarning}
               </div>
             )}
+          </SimulatorSection>
 
+          <div className="mt-5">
             <Button
               type="button"
               variant="secondary"

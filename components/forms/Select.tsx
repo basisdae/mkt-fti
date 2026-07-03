@@ -2,16 +2,34 @@ import { cn } from "@/lib/utils";
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
+  labelClassName?: string;
+  hint?: string;
+  hintClassName?: string;
   options: { value: string; label: string }[];
 }
 
-export function Select({ label, options, className, id, ...props }: SelectProps) {
+export function Select({
+  label,
+  labelClassName,
+  hint,
+  hintClassName,
+  options,
+  className,
+  id,
+  ...props
+}: SelectProps) {
   const selectId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
 
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={selectId} className="text-sm font-medium text-gray-700">
+        <label
+          htmlFor={selectId}
+          className={cn(
+            "text-sm font-medium text-gray-700",
+            labelClassName,
+          )}
+        >
           {label}
         </label>
       )}
@@ -29,6 +47,9 @@ export function Select({ label, options, className, id, ...props }: SelectProps)
           </option>
         ))}
       </select>
+      {hint && (
+        <p className={cn("text-xs text-gray-400", hintClassName)}>{hint}</p>
+      )}
     </div>
   );
 }

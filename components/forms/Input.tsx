@@ -2,15 +2,32 @@ import { cn } from "@/lib/utils";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
+  labelClassName?: string;
+  hint?: string;
+  hintClassName?: string;
 }
 
-export function Input({ label, className, id, ...props }: InputProps) {
+export function Input({
+  label,
+  labelClassName,
+  hint,
+  hintClassName,
+  className,
+  id,
+  ...props
+}: InputProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
 
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-sm font-medium text-gray-700">
+        <label
+          htmlFor={inputId}
+          className={cn(
+            "text-sm font-medium text-gray-700",
+            labelClassName,
+          )}
+        >
           {label}
         </label>
       )}
@@ -22,6 +39,9 @@ export function Input({ label, className, id, ...props }: InputProps) {
         )}
         {...props}
       />
+      {hint && (
+        <p className={cn("text-xs text-gray-400", hintClassName)}>{hint}</p>
+      )}
     </div>
   );
 }

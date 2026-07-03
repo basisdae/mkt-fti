@@ -6,6 +6,9 @@ export const SIMULATOR_COPY = {
     "ทดลองใส่จำนวนขาย เพื่อดูยอดขายรวม ต้นทุนรวม และกำไรโดยประมาณ",
 
   inputsTitle: "ข้อมูลสำหรับคำนวณ",
+  sectionProductSelection: "เลือกสินค้า",
+  sectionSalesTarget: "ตั้งเป้าการขาย",
+  sectionResultPreview: "ผลคำนวณต่อชิ้น",
   selectProduct: "เลือกสินค้า",
   moqTier: "ขั้นต่ำการสั่งซื้อ (MOQ)",
   targetRevenue: "เป้าหมายยอดขาย",

@@ -75,7 +75,7 @@ export function SimulatorKpiCard({
         >
           <Icon className="h-5 w-5" strokeWidth={1.75} />
         </div>
-        <p className="text-sm font-medium text-gray-500">{label}</p>
+        <p className="text-xs font-medium text-[#8A94A6]">{label}</p>
       </div>
       <p
         className={cn(
@@ -86,7 +86,7 @@ export function SimulatorKpiCard({
         {value}
       </p>
       {subtitle && (
-        <p className="mt-2 text-xs leading-relaxed text-gray-400">{subtitle}</p>
+        <p className="mt-2 text-xs leading-relaxed text-[#8A94A6]">{subtitle}</p>
       )}
     </div>
   );
