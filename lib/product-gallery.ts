@@ -156,7 +156,11 @@ export function appendGalleryFiles(
 ): { items: ProductGalleryItem[]; errors: string[] } {
   const errors: string[] = [];
   const next = [...items];
-  let sortOrder = next.length;
+  const hasCover = next.some((item) => item.isCover);
+  let sortOrder =
+    next.length === 0
+      ? 0
+      : Math.max(...next.map((item) => item.sortOrder), next.length - 1) + 1;
 
   for (const file of files) {
     const validationError = validateProductImageFile(file);
@@ -170,7 +174,7 @@ export function appendGalleryFiles(
         file,
         productName,
         sortOrder,
-        next.length === 0,
+        !hasCover && next.length === 0,
       ),
     );
     sortOrder += 1;

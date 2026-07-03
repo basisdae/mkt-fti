@@ -53,6 +53,68 @@ export interface ProductBrandStrategy {
   brandFitScore: number | null;
 }
 
+export type ProductImageType =
+  | ""
+  | "cover"
+  | "front"
+  | "back"
+  | "left"
+  | "right"
+  | "top"
+  | "bottom"
+  | "inside"
+  | "packaging"
+  | "filter"
+  | "accessories"
+  | "certificate"
+  | "dimension_drawing"
+  | "installation"
+  | "lifestyle"
+  | "marketing"
+  | "manual"
+  | "other";
+
+export const PRODUCT_IMAGE_TYPE_LABELS: Record<ProductImageType, string> = {
+  "": "No type",
+  cover: "Cover",
+  front: "Front",
+  back: "Back",
+  left: "Left",
+  right: "Right",
+  top: "Top",
+  bottom: "Bottom",
+  inside: "Inside",
+  packaging: "Packaging",
+  filter: "Filter",
+  accessories: "Accessories",
+  certificate: "Certificate",
+  dimension_drawing: "Dimension Drawing",
+  installation: "Installation",
+  lifestyle: "Lifestyle",
+  marketing: "Marketing",
+  manual: "Manual",
+  other: "Other",
+};
+
+export type ProductImageUsageTag =
+  | "website"
+  | "catalog"
+  | "marketplace"
+  | "presentation"
+  | "social_media"
+  | "packaging"
+  | "manual";
+
+export const PRODUCT_IMAGE_USAGE_LABELS: Record<ProductImageUsageTag, string> = {
+  website: "Website",
+  catalog: "Catalog",
+  marketplace: "Marketplace",
+  presentation: "Presentation",
+  social_media: "Social Media",
+  packaging: "Packaging",
+  manual: "Manual",
+};
+
 export interface ProductGalleryImage {
   id: string;
   url: string;
@@ -61,6 +123,10 @@ export interface ProductGalleryImage {
   isCover: boolean;
   /** Supabase Storage object path — used for delete on edit. */
   imagePath?: string | null;
+  /** Image category type for asset management. */
+  imageType?: ProductImageType;
+  /** Usage channels this image is approved for. */
+  usageTags?: ProductImageUsageTag[];
 }
 
 /** Core product record (no pricing summary or workflow status). */

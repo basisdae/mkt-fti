@@ -3,11 +3,13 @@ import {
   isSupabaseStorageUploadReady,
 } from "@/lib/product-image-storage";
 import {
+  insertProductImages,
   listProductImages,
   replaceProductImages,
   updateProductCoverFields,
 } from "@/lib/services/product-images";
 import {
+  appendGalleryFiles,
   normalizeGalleryItems,
   revokeGalleryPreviewUrls,
   syncCoverFields,
@@ -43,6 +45,8 @@ async function prepareItemForUpload(
       alt: uploaded.imageAlt,
       sortOrder: item.sortOrder,
       isCover: item.isCover,
+      imageType: item.imageType,
+      usageTags: item.usageTags,
     };
   }
 
@@ -59,6 +63,8 @@ async function prepareItemForUpload(
     alt: item.alt,
     sortOrder: item.sortOrder,
     isCover: item.isCover,
+    imageType: item.imageType,
+    usageTags: item.usageTags,
   };
 }
 
@@ -124,6 +130,46 @@ export async function syncProductGallery(
   await updateProductCoverFields(productId, cover.imageUrl, cover.imageAlt);
 
   return saved;
+}
+
+/** Upload only new files and append to existing gallery — existing rows stay untouched. */
+export async function appendNewGalleryImages(
+  productId: string,
+  productName: string,
+  existingItems: ProductGalleryItem[],
+  files: File[],
+): Promise<ProductGalleryItem[]> {
+  if (!isSupabaseStorageUploadReady()) {
+    throw new Error("Image upload requires Supabase Storage.");
+  }
+
+  const { items: withPending, errors } = appendGalleryFiles(
+    existingItems,
+    files,
+    productName,
+  );
+
+  const newPending = withPending.filter((item) => item.file);
+  if (newPending.length === 0) {
+    if (errors.length > 0) {
+      throw new Error(errors.join(" · "));
+    }
+    return existingItems.map((item) => ({
+      ...item,
+      file: null,
+      saveStatus: "saved" as const,
+    }));
+  }
+
+  const uploaded: ProductGalleryImage[] = [];
+  for (const item of newPending) {
+    uploaded.push(await prepareItemForUpload(productId, productName, item));
+  }
+
+  await insertProductImages(productId, uploaded);
+
+  const refreshed = await listProductImages(productId);
+  return markGalleryItemsSaved(refreshed);
 }
 
 export function galleryItemsNeedUpload(items: ProductGalleryItem[]): boolean {

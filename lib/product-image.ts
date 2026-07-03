@@ -8,7 +8,7 @@ export const ACCEPTED_PRODUCT_IMAGE_TYPES = [
 export const ACCEPTED_PRODUCT_IMAGE_ACCEPT =
   ".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp";
 
-export const MAX_PRODUCT_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+export const MAX_PRODUCT_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export type ProductImageSize = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -41,7 +41,7 @@ export function validateProductImageFile(file: File): string | null {
     return "Use PNG, JPG, or WebP only.";
   }
   if (file.size > MAX_PRODUCT_IMAGE_SIZE_BYTES) {
-    return "Image must be 5 MB or smaller.";
+    return "Image must be 10 MB or smaller.";
   }
   return null;
 }

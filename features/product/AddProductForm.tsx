@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -30,6 +30,7 @@ import {
 } from "@/lib/supabase/gallery-setup-error";
 import { deleteProduct } from "@/lib/services/products";
 import {
+  appendNewGalleryImages,
   galleryItemsNeedUpload,
   hasInvalidGalleryItems,
   loadGalleryItemsForProduct,
@@ -112,7 +113,7 @@ export function ProductForm({
   initialProduct,
 }: ProductFormProps) {
   const router = useRouter();
-  const { addProduct, updateProduct } = usePipelineStore();
+  const { addProduct, updateProduct, updateProductGallery } = usePipelineStore();
   const { getSupplier } = useSupplierStore();
   const { exchangeRate } = useSettingsStore();
   const isEdit = mode === "edit";
@@ -134,6 +135,51 @@ export function ProductForm({
     return createEmptyGalleryItems();
   });
   const [galleryLoading, setGalleryLoading] = useState(isEdit);
+  const [galleryAppending, setGalleryAppending] = useState(false);
+  const [galleryAppendError, setGalleryAppendError] = useState<string | null>(
+    null,
+  );
+
+  const handleAppendGalleryImages = useCallback(
+    async (files: File[]) => {
+      if (!productId) return;
+
+      setGalleryAppending(true);
+      setGalleryAppendError(null);
+
+      try {
+        const productName =
+          form.productName.trim() ||
+          initialProduct?.name ||
+          "Product";
+        const next = await appendNewGalleryImages(
+          productId,
+          productName,
+          galleryItems,
+          files,
+        );
+        setGalleryItems(next);
+        updateProductGallery(
+          productId,
+          next.map(({ file: _file, saveStatus: _status, ...image }) => image),
+        );
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to upload images";
+        setGalleryAppendError(message);
+        throw err;
+      } finally {
+        setGalleryAppending(false);
+      }
+    },
+    [
+      productId,
+      form.productName,
+      initialProduct?.name,
+      galleryItems,
+      updateProductGallery,
+    ],
+  );
 
   useEffect(() => {
     if (!isEdit || !productId || !initialProduct) {
@@ -318,7 +364,9 @@ export function ProductForm({
             productName,
             galleryItems,
           );
-          setGalleryItems(markGalleryItemsSaved(images));
+          const savedItems = markGalleryItemsSaved(images);
+          setGalleryItems(savedItems);
+          updateProductGallery(productId, images);
         } else if (isProductSupabaseEnabled()) {
           images = await syncProductGallery(productId, productName, []);
           setGalleryItems([]);
@@ -562,6 +610,13 @@ export function ProductForm({
               onChange={setGalleryItems}
               productName={form.productName}
               persistHint={isEdit ? "saved" : "created"}
+              onAppendImages={
+                isEdit && productId && isProductSupabaseEnabled()
+                  ? handleAppendGalleryImages
+                  : undefined
+              }
+              appending={galleryAppending}
+              appendError={galleryAppendError}
             />
             {galleryLoading && (
               <p className="mt-2 text-xs text-gray-500">Loading gallery…</p>

@@ -22,6 +22,8 @@ function mapRow(row: {
   alt_text: string;
   sort_order: number;
   is_cover: boolean;
+  image_type?: string;
+  usage_tags?: string[] | null;
 }): ProductGalleryImage {
   return {
     id: row.id,
@@ -30,6 +32,8 @@ function mapRow(row: {
     alt: row.alt_text,
     sortOrder: row.sort_order,
     isCover: row.is_cover,
+    imageType: (row.image_type as ProductGalleryImage["imageType"]) ?? "",
+    usageTags: (row.usage_tags as ProductGalleryImage["usageTags"]) ?? [],
   };
 }
 
@@ -72,6 +76,35 @@ export async function listAllProductGalleryGrouped(): Promise<
   return grouped;
 }
 
+/** Insert new gallery rows without removing existing ones. */
+export async function insertProductImages(
+  productId: string,
+  images: ProductGalleryImage[],
+) {
+  if (images.length === 0) return [];
+
+  const supabase = getClient();
+  const rows = images.map((image) => ({
+    id: image.id,
+    product_id: productId,
+    image_url: image.url,
+    image_path: image.imagePath ?? null,
+    alt_text: image.alt,
+    sort_order: image.sortOrder,
+    is_cover: image.isCover,
+    image_type: image.imageType ?? "",
+    usage_tags: image.usageTags ?? [],
+  }));
+
+  const { data, error } = await supabase
+    .from("product_images")
+    .insert(rows)
+    .select();
+
+  throwOnError(error);
+  return (data ?? []).map(mapRow);
+}
+
 export async function replaceProductImages(
   productId: string,
   images: ProductGalleryImage[],
@@ -95,6 +128,8 @@ export async function replaceProductImages(
     alt_text: image.alt,
     sort_order: image.sortOrder,
     is_cover: image.isCover,
+    image_type: image.imageType ?? "",
+    usage_tags: image.usageTags ?? [],
   }));
 
   const { data, error } = await supabase
@@ -104,6 +139,27 @@ export async function replaceProductImages(
 
   throwOnError(error);
   return (data ?? []).map(mapRow);
+}
+
+/** Update a single image's metadata. */
+export async function updateProductImage(
+  imageId: string,
+  patch: Partial<Pick<ProductGalleryImage, "alt" | "imageType" | "isCover" | "sortOrder" | "usageTags">>,
+) {
+  const supabase = getClient();
+  const dbPatch: Record<string, unknown> = {};
+  if (patch.alt !== undefined) dbPatch.alt_text = patch.alt;
+  if (patch.imageType !== undefined) dbPatch.image_type = patch.imageType;
+  if (patch.isCover !== undefined) dbPatch.is_cover = patch.isCover;
+  if (patch.sortOrder !== undefined) dbPatch.sort_order = patch.sortOrder;
+  if (patch.usageTags !== undefined) dbPatch.usage_tags = patch.usageTags;
+
+  const { error } = await supabase
+    .from("product_images")
+    .update(dbPatch)
+    .eq("id", imageId);
+
+  throwOnError(error);
 }
 
 export async function deleteProductImagesByIds(ids: string[]) {

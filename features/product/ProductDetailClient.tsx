@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
 import { useLiveProducts } from "@/hooks/PipelineStore";
 import { ProductDetailView } from "@/features/product/ProductDetailView";
@@ -38,6 +38,10 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
     };
   }, [productId]);
 
+  const handleGalleryChange = useCallback((images: ProductGalleryImage[]) => {
+    setRemoteImages(images);
+  }, []);
+
   const displayProduct = useMemo((): ProductView | undefined => {
     if (!product) return undefined;
     if (!remoteImages?.length) return product;
@@ -55,5 +59,10 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
     notFound();
   }
 
-  return <ProductDetailView product={displayProduct} />;
+  return (
+    <ProductDetailView
+      product={displayProduct}
+      onGalleryChange={handleGalleryChange}
+    />
+  );
 }
