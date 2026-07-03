@@ -1,7 +1,8 @@
+import { generateId } from "@/lib/generate-id";
 import type { Supplier, SupplierContact } from "@/types/supplier";
 
 export interface SupplierSeedInput {
-  id: string;
+  id?: string;
   factoryName: string;
   displayName?: string;
   country?: string;
@@ -19,8 +20,8 @@ export interface SupplierSeedInput {
 }
 
 export function createSupplierContact(
-  id: string,
   input: Omit<SupplierContact, "id" | "imageUrl">,
+  id: string = generateId(),
 ): SupplierContact {
   return {
     id,
@@ -30,8 +31,9 @@ export function createSupplierContact(
 }
 
 export function createSupplier(seed: SupplierSeedInput): Supplier {
-  const contacts = (seed.contacts ?? []).map((c, i) =>
-    createSupplierContact(`${seed.id}-contact-${i + 1}`, c),
+  const supplierId = seed.id ?? generateId();
+  const contacts = (seed.contacts ?? []).map((contact) =>
+    createSupplierContact(contact),
   );
 
   if (contacts.length > 0 && !contacts.some((c) => c.isPrimary)) {
@@ -39,7 +41,7 @@ export function createSupplier(seed: SupplierSeedInput): Supplier {
   }
 
   return {
-    id: seed.id,
+    id: supplierId,
     factoryName: seed.factoryName,
     displayName: seed.displayName ?? seed.factoryName,
     country: seed.country ?? "China",

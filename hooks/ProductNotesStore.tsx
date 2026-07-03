@@ -12,6 +12,7 @@ import {
   filterNotesByType,
   type ProductNoteTypeFilter,
 } from "@/lib/product-notes";
+import { generateId } from "@/lib/generate-id";
 import { localNoteRepository } from "@/lib/repositories";
 import type { ProductNote, ProductNoteAttachment } from "@/types/product";
 
@@ -62,7 +63,7 @@ export function ProductNotesStoreProvider({ children }: { children: ReactNode })
   const addNote = useCallback((input: AddProductNoteInput): ProductNote => {
     const now = new Date().toISOString();
     const note: ProductNote = {
-      id: `note-${input.productId}-${Date.now()}`,
+      id: generateId(),
       productId: input.productId,
       type: input.type,
       title: input.title.trim(),

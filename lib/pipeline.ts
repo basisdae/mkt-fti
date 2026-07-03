@@ -2,6 +2,7 @@ import {
   PIPELINE_STAGE_LABELS,
   PIPELINE_STAGES,
 } from "@/lib/constants";
+import { generateId } from "@/lib/generate-id";
 import type { PipelineItem, PipelineStage } from "@/types/product";
 import type { PipelineLog, ProductView } from "@/types/product";
 
@@ -78,7 +79,7 @@ export function createPipelineMoveLog(
   const toLabel = PIPELINE_STAGE_LABELS[to];
 
   return {
-    id: `log-${productId}-${Date.now()}`,
+    id: generateId(),
     productId,
     action:
       direction === "forward" ? "Stage advanced" : "Stage moved back",

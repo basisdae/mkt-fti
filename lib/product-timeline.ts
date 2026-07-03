@@ -1,4 +1,5 @@
 import type { PipelineStage } from "@/types/product";
+import { generateId } from "@/lib/generate-id";
 import type { ProductTimelineMovement, ProductTimelineStage } from "@/types/product";
 
 export const PRODUCT_TIMELINE_STAGES: ProductTimelineStage[] = [
@@ -128,7 +129,7 @@ export function createTimelineMovement(input: {
   note: string;
 }): ProductTimelineMovement {
   return {
-    id: `tl-${input.productId}-${Date.now()}`,
+    id: generateId(),
     productId: input.productId,
     stage: input.stage,
     occurredAt: input.occurredAt,

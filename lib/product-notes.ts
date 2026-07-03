@@ -1,4 +1,5 @@
 import type { ProductNoteFileType, ProductNoteType } from "@/types/product";
+import { generateId } from "@/lib/generate-id";
 
 export const PRODUCT_NOTE_TYPE_LABELS: Record<ProductNoteType, string> = {
   rich: "Rich Note",
@@ -65,7 +66,7 @@ export function createNoteAttachmentFromFile(file: File): {
 } {
   const fileType = detectNoteFileType(file.type)!;
   return {
-    id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: generateId(),
     name: file.name,
     fileType,
     mimeType: file.type,

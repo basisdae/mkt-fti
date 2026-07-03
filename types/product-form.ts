@@ -1,4 +1,5 @@
 import { PIPELINE_STAGES } from "@/lib/constants";
+import { generateId } from "@/lib/generate-id";
 import type { ProductStatus } from "@/types/product";
 
 /** True when status is after Contact Factory in the lifecycle. */
@@ -45,7 +46,7 @@ export interface NewProductFormData {
 
 export function createMoqRow(): MoqOptionRow {
   return {
-    id: `moq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: generateId(),
     quantity: "",
     usdPerUnit: "",
     label: "",

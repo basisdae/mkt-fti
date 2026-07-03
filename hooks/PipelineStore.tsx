@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { PIPELINE_STAGE_LABELS, PIPELINE_STAGES } from "@/lib/constants";
+import { generateId } from "@/lib/generate-id";
 import {
   createPipelineMoveLog,
   initPipelineItems,
@@ -177,7 +178,7 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     }));
     setLogs((prev) => [
       {
-        id: `log-${bundle.product.id}-${Date.now()}`,
+        id: generateId(),
         productId: bundle.product.id,
         action: "Product created",
         detail: `Added product: ${bundle.product.name}`,

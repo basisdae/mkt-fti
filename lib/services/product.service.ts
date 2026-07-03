@@ -1,6 +1,7 @@
 import { createProduct, priceOption } from "@/lib/product-builder";
 import { defaultBrandStrategy } from "@/lib/brand-strategy";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
+import { generateId } from "@/lib/generate-id";
 import type { ProductCreateBundle } from "@/lib/repositories/types";
 import type { NewProductFormData } from "@/types/product-form";
 import type { OemType, ProductStatus } from "@/types/product";
@@ -33,7 +34,7 @@ export function buildProductBundleFromForm(
   },
 ): ProductCreateBundle {
   const now = new Date().toISOString();
-  const productId = `prod-${Date.now()}`;
+  const productId = generateId();
   const code = slugCode(form.productName);
   const status = (form.status || "interested") as ProductStatus;
   const exchangeRate = options.exchangeRate;
@@ -84,7 +85,7 @@ export function buildProductBundleFromForm(
     .filter((row) => row.quantity.trim() && row.usdPerUnit.trim())
     .map((row, index) =>
       priceOption(
-        row.id || `moq-${productId}-${index}`,
+        row.id || generateId(),
         productId,
         parseInt(row.quantity, 10) || 0,
         parseFloat(row.usdPerUnit) || 0,
@@ -109,7 +110,7 @@ export function buildProductBundleFromForm(
         ? priceOptions
         : [
             priceOption(
-              `moq-${productId}-default`,
+              generateId(),
               productId,
               500,
               25,

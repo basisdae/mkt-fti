@@ -1,6 +1,7 @@
 import { createProduct, priceOption } from "@/lib/product-builder";
 import { defaultBrandStrategy } from "@/lib/brand-strategy";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
+import { generateId } from "@/lib/generate-id";
 import { IDEA_SOURCE_PLATFORM_LABELS } from "@/lib/idea-constants";
 import type { ProductIdea } from "@/types/idea";
 import type {
@@ -60,7 +61,7 @@ export function matchesIdeaSearch(idea: ProductIdea, query: string): boolean {
 
 export function buildProductFromIdea(idea: ProductIdea): ConvertedProductBundle {
   const now = new Date().toISOString();
-  const productId = `prod-${Date.now()}`;
+  const productId = generateId();
   const code = slugCode(idea.productName);
   const usdCost = parseUsdCostFromRange(idea.estimatedPriceRange);
   const platform = IDEA_SOURCE_PLATFORM_LABELS[idea.sourcePlatform];
@@ -114,7 +115,7 @@ export function buildProductFromIdea(idea: ProductIdea): ConvertedProductBundle 
 
   const priceOptions: ProductPriceOption[] = [
     priceOption(
-      `moq-${productId}-a`,
+      generateId(),
       productId,
       500,
       usdCost,

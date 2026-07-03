@@ -1,4 +1,5 @@
 import type { ProductPriceOption } from "@/types/product";
+import { generateId } from "@/lib/generate-id";
 
 export const LOW_GP_THRESHOLD = 25;
 
@@ -128,9 +129,7 @@ export function buildScenarioRow(
     revenue > 0 ? (grossProfit / revenue) * 100 : 0;
 
   return {
-    id:
-      options.id ??
-      `scenario-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: options.id ?? generateId(),
     productId,
     productName,
     moqTierId: options.moqTierId ?? "",

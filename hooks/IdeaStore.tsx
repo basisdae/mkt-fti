@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { buildProductFromIdea } from "@/lib/idea";
+import { generateId } from "@/lib/generate-id";
 import { localIdeaRepository } from "@/lib/repositories";
 import { usePipelineStore } from "@/hooks/PipelineStore";
 import type { IdeaStatus, NewIdeaInput, ProductIdea } from "@/types/idea";
@@ -31,7 +32,7 @@ export function IdeaStoreProvider({ children }: { children: ReactNode }) {
   const addIdea = useCallback((input: NewIdeaInput): ProductIdea => {
     const now = new Date().toISOString();
     const idea: ProductIdea = {
-      id: `idea-${Date.now()}`,
+      id: generateId(),
       ...input,
       imageUrl: null,
       status: "interested",
