@@ -1,5 +1,26 @@
 import { calculatePricing } from "@/lib/pricing";
-import type { MoqOptionRow } from "@/types/product-form";
+import { createMoqRow, type MoqOptionRow } from "@/types/product-form";
+
+export function moqRowHasValues(
+  row: Pick<MoqOptionRow, "quantity" | "usdPerUnit" | "label">,
+): boolean {
+  return (
+    row.quantity.trim() !== "" ||
+    row.usdPerUnit.trim() !== "" ||
+    row.label.trim() !== ""
+  );
+}
+
+export function clearMoqRow(row: MoqOptionRow): MoqOptionRow {
+  return { ...row, quantity: "", usdPerUnit: "", label: "" };
+}
+
+export function ensureTrailingEmptyMoqRow(rows: MoqOptionRow[]): MoqOptionRow[] {
+  if (rows.length === 0) return [createMoqRow()];
+  const last = rows[rows.length - 1]!;
+  if (moqRowHasValues(last)) return [...rows, createMoqRow()];
+  return rows;
+}
 
 export interface MoqRowPreview {
   moq: number;

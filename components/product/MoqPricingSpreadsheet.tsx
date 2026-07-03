@@ -5,8 +5,11 @@ import Link from "next/link";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
+  clearMoqRow,
   computeMoqRowPreview,
+  ensureTrailingEmptyMoqRow,
   isMultiRowMoqPaste,
+  moqRowHasValues,
   parseMoqPaste,
 } from "@/lib/moq-pricing-table";
 import { formatCurrencyTHB } from "@/lib/utils";
@@ -57,10 +60,29 @@ export function MoqPricingSpreadsheet({
     [onChange, rows],
   );
 
-  const removeRow = useCallback(
+  const handleDeleteRow = useCallback(
     (rowId: string) => {
-      if (rows.length <= 1) return;
-      onChange(rows.filter((row) => row.id !== rowId));
+      const row = rows.find((r) => r.id === rowId);
+      if (!row) return;
+
+      const hasValues = moqRowHasValues(row);
+      const isOnlyRow = rows.length === 1;
+
+      if (hasValues) {
+        const message = isOnlyRow
+          ? "Clear all values in this MOQ row?"
+          : "Delete this MOQ row?";
+        if (!window.confirm(message)) return;
+      }
+
+      if (isOnlyRow) {
+        onChange([clearMoqRow(row)]);
+        return;
+      }
+
+      onChange(
+        ensureTrailingEmptyMoqRow(rows.filter((r) => r.id !== rowId)),
+      );
     },
     [onChange, rows],
   );
@@ -268,9 +290,8 @@ export function MoqPricingSpreadsheet({
                   <td className="px-3 py-2 text-center">
                     <button
                       type="button"
-                      onClick={() => removeRow(row.id)}
-                      disabled={rows.length <= 1}
-                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-fti-red disabled:opacity-30"
+                      onClick={() => handleDeleteRow(row.id)}
+                      className="cursor-pointer rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-fti-red"
                       aria-label="Delete MOQ row"
                     >
                       <Trash2 className="h-4 w-4" />
