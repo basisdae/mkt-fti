@@ -36,18 +36,26 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-export const NAV_ITEMS: NavItem[] = [
+export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/products", icon: Package },
-  { label: "Brand Board", href: "/brand-board", icon: Sparkles },
-  { label: "Ideas", href: "/ideas", icon: Lightbulb },
   { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
+  { label: "Simulator", href: "/simulator", icon: Calculator },
   { label: "Timeline", href: "/timeline", icon: Clock3 },
   { label: "Notes", href: "/notes", icon: StickyNote },
-  { label: "Simulator", href: "/simulator", icon: Calculator },
+];
+
+export const SECONDARY_NAV_ITEMS: NavItem[] = [
+  { label: "Ideas", href: "/ideas", icon: Lightbulb },
+  { label: "Brand Board", href: "/brand-board", icon: Sparkles },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
+
+export const NAV_GROUPS = [
+  { label: "เมนูหลัก", items: MAIN_NAV_ITEMS },
+  { label: "เครื่องมือเสริม", items: SECONDARY_NAV_ITEMS },
+] as const;
 
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
   interested: "Interested",

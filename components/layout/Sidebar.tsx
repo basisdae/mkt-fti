@@ -4,11 +4,46 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { APP_SHORT, APP_TITLE, NAV_ITEMS } from "@/lib/constants";
+import {
+  APP_SHORT,
+  APP_TITLE,
+  NAV_GROUPS,
+  type NavItem,
+} from "@/lib/constants";
 
 interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+}
+
+function SidebarNavLink({
+  item,
+  pathname,
+  onMobileClose,
+}: {
+  item: NavItem;
+  pathname: string;
+  onMobileClose?: () => void;
+}) {
+  const isActive =
+    pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onMobileClose}
+      className={cn(
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+        isActive
+          ? "bg-light-purple text-primary shadow-sm"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+      )}
+    >
+      <Icon className="h-5 w-5 shrink-0" />
+      {item.label}
+    </Link>
+  );
 }
 
 export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
@@ -47,29 +82,27 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onMobileClose}
-              className={cn(
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-light-purple text-primary shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-              )}
-            >
-              <Icon className="h-5 w-5 shrink-0" />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {NAV_GROUPS.map((group, groupIndex) => (
+          <div
+            key={group.label}
+            className={cn(groupIndex > 0 && "mt-4 border-t border-gray-100 pt-4")}
+          >
+            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              {group.label}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((item) => (
+                <SidebarNavLink
+                  key={item.href}
+                  item={item}
+                  pathname={pathname}
+                  onMobileClose={onMobileClose}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
       </nav>
 
       <div className="border-t border-gray-100 px-5 py-4 sm:px-6">
