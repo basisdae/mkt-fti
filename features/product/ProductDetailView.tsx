@@ -23,8 +23,13 @@ import { ProductTimeline } from "@/components/product/ProductTimeline";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { useAuth } from "@/hooks/AuthStore";
 import { usePipelineStore } from "@/hooks/PipelineStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
+import {
+  canEditProducts,
+  canEditProductSpecs,
+} from "@/lib/auth/permissions";
 import {
   sortGalleryImages,
   type ProductGalleryItem,
@@ -68,6 +73,9 @@ export function ProductDetailView({
   onScorecardSaved,
 }: ProductDetailViewProps) {
   const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const canEdit = canEditProducts(user);
+  const canEditSpec = canEditProductSpecs(user);
   const { getSupplier } = useSupplierStore();
   const { getTimelineForProduct } = usePipelineStore();
 
@@ -227,6 +235,7 @@ export function ProductDetailView({
             <EvaluationScorecardCard
               product={product}
               onScorecardSaved={onScorecardSaved}
+              readOnly={!canEdit}
             />
           </div>
 
@@ -287,13 +296,15 @@ export function ProductDetailView({
                 Spec is optional · helps MKT / R&D track incomplete products
               </p>
             </div>
-            <Link
-              href={`/products/${product.id}/spec`}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#9F1239] px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#9F1239]/90"
-            >
-              <ClipboardList className="h-4 w-4" />
-              {getSpecActionLabel(specStatus)}
-            </Link>
+            {canEditSpec && (
+              <Link
+                href={`/products/${product.id}/spec`}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#9F1239] px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#9F1239]/90"
+              >
+                <ClipboardList className="h-4 w-4" />
+                {getSpecActionLabel(specStatus)}
+              </Link>
+            )}
           </div>
 
           {specStatus === "not_started" ? (
@@ -351,7 +362,7 @@ export function ProductDetailView({
                 {!editingGallery && "· click thumbnail to view as hero"}
               </p>
             </div>
-            {!editingGallery && (
+            {canEdit && !editingGallery && (
               <Button
                 type="button"
                 size="sm"
@@ -364,7 +375,7 @@ export function ProductDetailView({
             )}
           </div>
 
-          {editingGallery ? (
+          {canEdit && editingGallery ? (
             <div className="space-y-4">
               <ProductGalleryEditor
                 items={galleryItems}
@@ -458,15 +469,17 @@ export function ProductDetailView({
               <div className="rounded-[20px] border border-dashed border-gray-200 bg-white/60 px-6 py-10 text-center">
                 <p className="text-sm text-gray-500">No gallery images yet</p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={openGalleryEditor}
-              >
-                <Images className="h-3.5 w-3.5" />
-                Add Images
-              </Button>
+              {canEdit && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={openGalleryEditor}
+                >
+                  <Images className="h-3.5 w-3.5" />
+                  Add Images
+                </Button>
+              )}
             </div>
           )}
         </Card>

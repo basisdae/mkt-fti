@@ -1,11 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { AUTH_SESSION_COOKIE } from "@/lib/auth/session";
+import {
+  canAccessPath,
+  getHomePathForUser,
+} from "@/lib/auth/permissions";
+import { readSessionFromCookieHeader } from "@/lib/auth/session";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasSession = Boolean(
-    request.cookies.get(AUTH_SESSION_COOKIE)?.value,
-  );
+  const session = readSessionFromCookieHeader(request.headers.get("cookie"));
+  const hasSession = Boolean(session?.user);
   const isLoginPage = pathname === "/login";
 
   if (!hasSession && !isLoginPage) {
@@ -17,9 +20,20 @@ export function proxy(request: NextRequest) {
 
   if (hasSession && isLoginPage) {
     const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = "/";
+    homeUrl.pathname = getHomePathForUser(session?.user);
     homeUrl.search = "";
     return NextResponse.redirect(homeUrl);
+  }
+
+  if (
+    hasSession &&
+    session?.user &&
+    !canAccessPath(session.user, pathname)
+  ) {
+    const fallback = request.nextUrl.clone();
+    fallback.pathname = getHomePathForUser(session.user);
+    fallback.search = "";
+    return NextResponse.redirect(fallback);
   }
 
   return NextResponse.next();

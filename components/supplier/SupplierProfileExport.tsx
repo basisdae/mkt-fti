@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { FileDown, Printer, X } from "lucide-react";
 import { SupplierProfileDocument } from "@/components/supplier/SupplierProfileDocument";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/hooks/AuthStore";
+import { canExportCompanyProfile } from "@/lib/auth/permissions";
 import type { ProductView } from "@/types/product";
 import type { Supplier } from "@/types/supplier";
 
@@ -16,7 +18,10 @@ export function SupplierProfileExportButton({
   supplier,
   linkedProducts,
 }: SupplierProfileExportProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+
+  if (!canExportCompanyProfile(user)) return null;
 
   const handlePrint = useCallback(() => {
     window.print();

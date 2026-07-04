@@ -1,6 +1,9 @@
-import { SEED_USERS, type SeedUserRecord } from "@/lib/auth/seed-users";
-import { AUTH_USERS_STORAGE_KEY } from "@/lib/auth/session";
-import { isAppRole } from "@/lib/auth/roles";
+import { getDefaultPermissionsForRole } from "@/lib/auth/permission-catalog";
+import {
+  getManagedUserByEmail,
+  listManagedUsers,
+  recordUserLogin,
+} from "@/lib/auth/user-registry";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppUser } from "@/types/auth";
 
@@ -8,78 +11,33 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function loadExtraUsers(): SeedUserRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(AUTH_USERS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item): item is SeedUserRecord => {
-      if (!item || typeof item !== "object") return false;
-      const row = item as SeedUserRecord;
-      return (
-        typeof row.id === "string" &&
-        typeof row.email === "string" &&
-        typeof row.password === "string" &&
-        typeof row.displayName === "string" &&
-        isAppRole(row.role)
-      );
-    });
-  } catch {
-    return [];
-  }
-}
-
-/** All pre-created accounts (seed + admin-added local users). */
-export function listLocalAuthUsers(): SeedUserRecord[] {
-  const extras = loadExtraUsers();
-  const byEmail = new Map<string, SeedUserRecord>();
-  for (const user of [...SEED_USERS, ...extras]) {
-    byEmail.set(normalizeEmail(user.email), {
-      ...user,
-      email: normalizeEmail(user.email),
-    });
-  }
-  return [...byEmail.values()];
-}
-
-/**
- * Admin can pre-create users locally (no self-registration UI).
- * Call from settings/scripts as needed.
- */
-export function upsertLocalAuthUser(user: SeedUserRecord): void {
-  if (typeof window === "undefined") return;
-  const extras = loadExtraUsers().filter(
-    (item) => normalizeEmail(item.email) !== normalizeEmail(user.email),
-  );
-  extras.push({
-    ...user,
-    email: normalizeEmail(user.email),
-  });
-  localStorage.setItem(AUTH_USERS_STORAGE_KEY, JSON.stringify(extras));
-}
-
-function toAppUser(record: SeedUserRecord): AppUser {
+function toAppUser(record: {
+  id: string;
+  email: string;
+  displayName: string;
+  role: AppUser["role"];
+  permissions?: AppUser["permissions"];
+}): AppUser {
   return {
     id: record.id,
     email: normalizeEmail(record.email),
     displayName: record.displayName,
     role: record.role,
+    permissions:
+      record.permissions ?? getDefaultPermissionsForRole(record.role),
   };
 }
 
 async function loginWithLocalCredentials(
   email: string,
   password: string,
-): Promise<AppUser | null> {
-  const users = listLocalAuthUsers();
-  const match = users.find(
-    (user) =>
-      normalizeEmail(user.email) === normalizeEmail(email) &&
-      user.password === password,
-  );
-  return match ? toAppUser(match) : null;
+): Promise<AppUser | "invalid" | "inactive" | null> {
+  const match = getManagedUserByEmail(email);
+  if (!match) return null;
+  if (match.password !== password.trim()) return "invalid";
+  if (!match.isActive) return "inactive";
+  recordUserLogin(match.email);
+  return toAppUser(match);
 }
 
 async function loginWithSupabaseCredentials(
@@ -90,6 +48,7 @@ async function loginWithSupabaseCredentials(
 
   try {
     const { createClient } = await import("@/lib/supabase/client");
+    const { isAppRole } = await import("@/lib/auth/roles");
     const supabase = createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email: normalizeEmail(email),
@@ -122,11 +81,13 @@ async function loginWithSupabaseCredentials(
       }
     }
 
+    const resolvedRole = role ?? "mkt_hq";
     return {
       id: userId,
       email: normalizeEmail(data.user.email ?? email),
       displayName,
-      role: role ?? "mkt_hq",
+      role: resolvedRole,
+      permissions: getDefaultPermissionsForRole(resolvedRole),
     };
   } catch {
     return null;
@@ -137,10 +98,25 @@ export async function authenticateUser(
   email: string,
   password: string,
 ): Promise<AppUser> {
-  const localUser = await loginWithLocalCredentials(email, password);
-  if (localUser) return localUser;
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPassword = password.trim();
 
-  const supabaseUser = await loginWithSupabaseCredentials(email, password);
+  const localResult = await loginWithLocalCredentials(
+    normalizedEmail,
+    normalizedPassword,
+  );
+  if (localResult === "inactive") {
+    throw new Error("This account is inactive. Contact an administrator.");
+  }
+  if (localResult === "invalid") {
+    throw new Error("Invalid email or password");
+  }
+  if (localResult) return localResult;
+
+  const supabaseUser = await loginWithSupabaseCredentials(
+    normalizedEmail,
+    normalizedPassword,
+  );
   if (supabaseUser) return supabaseUser;
 
   throw new Error("Invalid email or password");
@@ -155,4 +131,9 @@ export async function signOutRemote(): Promise<void> {
   } catch {
     // ignore
   }
+}
+
+/** @deprecated Use listManagedUsers from user-registry */
+export function listLocalAuthUsers() {
+  return listManagedUsers();
 }

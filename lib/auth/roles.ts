@@ -6,6 +6,7 @@ export const APP_ROLES: AppRole[] = [
   "admin",
   "ceo",
   "sale",
+  "pu",
 ];
 
 export const APP_ROLE_LABELS: Record<AppRole, string> = {
@@ -14,6 +15,7 @@ export const APP_ROLE_LABELS: Record<AppRole, string> = {
   admin: "Admin",
   ceo: "CEO",
   sale: "SALE",
+  pu: "Purchasing",
 };
 
 export function formatAppRole(role: AppRole | null | undefined): string {

@@ -15,9 +15,15 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Toast } from "@/components/ui/Toast";
+import { useAuth } from "@/hooks/AuthStore";
 import { useBrandStore } from "@/hooks/BrandStore";
 import { usePipelineStore } from "@/hooks/PipelineStore";
 import { useProductNotesStore } from "@/hooks/ProductNotesStore";
+import {
+  canCreateProducts,
+  canDeleteProducts,
+  canEditProducts,
+} from "@/lib/auth/permissions";
 import {
   applyProductFilters,
   DEFAULT_PRODUCT_FILTERS,
@@ -33,6 +39,10 @@ import type { ProductView } from "@/types/product";
 export function ProductsListView() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const canEdit = canEditProducts(user);
+  const canCreate = canCreateProducts(user);
+  const canDelete = canDeleteProducts(user);
   const { productsWithBrand: allProducts } = useBrandStore();
   const { removeProduct, duplicateProduct, archiveProduct } =
     usePipelineStore();
@@ -151,7 +161,9 @@ export function ProductsListView() {
       <div className="page-header-block">
         <h1 className="page-title">Products</h1>
         <p className="page-description">
-          All sourcing products with pricing, MOQ, and margin overview.
+          {canEdit
+            ? "All sourcing products with pricing, MOQ, and margin overview."
+            : "Product catalog (read only) · pricing, MOQ, and supplier context."}
         </p>
       </div>
 
@@ -167,11 +179,17 @@ export function ProductsListView() {
         <PageEmptyState
           icon={PackageSearch}
           title="ยังไม่มีสินค้า"
-          description="เพิ่มสินค้าแรกเพื่อเริ่มติดตาม pipeline และการประเมิน"
+          description={
+            canEdit
+              ? "เพิ่มสินค้าแรกเพื่อเริ่มติดตาม pipeline และการประเมิน"
+              : "ยังไม่มีสินค้าในระบบ"
+          }
         >
-          <Link href="/products/new">
-            <Button className="gap-2">เพิ่มสินค้า</Button>
-          </Link>
+          {canCreate ? (
+            <Link href="/products/new">
+              <Button className="gap-2">เพิ่มสินค้า</Button>
+            </Link>
+          ) : null}
         </PageEmptyState>
       ) : filteredProducts.length === 0 ? (
         <Card className="border-dashed">
@@ -197,6 +215,8 @@ export function ProductsListView() {
               <ProductListRow
                 key={product.id}
                 product={product}
+                readOnly={!canEdit}
+                canDelete={canDelete}
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
                 onDelete={setPendingDelete}

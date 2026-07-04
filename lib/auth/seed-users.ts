@@ -10,14 +10,19 @@ export interface SeedUserRecord {
   password: string;
   displayName: string;
   role: AppRole;
+  isActive?: boolean;
+  lastLoginAt?: string | null;
 }
+
+/** Former demo admin — removed from seed; stripped from local overrides on load. */
+export const LEGACY_DEMO_ADMIN_EMAIL = "admin@fti.co.th";
 
 export const SEED_USERS: SeedUserRecord[] = [
   {
-    id: "user-admin",
-    email: "admin@fti.co.th",
-    password: "admin123",
-    displayName: "System Admin",
+    id: "user-system-admin",
+    email: "mkt.dir@functioninter.co.th",
+    password: "Letgoparty2027!",
+    displayName: "System Administrator",
     role: "admin",
   },
   {
@@ -47,5 +52,12 @@ export const SEED_USERS: SeedUserRecord[] = [
     password: "sale123",
     displayName: "Sales Team",
     role: "sale",
+  },
+  {
+    id: "user-pu",
+    email: "pu@fti.co.th",
+    password: "pu123",
+    displayName: "Purchasing",
+    role: "pu",
   },
 ];

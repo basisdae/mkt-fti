@@ -7,12 +7,20 @@ import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { Button } from "@/components/ui/Button";
 import { DataLoadingState, DataStatusBanner } from "@/components/ui/DataStatus";
 import { SupplierListCard } from "@/components/supplier/SupplierListCard";
+import { useAuth } from "@/hooks/AuthStore";
 import { useLiveProducts } from "@/hooks/PipelineStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
+import {
+  canCreateSuppliers,
+  canEditSuppliers,
+} from "@/lib/auth/permissions";
 import { countLinkedProducts, matchesSupplierSearch } from "@/lib/supplier";
 
 export function SuppliersListView() {
   const [query, setQuery] = useState("");
+  const { user } = useAuth();
+  const canEdit = canEditSuppliers(user);
+  const canCreate = canCreateSuppliers(user);
   const { suppliers, loading, error, hydrated } = useSupplierStore();
   const products = useLiveProducts();
 
@@ -33,12 +41,14 @@ export function SuppliersListView() {
             Factory master records — link products to shared supplier data
           </p>
         </div>
-        <Link href="/suppliers/new">
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Register supplier
-          </Button>
-        </Link>
+        {canCreate && (
+          <Link href="/suppliers/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Register supplier
+            </Button>
+          </Link>
+        )}
       </div>
 
       <DataStatusBanner error={error} className="mb-4" />
@@ -51,12 +61,14 @@ export function SuppliersListView() {
           title="ยังไม่มี Supplier"
           description="ลงทะเบียนโรงงานหรือซัพพลายเออร์เพื่อเชื่อมกับสินค้าในระบบ"
         >
-          <Link href="/suppliers/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              เพิ่ม Supplier
-            </Button>
-          </Link>
+          {canCreate ? (
+            <Link href="/suppliers/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                เพิ่ม Supplier
+              </Button>
+            </Link>
+          ) : null}
         </PageEmptyState>
       ) : (
         <>

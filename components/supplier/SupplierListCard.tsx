@@ -7,8 +7,13 @@ import { Card } from "@/components/ui/Card";
 import { DeleteSupplierModal } from "@/components/supplier/DeleteSupplierModal";
 import { LinkedProductsModal } from "@/components/supplier/LinkedProductsModal";
 import { SupplierDeleteBlockedModal } from "@/components/supplier/SupplierDeleteBlockedModal";
+import { useAuth } from "@/hooks/AuthStore";
 import { useLiveProducts } from "@/hooks/PipelineStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
+import {
+  canDeleteSuppliers,
+  canEditSuppliers,
+} from "@/lib/auth/permissions";
 import { cn, formatDate } from "@/lib/utils";
 import { getLinkedProducts, getPrimaryContact } from "@/lib/supplier";
 import type { Supplier } from "@/types/supplier";
@@ -32,6 +37,9 @@ export function SupplierListCard({
   linkedProductCount,
   className,
 }: SupplierListCardProps) {
+  const { user } = useAuth();
+  const canEdit = canEditSuppliers(user);
+  const canDelete = canDeleteSuppliers(user);
   const { deleteSupplier } = useSupplierStore();
   const products = useLiveProducts();
   const linkedProducts = getLinkedProducts(supplier.id, products);
@@ -77,32 +85,38 @@ export function SupplierListCard({
   return (
     <>
       <Card interactive padding="lg" className={cn("group relative h-full", className)}>
-        <div className="absolute right-4 top-4 z-10 flex items-center gap-0.5">
-          <Link
-            href={`/suppliers/${supplier.id}`}
-            title="แก้ไข"
-            aria-label="แก้ไข Supplier"
-            className={cn(
-              actionButtonClass,
-              "hover:bg-gray-100 hover:text-gray-700",
+        {(canEdit || canDelete) && (
+          <div className="absolute right-4 top-4 z-10 flex items-center gap-0.5">
+            {canEdit && (
+              <Link
+                href={`/suppliers/${supplier.id}/edit`}
+                title="แก้ไข"
+                aria-label="แก้ไข Supplier"
+                className={cn(
+                  actionButtonClass,
+                  "hover:bg-gray-100 hover:text-gray-700",
+                )}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Pencil className="h-4 w-4" />
+              </Link>
             )}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Pencil className="h-4 w-4" />
-          </Link>
-          <button
-            type="button"
-            title="ลบ Supplier"
-            aria-label="ลบ Supplier"
-            className={cn(
-              actionButtonClass,
-              "hover:bg-red-50 hover:text-fti-red",
+            {canDelete && (
+              <button
+                type="button"
+                title="ลบ Supplier"
+                aria-label="ลบ Supplier"
+                className={cn(
+                  actionButtonClass,
+                  "hover:bg-red-50 hover:text-fti-red",
+                )}
+                onClick={handleDeleteClick}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
             )}
-            onClick={handleDeleteClick}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
+          </div>
+        )}
 
         <Link href={`/suppliers/${supplier.id}`} className="block pr-16">
           <div className="flex items-start gap-4">

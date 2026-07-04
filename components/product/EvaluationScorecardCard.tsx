@@ -33,12 +33,14 @@ const SCORE_OPTIONS: EvaluationScore[] = [1, 2, 3, 4, 5];
 interface EvaluationScorecardCardProps {
   product: ProductView;
   onScorecardSaved?: (scorecard: ProductEvaluationScorecard) => void;
+  readOnly?: boolean;
   className?: string;
 }
 
 export function EvaluationScorecardCard({
   product,
   onScorecardSaved,
+  readOnly = false,
   className,
 }: EvaluationScorecardCardProps) {
   const [savedScorecard, setSavedScorecard] =
@@ -267,12 +269,14 @@ export function EvaluationScorecardCard({
                           <button
                             key={`${row.id}-${score}`}
                             type="button"
+                            disabled={readOnly}
                             onClick={() => setCriterionScore(row.id, score)}
                             className={cn(
                               "h-8 w-8 rounded-lg text-sm font-bold transition-colors",
                               active
                                 ? cn(colors.cell, colors.text)
                                 : "text-gray-500 hover:bg-gray-50",
+                              readOnly && "cursor-default hover:bg-transparent",
                             )}
                             aria-pressed={active}
                             aria-label={`${row.label} score ${score}`}
@@ -322,6 +326,8 @@ export function EvaluationScorecardCard({
           }}
           rows={3}
           placeholder="สรุปความเห็นโดยรวม"
+          readOnly={readOnly}
+          disabled={readOnly}
         />
         <Textarea
           label="Next Action / Recommendation"
@@ -332,9 +338,12 @@ export function EvaluationScorecardCard({
           }}
           rows={3}
           placeholder="ขั้นตอนถัดไป / คำแนะนำ"
+          readOnly={readOnly}
+          disabled={readOnly}
         />
       </div>
 
+      {!readOnly && (
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-gray-100 pt-4">
         <Button
           type="button"
@@ -365,6 +374,7 @@ export function EvaluationScorecardCard({
           <span className="text-xs font-medium text-fti-red">{saveError}</span>
         )}
       </div>
+      )}
     </Card>
   );
 }

@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/forms/Input";
 import { useAuth } from "@/hooks/AuthStore";
+import { getHomePathForUser } from "@/lib/auth/permissions";
 import { APP_TAGLINE, APP_TITLE, APP_VERSION } from "@/lib/constants";
 
 export function LoginForm() {
   const router = useRouter();
-  const { login, isAuthenticated, ready } = useAuth();
+  const { login, isAuthenticated, ready, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,17 +19,17 @@ export function LoginForm() {
 
   useEffect(() => {
     if (ready && isAuthenticated) {
-      router.replace("/");
+      router.replace(getHomePathForUser(user));
     }
-  }, [ready, isAuthenticated, router]);
+  }, [ready, isAuthenticated, router, user]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      await login(email, password);
-      router.replace("/");
+      const nextUser = await login(email, password);
+      router.replace(getHomePathForUser(nextUser));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

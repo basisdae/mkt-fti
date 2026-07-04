@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { ProductResumeExportButton } from "@/components/product/ProductResumeExport";
+import { useAuth } from "@/hooks/AuthStore";
+import {
+  canEditProducts,
+  canEditProductSpecs,
+} from "@/lib/auth/permissions";
 import { formatProductBrand } from "@/lib/brand-strategy";
 import {
   getSpecActionLabel,
@@ -30,6 +35,9 @@ export function ProductDetailHeader({
   imageAlt,
 }: ProductDetailHeaderProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const canEdit = canEditProducts(user);
+  const canEditSpec = canEditProductSpecs(user);
   const specStatus = resolveProductSpecStatus(product);
 
   return (
@@ -79,31 +87,37 @@ export function ProductDetailHeader({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
-          <Link
-            href={`/products/${product.id}/spec`}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#9F1239] px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#9F1239]/90"
-          >
-            <ClipboardList className="h-4 w-4" />
-            {getSpecActionLabel(specStatus)}
-          </Link>
+          {canEditSpec && (
+            <Link
+              href={`/products/${product.id}/spec`}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#9F1239] px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#9F1239]/90"
+            >
+              <ClipboardList className="h-4 w-4" />
+              {getSpecActionLabel(specStatus)}
+            </Link>
+          )}
           <ProductResumeExportButton product={product} />
-          <Button href={`/notes?product=${product.id}`} variant="secondary" size="sm">
-            <StickyNote className="h-4 w-4" />
-            Notes
-          </Button>
+          {canEdit && (
+            <Button href={`/notes?product=${product.id}`} variant="secondary" size="sm">
+              <StickyNote className="h-4 w-4" />
+              Notes
+            </Button>
+          )}
           <Button href={`/timeline?product=${product.id}`} variant="secondary" size="sm">
             <Clock3 className="h-4 w-4" />
             Timeline
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => router.push(`/products/${product.id}/edit`)}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Product
-          </Button>
+          {canEdit && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => router.push(`/products/${product.id}/edit`)}
+            >
+              <Pencil className="h-4 w-4" />
+              Edit Product
+            </Button>
+          )}
           <Button href="/products" variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -115,12 +129,14 @@ export function ProductDetailHeader({
         <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50/80 px-4 py-3">
           <p className="text-xs font-medium text-gray-400">Latest note</p>
           <p className="mt-1 text-sm text-gray-700">{product.latestNote}</p>
-          <Link
-            href={`/notes?product=${product.id}`}
-            className="mt-2 inline-block text-xs font-medium text-primary hover:underline"
-          >
-            View all notes →
-          </Link>
+          {canEdit && (
+            <Link
+              href={`/notes?product=${product.id}`}
+              className="mt-2 inline-block text-xs font-medium text-primary hover:underline"
+            >
+              View all notes →
+            </Link>
+          )}
         </div>
       )}
     </div>

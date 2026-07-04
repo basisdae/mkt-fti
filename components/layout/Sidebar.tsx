@@ -4,12 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  APP_TAGLINE,
-  APP_TITLE,
-  NAV_GROUPS,
-  type NavItem,
-} from "@/lib/constants";
+import { useAuth } from "@/hooks/AuthStore";
+import { getNavItemsForUser } from "@/lib/auth/permissions";
+import { APP_TAGLINE, APP_TITLE, type NavItem } from "@/lib/constants";
 
 interface SidebarProps {
   mobileOpen?: boolean;
@@ -48,6 +45,8 @@ function SidebarNavLink({
 
 export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const navGroups = getNavItemsForUser(user);
 
   return (
     <aside
@@ -86,7 +85,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {NAV_GROUPS.map((group, groupIndex) => (
+        {navGroups.map((group, groupIndex) => (
           <div
             key={group.label}
             className={cn(groupIndex > 0 && "mt-4 border-t border-gray-100 pt-4")}
@@ -112,7 +111,11 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         <div className="rounded-xl bg-light-purple/60 px-4 py-3">
           <p className="text-xs font-semibold text-primary">Internal Use Only</p>
           <p className="mt-0.5 text-[11px] text-gray-500">
-            FTI Marketing · Product Ops
+            {user?.role === "pu"
+              ? "FTI Purchasing · Factory Ops"
+              : user?.role === "sale"
+                ? "FTI Sales · Product Ops"
+                : "FTI Marketing · Product Ops"}
           </p>
         </div>
       </div>

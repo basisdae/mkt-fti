@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { FileDown, Printer, X } from "lucide-react";
 import { ProductResumeDocument } from "@/components/product/ProductResumeDocument";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/hooks/AuthStore";
+import { canExportProductResume } from "@/lib/auth/permissions";
 import type { ProductView } from "@/types/product";
 
 interface ProductResumeExportProps {
@@ -11,7 +13,10 @@ interface ProductResumeExportProps {
 }
 
 export function ProductResumeExportButton({ product }: ProductResumeExportProps) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+
+  if (!canExportProductResume(user)) return null;
 
   const handlePrint = useCallback(() => {
     window.print();

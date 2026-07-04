@@ -1,5 +1,6 @@
-import type { AppUser, AuthSession } from "@/types/auth";
+import { getDefaultPermissionsForRole, normalizePermissions } from "@/lib/auth/permission-catalog";
 import { isAppRole } from "@/lib/auth/roles";
+import type { AppUser, AuthSession } from "@/types/auth";
 
 export const AUTH_SESSION_COOKIE = "mkt-fti-session";
 export const AUTH_SESSION_STORAGE_KEY = "mkt-fti-auth-session";
@@ -27,13 +28,21 @@ function decodeSession(raw: string): AuthSession | null {
     ) {
       return null;
     }
+
+    const permissions = normalizePermissions(parsed.user.permissions);
+    const user: AppUser = {
+      id: parsed.user.id,
+      email: parsed.user.email,
+      displayName: parsed.user.displayName,
+      role: parsed.user.role,
+      permissions:
+        permissions.length > 0
+          ? permissions
+          : getDefaultPermissionsForRole(parsed.user.role),
+    };
+
     return {
-      user: {
-        id: parsed.user.id,
-        email: parsed.user.email,
-        displayName: parsed.user.displayName,
-        role: parsed.user.role,
-      },
+      user,
       loggedInAt: parsed.loggedInAt || new Date().toISOString(),
     };
   } catch {
@@ -43,7 +52,13 @@ function decodeSession(raw: string): AuthSession | null {
 
 export function createSession(user: AppUser): AuthSession {
   return {
-    user,
+    user: {
+      ...user,
+      permissions:
+        user.permissions?.length > 0
+          ? user.permissions
+          : getDefaultPermissionsForRole(user.role),
+    },
     loggedInAt: new Date().toISOString(),
   };
 }

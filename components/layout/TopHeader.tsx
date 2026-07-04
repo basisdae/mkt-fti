@@ -5,6 +5,7 @@ import { LogOut, Menu, Plus } from "lucide-react";
 import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/AuthStore";
+import { canCreateProducts } from "@/lib/auth/permissions";
 
 interface TopHeaderProps {
   onMenuClick?: () => void;
@@ -48,11 +49,13 @@ export function TopHeader({ onMenuClick }: TopHeaderProps) {
           </div>
         )}
 
-        <Button href="/products/new" size="sm" className="shrink-0">
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Product</span>
-          <span className="sm:hidden">Add</span>
-        </Button>
+        {canCreateProducts(user) && (
+          <Button href="/products/new" size="sm" className="shrink-0">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Product</span>
+            <span className="sm:hidden">Add</span>
+          </Button>
+        )}
 
         <Button
           type="button"

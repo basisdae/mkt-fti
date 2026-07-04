@@ -36,6 +36,8 @@ const COLUMN_DIVIDER =
 
 interface ProductListRowProps {
   product: ProductView;
+  readOnly?: boolean;
+  canDelete?: boolean;
   onDuplicate: (product: ProductView) => void;
   onArchive: (product: ProductView) => void;
   onDelete: (product: ProductView) => void;
@@ -104,6 +106,8 @@ function ActionButton({
 
 export function ProductListRow({
   product,
+  readOnly = false,
+  canDelete = true,
   onDuplicate,
   onArchive,
   onDelete,
@@ -231,21 +235,27 @@ export function ProductListRow({
         >
           <Eye className="h-3.5 w-3.5" />
         </ActionButton>
-        <ActionButton
-          label="Edit"
-          onClick={() => router.push(`/products/${product.id}/edit`)}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </ActionButton>
-        <ActionButton label="Duplicate" onClick={() => onDuplicate(product)}>
-          <Copy className="h-3.5 w-3.5" />
-        </ActionButton>
-        <ActionButton label="Archive" onClick={() => onArchive(product)}>
-          <Archive className="h-3.5 w-3.5" />
-        </ActionButton>
-        <ActionButton label="Delete" danger onClick={() => onDelete(product)}>
-          <Trash2 className="h-3.5 w-3.5" />
-        </ActionButton>
+        {!readOnly && (
+          <>
+            <ActionButton
+              label="Edit"
+              onClick={() => router.push(`/products/${product.id}/edit`)}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </ActionButton>
+            <ActionButton label="Duplicate" onClick={() => onDuplicate(product)}>
+              <Copy className="h-3.5 w-3.5" />
+            </ActionButton>
+            <ActionButton label="Archive" onClick={() => onArchive(product)}>
+              <Archive className="h-3.5 w-3.5" />
+            </ActionButton>
+          </>
+        )}
+        {canDelete && (
+          <ActionButton label="Delete" danger onClick={() => onDelete(product)}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </ActionButton>
+        )}
       </div>
 
       <div className="border-t border-[#F1F2F7] px-4 pb-4 pt-3 md:hidden">

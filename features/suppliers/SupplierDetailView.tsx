@@ -15,9 +15,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SupplierContactsSection } from "@/components/supplier/SupplierContactsSection";
 import { SupplierProfileExportButton } from "@/components/supplier/SupplierProfileExport";
+import { useAuth } from "@/hooks/AuthStore";
+import { useLiveProducts } from "@/hooks/PipelineStore";
+import { canEditSuppliers } from "@/lib/auth/permissions";
 import { formatSupplierLocation } from "@/lib/supplier";
 import { formatDate } from "@/lib/utils";
-import { useLiveProducts } from "@/hooks/PipelineStore";
 import type { Supplier } from "@/types/supplier";
 
 interface SupplierDetailViewProps {
@@ -29,6 +31,8 @@ export function SupplierDetailView({
   supplier,
   linkedProductCount,
 }: SupplierDetailViewProps) {
+  const { user } = useAuth();
+  const canEdit = canEditSuppliers(user);
   const products = useLiveProducts();
   const linkedProducts = products.filter(
     (p) => p.supplierId === supplier.id,
@@ -50,14 +54,16 @@ export function SupplierDetailView({
             supplier={supplier}
             linkedProducts={linkedProducts}
           />
-          <Button
-            href={`/suppliers/${supplier.id}/edit`}
-            variant="secondary"
-            size="sm"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Supplier
-          </Button>
+          {canEdit && (
+            <Button
+              href={`/suppliers/${supplier.id}/edit`}
+              variant="secondary"
+              size="sm"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit Supplier
+            </Button>
+          )}
         </div>
       </div>
 

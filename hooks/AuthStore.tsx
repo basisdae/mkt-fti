@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { authenticateUser, signOutRemote } from "@/lib/auth/credentials";
+import { getDefaultPermissionsForRole } from "@/lib/auth/permission-catalog";
 import { formatAppRole } from "@/lib/auth/roles";
 import {
   clearSession,
@@ -17,6 +18,10 @@ import {
   readSessionFromStorage,
   writeSession,
 } from "@/lib/auth/session";
+import {
+  getManagedUserByEmail,
+  getManagedUserById,
+} from "@/lib/auth/user-registry";
 import type { AppUser, AuthSession } from "@/types/auth";
 
 interface AuthStoreValue {
@@ -25,8 +30,10 @@ interface AuthStoreValue {
   ready: boolean;
   isAuthenticated: boolean;
   roleLabel: string;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AppUser>;
   logout: () => Promise<void>;
+  /** Reload permissions/profile from the local user registry into the session. */
+  refreshSession: () => void;
 }
 
 const AuthStoreContext = createContext<AuthStoreValue | null>(null);
@@ -45,12 +52,39 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
     const next = createSession(user);
     writeSession(next);
     setSession(next);
+    return user;
   }, []);
 
   const logout = useCallback(async () => {
     await signOutRemote();
     clearSession();
     setSession(null);
+  }, []);
+
+  const refreshSession = useCallback(() => {
+    const current = readSessionFromStorage();
+    if (!current?.user) return;
+    const record =
+      getManagedUserById(current.user.id) ??
+      getManagedUserByEmail(current.user.email);
+    if (!record || !record.isActive) {
+      clearSession();
+      setSession(null);
+      return;
+    }
+    const user: AppUser = {
+      id: record.id,
+      email: record.email,
+      displayName: record.displayName,
+      role: record.role,
+      permissions:
+        record.permissions.length > 0
+          ? record.permissions
+          : getDefaultPermissionsForRole(record.role),
+    };
+    const next = createSession(user);
+    writeSession(next);
+    setSession(next);
   }, []);
 
   const value = useMemo(
@@ -62,8 +96,9 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
       roleLabel: formatAppRole(session?.user.role),
       login,
       logout,
+      refreshSession,
     }),
-    [session, ready, login, logout],
+    [session, ready, login, logout, refreshSession],
   );
 
   return (
