@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SupplierContactsSection } from "@/components/supplier/SupplierContactsSection";
+import { SupplierProfileExportButton } from "@/components/supplier/SupplierProfileExport";
 import { formatSupplierLocation } from "@/lib/supplier";
 import { formatDate } from "@/lib/utils";
 import { useLiveProducts } from "@/hooks/PipelineStore";
@@ -32,6 +33,7 @@ export function SupplierDetailView({
   const linkedProducts = products.filter(
     (p) => p.supplierId === supplier.id,
   );
+  const logoUrl = supplier.logoUrl?.trim() || null;
 
   return (
     <div className="page-shell">
@@ -44,6 +46,10 @@ export function SupplierDetailView({
           Back to suppliers
         </Link>
         <div className="flex flex-wrap gap-2">
+          <SupplierProfileExportButton
+            supplier={supplier}
+            linkedProducts={linkedProducts}
+          />
           <Button
             href={`/suppliers/${supplier.id}/edit`}
             variant="secondary"
@@ -57,18 +63,26 @@ export function SupplierDetailView({
 
       <div className="rounded-[20px] bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#1e3a5f] p-6 shadow-lg shadow-indigo-900/20 sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-indigo-200">
-            {supplier.imageUrl ? (
+          {/* Primary identity: logo OR factory icon — never both */}
+          <div
+            className={
+              logoUrl
+                ? "flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white p-3 shadow-lg"
+                : "flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-indigo-200"
+            }
+          >
+            {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={supplier.imageUrl}
-                alt=""
-                className="h-full w-full rounded-2xl object-cover"
+                src={logoUrl}
+                alt={`${supplier.factoryName} logo`}
+                className="max-h-full max-w-full object-contain"
               />
             ) : (
               <Building2 className="h-10 w-10" />
             )}
           </div>
+
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-indigo-200/80">
               Factory Master

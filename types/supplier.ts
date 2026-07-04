@@ -27,6 +27,10 @@ export interface Supplier {
   alibabaLink: string;
   mainProductCategory: string;
   imageUrl: string | null;
+  /** Company logo (secondary visual) — not the system factory icon. */
+  logoUrl: string | null;
+  /** Supabase Storage path for logo cleanup. */
+  logoPath: string | null;
   notes: string;
   contacts: SupplierContact[];
   updatedAt: string;
@@ -67,6 +71,8 @@ export interface NewSupplierInput {
   alibabaLink: string;
   mainProductCategory: string;
   imageUrl: string | null;
+  logoUrl: string | null;
+  logoPath: string | null;
   notes: string;
   contacts: NewSupplierContactInput[];
 }

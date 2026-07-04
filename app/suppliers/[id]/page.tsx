@@ -5,11 +5,8 @@ interface SupplierDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: SupplierDetailPageProps): Promise<Metadata> {
-  const { id } = await params;
-  return { title: `Supplier ${id} | MKT-FTI` };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: "Supplier" };
 }
 
 export default async function SupplierDetailPage({

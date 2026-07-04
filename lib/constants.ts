@@ -1,6 +1,7 @@
 import {
   Clock3,
   Factory,
+  FlaskConical,
   LayoutDashboard,
   Lightbulb,
   Package,
@@ -13,12 +14,16 @@ import {
 } from "lucide-react";
 import type { PipelineStage, PipelineStageTone, ProductStatus } from "@/types/product";
 
-export const APP_TITLE = "FTI Product Command Center";
-export const APP_SHORT = "MKT-FTI";
+export const APP_TITLE = "MKT Headquarter";
+export const APP_SHORT = "MKT Headquarter";
 /** @deprecated Use APP_TITLE */
 export const APP_NAME = APP_SHORT;
-export const APP_TAGLINE = APP_TITLE;
-export const APP_VERSION = "MKT-FTI Product Line-up MVP v0.1";
+export const APP_DESCRIPTION =
+  "FTI Product Information Management Platform";
+export const APP_TAGLINE = APP_DESCRIPTION;
+export const APP_AUTHOR = "Function International PCL.";
+export const APP_THEME_COLOR = "#7A1F2B";
+export const APP_VERSION = "MKT Headquarter MVP v0.1";
 
 export const DESIGN_TOKENS = {
   primary: "#695CFF",
@@ -39,6 +44,7 @@ export interface NavItem {
 export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/products", icon: Package },
+  { label: "R&D Specs", href: "/rnd/specs", icon: FlaskConical },
   { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
   { label: "Simulator", href: "/simulator", icon: Calculator },

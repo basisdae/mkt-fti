@@ -1,4 +1,5 @@
 import { normalizeProductCertification } from "@/lib/product-certification";
+import { normalizeProductSpecification } from "@/lib/product-specification";
 import type {
   Product,
   ProductPriceOption,
@@ -42,6 +43,8 @@ export function loadPipelineSnapshot(): PipelineSnapshot {
             ...product,
             images: Array.isArray(product.images) ? product.images : [],
             certification: normalizeProductCertification(product.certification),
+            specification: normalizeProductSpecification(product.specification),
+            specStatus: product.specStatus,
           }))
         : [],
       statuses:

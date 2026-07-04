@@ -20,6 +20,8 @@ interface SupplierRow {
   alibaba_link: string;
   main_product_category: string;
   image_url: string | null;
+  logo_url?: string | null;
+  logo_path?: string | null;
   notes: string;
   updated_at: string;
 }
@@ -79,14 +81,16 @@ function mapSupplierRow(
     alibabaLink: row.alibaba_link,
     mainProductCategory: row.main_product_category,
     imageUrl: row.image_url,
+    logoUrl: row.logo_url ?? null,
+    logoPath: row.logo_path ?? null,
     notes: row.notes,
     contacts: contacts.map(mapContactRow),
     updatedAt: row.updated_at,
   };
 }
 
-function supplierInputToInsert(input: NewSupplierInput): SupplierInsertRow {
-  return {
+function supplierInputToInsert(input: NewSupplierInput): Record<string, unknown> {
+  const row: Record<string, unknown> = {
     factory_name: input.factoryName,
     display_name: input.displayName,
     country: input.country,
@@ -100,6 +104,12 @@ function supplierInputToInsert(input: NewSupplierInput): SupplierInsertRow {
     image_url: input.imageUrl,
     notes: input.notes,
   };
+  // Only send logo columns when set (avoids insert failure before migration).
+  if (input.logoUrl || input.logoPath) {
+    row.logo_url = input.logoUrl;
+    row.logo_path = input.logoPath;
+  }
+  return row;
 }
 
 function contactInputToInsert(
@@ -223,6 +233,8 @@ export async function updateSupplier(
     row.main_product_category = patch.mainProductCategory;
   }
   if (patch.imageUrl !== undefined) row.image_url = patch.imageUrl;
+  if (patch.logoUrl !== undefined) row.logo_url = patch.logoUrl;
+  if (patch.logoPath !== undefined) row.logo_path = patch.logoPath;
   if (patch.notes !== undefined) row.notes = patch.notes;
 
   const { error } = await supabase
@@ -230,7 +242,28 @@ export async function updateSupplier(
     .update(row)
     .eq("id", supplierId);
 
-  throwOnError(error);
+  if (error) {
+    const message = error.message.toLowerCase();
+    // Graceful fallback when logo columns are not installed yet.
+    if (
+      (patch.logoUrl !== undefined || patch.logoPath !== undefined) &&
+      (message.includes("logo_url") ||
+        message.includes("logo_path") ||
+        message.includes("column") ||
+        message.includes("does not exist"))
+    ) {
+      const fallback = { ...row };
+      delete fallback.logo_url;
+      delete fallback.logo_path;
+      const retry = await supabase
+        .from("suppliers")
+        .update(fallback)
+        .eq("id", supplierId);
+      throwOnError(retry.error);
+      return;
+    }
+    throwOnError(error);
+  }
 }
 
 export async function deleteSupplier(supplierId: string): Promise<void> {

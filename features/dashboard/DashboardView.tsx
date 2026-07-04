@@ -46,7 +46,7 @@ export function DashboardView() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70">
-              FTI Product Command Center
+              MKT Headquarter
             </p>
             <h1 className="page-title mt-2">Dashboard</h1>
             <p className="page-description mt-2 max-w-2xl">

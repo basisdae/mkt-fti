@@ -41,6 +41,10 @@ import {
   uploadProductGallery,
 } from "@/lib/services/product-gallery-persist";
 import {
+  PRODUCT_BRAND_SELECT_OPTIONS,
+  type ProductBrandOption,
+} from "@/lib/brand-strategy";
+import {
   PRODUCT_CATEGORY_LABELS,
   PRODUCT_STATUS_LABELS,
 } from "@/lib/constants";
@@ -56,8 +60,14 @@ import { useSettingsStore } from "@/hooks/SettingsStore";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import {
+  isKnownCertificationOption,
+  isKnownIsoOption,
+  normalizeTagList,
+} from "@/lib/product-certification";
+import {
   CERTIFICATION_OPTIONS,
   INITIAL_FORM_DATA,
+  ISO_OPTIONS,
   isStatusBeyondContactFactory,
   PRODUCT_SYSTEM_OPTIONS,
   type NewProductFormData,
@@ -122,6 +132,13 @@ export function ProductForm({
       ? productViewToFormData(initialProduct)
       : INITIAL_FORM_DATA,
   );
+  const [isoOtherOpen, setIsoOtherOpen] = useState(() => {
+    const initialIso =
+      isEdit && initialProduct
+        ? productViewToFormData(initialProduct).iso
+        : [];
+    return initialIso.some((item) => !isKnownIsoOption(item));
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
@@ -261,6 +278,55 @@ export function ProductForm({
         : [...prev.certifications, cert],
     }));
   }
+
+  function addCustomCertification() {
+    const value = form.certificationCustom.trim();
+    if (!value) return;
+    setForm((prev) => ({
+      ...prev,
+      certifications: normalizeTagList([...prev.certifications, value]),
+      certificationCustom: "",
+    }));
+  }
+
+  function removeCertification(cert: string) {
+    setForm((prev) => ({
+      ...prev,
+      certifications: prev.certifications.filter((item) => item !== cert),
+    }));
+  }
+
+  function toggleIso(iso: string) {
+    setForm((prev) => ({
+      ...prev,
+      iso: prev.iso.includes(iso)
+        ? prev.iso.filter((item) => item !== iso)
+        : [...prev.iso, iso],
+    }));
+  }
+
+  function addCustomIso() {
+    const value = form.isoCustom.trim();
+    if (!value) return;
+    setForm((prev) => ({
+      ...prev,
+      iso: normalizeTagList([...prev.iso, value]),
+      isoCustom: "",
+    }));
+    setIsoOtherOpen(true);
+  }
+
+  function removeIso(iso: string) {
+    setForm((prev) => {
+      const nextIso = prev.iso.filter((item) => item !== iso);
+      return { ...prev, iso: nextIso };
+    });
+  }
+
+  const customIsoValues = form.iso.filter((item) => !isKnownIsoOption(item));
+  const customCertValues = form.certifications.filter(
+    (item) => !isKnownCertificationOption(item),
+  );
 
   function handleSupplierChange(supplierId: string | null) {
     setForm((prev) => ({ ...prev, supplierId }));
@@ -448,6 +514,7 @@ export function ProductForm({
 
   function handleReset() {
     setForm(INITIAL_FORM_DATA);
+    setIsoOtherOpen(false);
     setErrors({});
     setSubmitted(false);
     setSavedName("");
@@ -540,12 +607,28 @@ export function ProductForm({
                   <p className="mt-1 text-xs text-fti-red">{errors.productName}</p>
                 )}
               </div>
-              <Input
+              <Select
                 label="Brand"
-                placeholder="e.g. FTI Living"
-                value={form.brand}
-                onChange={(e) => updateField("brand", e.target.value)}
+                options={PRODUCT_BRAND_SELECT_OPTIONS}
+                value={form.brandOption}
+                onChange={(e) => {
+                  const brandOption = e.target.value as ProductBrandOption;
+                  setForm((prev) => ({
+                    ...prev,
+                    brandOption,
+                    brandCustom:
+                      brandOption === "other" ? prev.brandCustom : "",
+                  }));
+                }}
               />
+              {form.brandOption === "other" && (
+                <Input
+                  label="Custom Brand"
+                  placeholder="Enter brand name"
+                  value={form.brandCustom}
+                  onChange={(e) => updateField("brandCustom", e.target.value)}
+                />
+              )}
               <div className="sm:col-span-2">
                 <SupplierSearchPicker
                   value={form.supplierId}
@@ -592,12 +675,34 @@ export function ProductForm({
                   <p className="mt-1 text-xs text-fti-red">{errors.status}</p>
                 )}
               </div>
-              <Input
-                label="Lead Time"
-                placeholder="e.g. 45 days"
-                value={form.leadTime}
-                onChange={(e) => updateField("leadTime", e.target.value)}
-              />
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="lead-time"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Lead Time
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="lead-time"
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="e.g. 45"
+                    value={form.leadTime}
+                    onChange={(e) =>
+                      updateField(
+                        "leadTime",
+                        e.target.value.replace(/\D/g, ""),
+                      )
+                    }
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  />
+                  <span className="shrink-0 text-sm font-medium text-gray-500">
+                    days
+                  </span>
+                </div>
+              </div>
             </div>
           </FormSection>
 
@@ -728,6 +833,96 @@ export function ProductForm({
             description="Compliance and product line assignment"
           >
             <div className="mb-5">
+              <p className="mb-2 text-sm font-medium text-gray-700">ISO</p>
+              <div className="flex flex-wrap gap-2">
+                {ISO_OPTIONS.map((iso) => {
+                  const selected = form.iso.includes(iso);
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      onClick={() => toggleIso(iso)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                        selected
+                          ? "bg-primary text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {iso}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isoOtherOpen) {
+                      setIsoOtherOpen(false);
+                      setForm((prev) => ({
+                        ...prev,
+                        iso: prev.iso.filter((item) => isKnownIsoOption(item)),
+                        isoCustom: "",
+                      }));
+                    } else {
+                      setIsoOtherOpen(true);
+                    }
+                  }}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    isoOtherOpen || customIsoValues.length > 0
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  Other
+                </button>
+              </div>
+              {(isoOtherOpen || customIsoValues.length > 0) && (
+                <div className="mt-3 space-y-2">
+                  {customIsoValues.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {customIsoValues.map((iso) => (
+                        <button
+                          key={iso}
+                          type="button"
+                          onClick={() => removeIso(iso)}
+                          className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white"
+                          title="Remove"
+                        >
+                          {iso} ×
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="min-w-[200px] flex-1">
+                      <Input
+                        label="Custom ISO"
+                        placeholder="e.g. ISO 50001"
+                        value={form.isoCustom}
+                        onChange={(e) =>
+                          updateField("isoCustom", e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addCustomIso();
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={addCustomIso}
+                      disabled={!form.isoCustom.trim()}
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="mb-5">
               <p className="mb-2 text-sm font-medium text-gray-700">
                 Certifications
               </p>
@@ -749,6 +944,37 @@ export function ProductForm({
                     </button>
                   );
                 })}
+              </div>
+              {customCertValues.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {customCertValues.map((cert) => (
+                    <button
+                      key={cert}
+                      type="button"
+                      onClick={() => removeCertification(cert)}
+                      className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white"
+                      title="Remove"
+                    >
+                      {cert} ×
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3">
+                <Input
+                  label="Custom Certificate"
+                  placeholder="Type certificate name and press Enter"
+                  value={form.certificationCustom}
+                  onChange={(e) =>
+                    updateField("certificationCustom", e.target.value)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addCustomCertification();
+                    }
+                  }}
+                />
               </div>
             </div>
             <Select

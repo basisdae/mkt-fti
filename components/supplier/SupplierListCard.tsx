@@ -107,16 +107,7 @@ export function SupplierListCard({
         <Link href={`/suppliers/${supplier.id}`} className="block pr-16">
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gradient-to-br from-light-purple/40 to-white text-primary group-hover:border-primary/20">
-              {supplier.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={supplier.imageUrl}
-                  alt=""
-                  className="h-full w-full rounded-2xl object-cover"
-                />
-              ) : (
-                <Building2 className="h-6 w-6" />
-              )}
+              <Building2 className="h-6 w-6" />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -171,6 +162,17 @@ export function SupplierListCard({
             Updated {formatDate(supplier.updatedAt)}
           </p>
         </Link>
+
+        {supplier.logoUrl && (
+          <div className="pointer-events-none absolute bottom-4 right-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={supplier.logoUrl}
+              alt=""
+              className="h-8 w-8 object-contain sm:h-9 sm:w-9"
+            />
+          </div>
+        )}
       </Card>
 
       <DeleteSupplierModal

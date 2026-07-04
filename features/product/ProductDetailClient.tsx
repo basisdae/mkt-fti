@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
-import { useLiveProducts } from "@/hooks/PipelineStore";
+import { useLiveProducts, usePipelineStore } from "@/hooks/PipelineStore";
 import { ProductDetailView } from "@/features/product/ProductDetailView";
 import { syncCoverFields } from "@/lib/product-gallery";
 import { listProductImages } from "@/lib/services/product-images";
 import { isProductSupabaseEnabled } from "@/lib/services/product-persist";
-import type { ProductGalleryImage, ProductView } from "@/types/product";
+import type {
+  ProductEvaluationScorecard,
+  ProductGalleryImage,
+  ProductView,
+} from "@/types/product";
 
 interface ProductDetailClientProps {
   productId: string;
@@ -15,6 +19,7 @@ interface ProductDetailClientProps {
 
 export function ProductDetailClient({ productId }: ProductDetailClientProps) {
   const products = useLiveProducts();
+  const { updateProductScorecard } = usePipelineStore();
   const product = products.find((p) => p.id === productId);
   const [remoteImages, setRemoteImages] = useState<ProductGalleryImage[] | null>(
     null,
@@ -42,6 +47,13 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
     setRemoteImages(images);
   }, []);
 
+  const handleScorecardSaved = useCallback(
+    (scorecard: ProductEvaluationScorecard) => {
+      updateProductScorecard(productId, scorecard);
+    },
+    [productId, updateProductScorecard],
+  );
+
   const displayProduct = useMemo((): ProductView | undefined => {
     if (!product) return undefined;
     if (!remoteImages?.length) return product;
@@ -63,6 +75,7 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
     <ProductDetailView
       product={displayProduct}
       onGalleryChange={handleGalleryChange}
+      onScorecardSaved={handleScorecardSaved}
     />
   );
 }

@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { AppShell } from "./AppShell";
+import { AuthGate } from "./AuthGate";
+import { AuthStoreProvider } from "@/hooks/AuthStore";
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
@@ -11,9 +13,11 @@ export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
 
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
-
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AuthStoreProvider>
+      <AuthGate>
+        {isLoginPage ? <>{children}</> : <AppShell>{children}</AppShell>}
+      </AuthGate>
+    </AuthStoreProvider>
+  );
 }

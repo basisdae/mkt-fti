@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import type { ProductGalleryImage } from "@/types/product";
+import type {
+  ProductGalleryImage,
+  ProductImageType,
+  ProductImageUsageTag,
+} from "@/types/product";
 
 function getClient() {
   if (!isSupabaseConfigured()) {
@@ -15,6 +19,32 @@ function throwOnError(error: { message: string } | null): void {
   if (error) throw new Error(error.message);
 }
 
+function isMissingMetaColumnError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("image_type") ||
+    lower.includes("usage_tags") ||
+    (lower.includes("column") && lower.includes("does not exist"))
+  );
+}
+
+function parseUsageTags(value: unknown): ProductImageUsageTag[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is ProductImageUsageTag =>
+      typeof item === "string",
+    );
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      return parseUsageTags(parsed);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function mapRow(row: {
   id: string;
   image_url: string;
@@ -22,19 +52,119 @@ function mapRow(row: {
   alt_text: string;
   sort_order: number;
   is_cover: boolean;
-  image_type?: string;
-  usage_tags?: string[] | null;
+  image_type?: string | null;
+  usage_tags?: unknown;
 }): ProductGalleryImage {
   return {
     id: row.id,
     url: row.image_url,
     imagePath: row.image_path,
-    alt: row.alt_text,
-    sortOrder: row.sort_order,
-    isCover: row.is_cover,
-    imageType: (row.image_type as ProductGalleryImage["imageType"]) ?? "",
-    usageTags: (row.usage_tags as ProductGalleryImage["usageTags"]) ?? [],
+    alt: row.alt_text ?? "",
+    sortOrder: row.sort_order ?? 0,
+    isCover: Boolean(row.is_cover),
+    imageType: (row.image_type as ProductImageType) ?? "",
+    usageTags: parseUsageTags(row.usage_tags),
   };
+}
+
+function toDbRows(
+  productId: string,
+  images: ProductGalleryImage[],
+  includeMeta: boolean,
+) {
+  return images.map((image) => {
+    const row: Record<string, unknown> = {
+      id: image.id,
+      product_id: productId,
+      image_url: image.url,
+      image_path: image.imagePath ?? null,
+      alt_text: image.alt,
+      sort_order: image.sortOrder,
+      is_cover: image.isCover,
+    };
+    if (includeMeta) {
+      row.image_type = image.imageType ?? "";
+      row.usage_tags = image.usageTags ?? [];
+    }
+    return row;
+  });
+}
+
+async function insertRows(
+  productId: string,
+  images: ProductGalleryImage[],
+): Promise<ProductGalleryImage[]> {
+  if (images.length === 0) return [];
+
+  const supabase = getClient();
+  const withMeta = toDbRows(productId, images, true);
+  const firstAttempt = await supabase
+    .from("product_images")
+    .insert(withMeta)
+    .select();
+
+  if (!firstAttempt.error) {
+    return (firstAttempt.data ?? []).map(mapRow);
+  }
+
+  if (!isMissingMetaColumnError(firstAttempt.error.message)) {
+    throw new Error(firstAttempt.error.message);
+  }
+
+  // Columns not applied yet — keep existing images working without meta.
+  const fallback = await supabase
+    .from("product_images")
+    .insert(toDbRows(productId, images, false))
+    .select();
+
+  throwOnError(fallback.error);
+  return (fallback.data ?? []).map((row) => {
+    const mapped = mapRow(row as Parameters<typeof mapRow>[0]);
+    const source = images.find((image) => image.id === mapped.id);
+    return {
+      ...mapped,
+      imageType: source?.imageType ?? "",
+      usageTags: source?.usageTags ?? [],
+    };
+  });
+}
+
+async function upsertRows(
+  productId: string,
+  images: ProductGalleryImage[],
+): Promise<ProductGalleryImage[]> {
+  if (images.length === 0) return [];
+
+  const supabase = getClient();
+  const withMeta = toDbRows(productId, images, true);
+  const firstAttempt = await supabase
+    .from("product_images")
+    .upsert(withMeta, { onConflict: "id" })
+    .select();
+
+  if (!firstAttempt.error) {
+    return (firstAttempt.data ?? []).map(mapRow);
+  }
+
+  if (!isMissingMetaColumnError(firstAttempt.error.message)) {
+    throw new Error(firstAttempt.error.message);
+  }
+
+  const fallback = await supabase
+    .from("product_images")
+    .upsert(toDbRows(productId, images, false), { onConflict: "id" })
+    .select();
+
+  throwOnError(fallback.error);
+  return (fallback.data ?? []).map((row) => {
+    const mapped = mapRow(row as Parameters<typeof mapRow>[0]);
+    const source = images.find((image) => image.id === mapped.id);
+    return {
+      ...mapped,
+      imageType: source?.imageType ?? "",
+      usageTags: source?.usageTags ?? [],
+    };
+  });
 }
 
 export async function listProductImages(productId: string) {
@@ -81,70 +211,42 @@ export async function insertProductImages(
   productId: string,
   images: ProductGalleryImage[],
 ) {
-  if (images.length === 0) return [];
-
-  const supabase = getClient();
-  const rows = images.map((image) => ({
-    id: image.id,
-    product_id: productId,
-    image_url: image.url,
-    image_path: image.imagePath ?? null,
-    alt_text: image.alt,
-    sort_order: image.sortOrder,
-    is_cover: image.isCover,
-    image_type: image.imageType ?? "",
-    usage_tags: image.usageTags ?? [],
-  }));
-
-  const { data, error } = await supabase
-    .from("product_images")
-    .insert(rows)
-    .select();
-
-  throwOnError(error);
-  return (data ?? []).map(mapRow);
+  return insertRows(productId, images);
 }
 
+/**
+ * Sync gallery rows for a product.
+ * Upserts first, then deletes removed ids — existing images stay if write fails.
+ */
 export async function replaceProductImages(
   productId: string,
   images: ProductGalleryImage[],
 ) {
-  const supabase = getClient();
+  const existing = await listProductImages(productId);
+  const nextIds = new Set(images.map((image) => image.id));
+  const removedIds = existing
+    .filter((image) => !nextIds.has(image.id))
+    .map((image) => image.id);
 
-  const { error: deleteError } = await supabase
-    .from("product_images")
-    .delete()
-    .eq("product_id", productId);
+  const saved = await upsertRows(productId, images);
 
-  throwOnError(deleteError);
+  if (removedIds.length > 0) {
+    await deleteProductImagesByIds(removedIds);
+  }
 
   if (images.length === 0) return [];
-
-  const rows = images.map((image) => ({
-    id: image.id,
-    product_id: productId,
-    image_url: image.url,
-    image_path: image.imagePath ?? null,
-    alt_text: image.alt,
-    sort_order: image.sortOrder,
-    is_cover: image.isCover,
-    image_type: image.imageType ?? "",
-    usage_tags: image.usageTags ?? [],
-  }));
-
-  const { data, error } = await supabase
-    .from("product_images")
-    .insert(rows)
-    .select();
-
-  throwOnError(error);
-  return (data ?? []).map(mapRow);
+  return saved;
 }
 
 /** Update a single image's metadata. */
 export async function updateProductImage(
   imageId: string,
-  patch: Partial<Pick<ProductGalleryImage, "alt" | "imageType" | "isCover" | "sortOrder" | "usageTags">>,
+  patch: Partial<
+    Pick<
+      ProductGalleryImage,
+      "alt" | "imageType" | "isCover" | "sortOrder" | "usageTags"
+    >
+  >,
 ) {
   const supabase = getClient();
   const dbPatch: Record<string, unknown> = {};
@@ -158,6 +260,21 @@ export async function updateProductImage(
     .from("product_images")
     .update(dbPatch)
     .eq("id", imageId);
+
+  if (error && isMissingMetaColumnError(error.message)) {
+    const fallbackPatch: Record<string, unknown> = {};
+    if (patch.alt !== undefined) fallbackPatch.alt_text = patch.alt;
+    if (patch.isCover !== undefined) fallbackPatch.is_cover = patch.isCover;
+    if (patch.sortOrder !== undefined) fallbackPatch.sort_order = patch.sortOrder;
+    if (Object.keys(fallbackPatch).length === 0) return;
+
+    const fallback = await supabase
+      .from("product_images")
+      .update(fallbackPatch)
+      .eq("id", imageId);
+    throwOnError(fallback.error);
+    return;
+  }
 
   throwOnError(error);
 }

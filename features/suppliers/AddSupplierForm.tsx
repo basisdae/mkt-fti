@@ -10,12 +10,17 @@ import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
 import { Checkbox } from "@/components/forms/Checkbox";
 import { SupplierHighlightSection } from "@/components/supplier/SupplierHighlightSection";
+import { SupplierLogoUpload } from "@/components/supplier/SupplierLogoUpload";
 import { DataStatusBanner } from "@/components/ui/DataStatus";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/constants";
 import {
   buildSupplierFromForm,
   supplierToFormData,
 } from "@/lib/services/supplier.service";
+import {
+  removeSupplierLogo,
+  uploadSupplierLogo,
+} from "@/lib/supplier-logo-storage";
 import { useSupplierStore } from "@/hooks/SupplierStore";
 import {
   createEmptyContactInput,
@@ -63,13 +68,19 @@ export function SupplierForm({
   initialSupplier,
 }: SupplierFormProps) {
   const router = useRouter();
-  const { addSupplier, updateSupplierFromForm } = useSupplierStore();
+  const { addSupplier, updateSupplier, updateSupplierFromForm } =
+    useSupplierStore();
   const isEdit = mode === "edit";
   const [form, setForm] = useState<NewSupplierFormData>(() =>
     isEdit && initialSupplier
       ? supplierToFormData(initialSupplier)
       : INITIAL_SUPPLIER_FORM,
   );
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    initialSupplier?.logoUrl ?? null,
+  );
+  const [removeLogo, setRemoveLogo] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [savedName, setSavedName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -128,6 +139,30 @@ export function SupplierForm({
     }));
   }
 
+  async function syncLogo(supplierIdValue: string, previousLogoPath?: string | null) {
+    if (removeLogo) {
+      if (previousLogoPath) {
+        await removeSupplierLogo(previousLogoPath).catch(() => undefined);
+      }
+      await updateSupplier(supplierIdValue, {
+        logoUrl: null,
+        logoPath: null,
+      });
+      return;
+    }
+
+    if (!logoFile) return;
+
+    const uploaded = await uploadSupplierLogo(supplierIdValue, logoFile);
+    if (previousLogoPath) {
+      await removeSupplierLogo(previousLogoPath).catch(() => undefined);
+    }
+    await updateSupplier(supplierIdValue, {
+      logoUrl: uploaded.logoUrl,
+      logoPath: uploaded.logoPath,
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
@@ -136,12 +171,16 @@ export function SupplierForm({
     try {
       if (isEdit && supplierId) {
         await updateSupplierFromForm(supplierId, form);
+        await syncLogo(supplierId, initialSupplier?.logoPath);
         router.push(detailHref);
         return;
       }
 
       const input = buildSupplierFromForm(form);
-      await addSupplier(input);
+      const created = await addSupplier(input);
+      if (logoFile) {
+        await syncLogo(created.id);
+      }
       setSavedName(
         form.factoryName.trim() || form.displayName.trim() || "New Supplier",
       );
@@ -213,6 +252,24 @@ export function SupplierForm({
           onProvinceChange={(v) => updateField("provinceRegion", v)}
           onCityChange={(v) => updateField("cityDistrict", v)}
         />
+
+        <FormSection
+          title="Supplier Logo"
+          description="Optional company logo — shown as a secondary mark on cards (factory icon stays)"
+        >
+          <SupplierLogoUpload
+            previewUrl={removeLogo ? null : logoPreview}
+            onFileChange={(file) => {
+              setLogoFile(file);
+              if (file) setRemoveLogo(false);
+            }}
+            onRemoveExisting={() => {
+              setLogoFile(null);
+              setLogoPreview(null);
+              setRemoveLogo(true);
+            }}
+          />
+        </FormSection>
 
         <FormSection
           title="Factory Details"

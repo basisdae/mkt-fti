@@ -1,4 +1,15 @@
+"use client";
+
+import type { ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Archive,
+  Copy,
+  Eye,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { BrandContextStack } from "@/components/product/BrandContextStack";
@@ -16,15 +27,18 @@ import {
 } from "@/lib/utils";
 import type { ProductView } from "@/types/product";
 
-/** Shared desktop grid: product | supplier | moq | cost | fti | gp | dealer | updated */
+/** Shared desktop grid: product | supplier | moq | cost | fti | gp | dealer | updated | actions */
 export const PRODUCT_LIST_GRID =
-  "md:grid md:grid-cols-[minmax(0,2.2fr)_minmax(0,1.2fr)_repeat(5,minmax(0,1fr))_minmax(0,0.9fr)]";
+  "md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)_repeat(5,minmax(0,0.9fr))_minmax(0,0.8fr)_minmax(0,1.35fr)]";
 
 const COLUMN_DIVIDER =
   "md:border-r md:border-[#F1F2F7] md:px-4 md:py-4 last:md:border-r-0";
 
 interface ProductListRowProps {
   product: ProductView;
+  onDuplicate: (product: ProductView) => void;
+  onArchive: (product: ProductView) => void;
+  onDelete: (product: ProductView) => void;
 }
 
 function MetricCell({
@@ -54,14 +68,53 @@ function MetricCell({
   );
 }
 
-export function ProductListRow({ product }: ProductListRowProps) {
+function ActionButton({
+  label,
+  onClick,
+  danger,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors",
+        danger
+          ? "text-fti-red hover:bg-red-50"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+      )}
+    >
+      {children}
+      <span className="hidden xl:inline">{label}</span>
+    </button>
+  );
+}
+
+export function ProductListRow({
+  product,
+  onDuplicate,
+  onArchive,
+  onDelete,
+}: ProductListRowProps) {
+  const router = useRouter();
   const statusStyle = getStatusColor(product.status);
   const lowGp = isLowProfitMargin(product.gpPercent);
   const pipelineStep = formatPipelineStep(product.pipelineStage);
 
   return (
-    <Link
-      href={`/products/${product.id}`}
+    <div
       className={cn(
         "group grid grid-cols-1 gap-3 rounded-[20px] border border-gray-100 bg-card shadow-sm shadow-gray-200/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-card-hover)] md:gap-0 md:px-0 md:py-0",
         PRODUCT_LIST_GRID,
@@ -74,7 +127,7 @@ export function ProductListRow({ product }: ProductListRowProps) {
           "min-w-0 px-4 py-4 md:py-5 md:pl-6 md:text-left",
         )}
       >
-        <div className="flex gap-3">
+        <Link href={`/products/${product.id}`} className="flex gap-3">
           <ProductImageDisplay
             src={product.imageUrl}
             alt={resolveProductImageAlt(product)}
@@ -101,11 +154,11 @@ export function ProductListRow({ product }: ProductListRowProps) {
             <p className="mt-1.5 text-xs font-medium text-primary/80">
               {pipelineStep}
             </p>
-            <div className="mt-2 max-w-xs">
+            <div className="mt-2 max-w-xs md:max-w-md lg:max-w-lg">
               <BrandContextStack strategy={product.brandStrategy} compact />
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Supplier — center aligned */}
@@ -150,11 +203,11 @@ export function ProductListRow({ product }: ProductListRowProps) {
         />
       </div>
 
-      {/* Updated — far right */}
+      {/* Updated */}
       <div
         className={cn(
           COLUMN_DIVIDER,
-          "flex items-center justify-between gap-2 px-4 pb-4 md:justify-center md:pb-0 md:pr-6 md:text-center",
+          "flex items-center justify-between gap-2 px-4 pb-4 md:justify-center md:pb-0 md:text-center",
         )}
       >
         <span className="text-[11px] font-medium text-gray-400 md:hidden">
@@ -165,13 +218,43 @@ export function ProductListRow({ product }: ProductListRowProps) {
         </span>
       </div>
 
+      {/* Actions — far right */}
+      <div
+        className={cn(
+          COLUMN_DIVIDER,
+          "flex flex-wrap items-center gap-0.5 px-4 pb-4 md:justify-end md:pb-0 md:pr-4",
+        )}
+      >
+        <ActionButton
+          label="View"
+          onClick={() => router.push(`/products/${product.id}`)}
+        >
+          <Eye className="h-3.5 w-3.5" />
+        </ActionButton>
+        <ActionButton
+          label="Edit"
+          onClick={() => router.push(`/products/${product.id}/edit`)}
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </ActionButton>
+        <ActionButton label="Duplicate" onClick={() => onDuplicate(product)}>
+          <Copy className="h-3.5 w-3.5" />
+        </ActionButton>
+        <ActionButton label="Archive" onClick={() => onArchive(product)}>
+          <Archive className="h-3.5 w-3.5" />
+        </ActionButton>
+        <ActionButton label="Delete" danger onClick={() => onDelete(product)}>
+          <Trash2 className="h-3.5 w-3.5" />
+        </ActionButton>
+      </div>
+
       <div className="border-t border-[#F1F2F7] px-4 pb-4 pt-3 md:hidden">
         <p className="text-xs text-gray-500">
           <span className="font-medium text-gray-600">Supplier:</span>{" "}
           {product.supplier}
         </p>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -185,6 +268,7 @@ export function ProductListHeader() {
     { label: "GP", align: "center" as const },
     { label: "Dealer Price", align: "center" as const },
     { label: "Updated", align: "center" as const },
+    { label: "Actions", align: "right" as const },
   ];
 
   return (
@@ -200,10 +284,10 @@ export function ProductListHeader() {
           className={cn(
             COLUMN_DIVIDER,
             "flex items-center py-3",
-            header.align === "left"
-              ? "justify-start pl-6 text-left"
-              : "justify-center text-center",
-            index === headers.length - 1 && "pr-6",
+            header.align === "left" && "justify-start pl-6 text-left",
+            header.align === "center" && "justify-center text-center",
+            header.align === "right" && "justify-end pr-4 text-right",
+            index === headers.length - 1 && "pr-4",
           )}
         >
           <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">

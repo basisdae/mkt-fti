@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Clock3, Pencil, StickyNote } from "lucide-react";
+import { ArrowLeft, ClipboardList, Clock3, Pencil, StickyNote } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
-import { timeAgo } from "@/lib/utils";
+import { ProductResumeExportButton } from "@/components/product/ProductResumeExport";
+import { formatProductBrand } from "@/lib/brand-strategy";
+import {
+  getSpecActionLabel,
+  getSpecStatusBadgeClasses,
+  PRODUCT_SPEC_STATUS_LABELS,
+  resolveProductSpecStatus,
+} from "@/lib/product-specification";
+import { cn, timeAgo } from "@/lib/utils";
 import type { ProductView } from "@/types/product";
 
 interface ProductDetailHeaderProps {
@@ -22,6 +30,7 @@ export function ProductDetailHeader({
   imageAlt,
 }: ProductDetailHeaderProps) {
   const router = useRouter();
+  const specStatus = resolveProductSpecStatus(product);
 
   return (
     <div className="mb-8">
@@ -41,6 +50,14 @@ export function ProductDetailHeader({
                 scorecard={product.evaluationScorecard}
                 showStatus
               />
+              <span
+                className={cn(
+                  "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                  getSpecStatusBadgeClasses(specStatus),
+                )}
+              >
+                Spec: {PRODUCT_SPEC_STATUS_LABELS[specStatus]}
+              </span>
               <span className="text-xs text-gray-400">{product.code}</span>
             </div>
 
@@ -48,7 +65,8 @@ export function ProductDetailHeader({
               {product.name}
             </h1>
             <p className="mt-2 text-sm font-medium text-gray-600">
-              {product.supplier}
+              Brand: {formatProductBrand(product.brand)}
+              {product.supplier ? ` · ${product.supplier}` : ""}
             </p>
             <p className="mt-3 max-w-2xl text-sm text-gray-400">
               {product.description}
@@ -61,6 +79,14 @@ export function ProductDetailHeader({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
+          <Link
+            href={`/products/${product.id}/spec`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#9F1239] px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-[#9F1239]/90"
+          >
+            <ClipboardList className="h-4 w-4" />
+            {getSpecActionLabel(specStatus)}
+          </Link>
+          <ProductResumeExportButton product={product} />
           <Button href={`/notes?product=${product.id}`} variant="secondary" size="sm">
             <StickyNote className="h-4 w-4" />
             Notes

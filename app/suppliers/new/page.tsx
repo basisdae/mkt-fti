@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AddSupplierForm } from "@/features/suppliers/AddSupplierForm";
 
 export const metadata: Metadata = {
-  title: "Register Supplier | MKT-FTI",
+  title: "New Supplier",
 };
 
 export default function NewSupplierPage() {

@@ -39,6 +39,8 @@ export function buildSupplierFromForm(form: NewSupplierFormData): NewSupplierInp
     alibabaLink: form.alibabaLink.trim(),
     mainProductCategory: form.mainProductCategory.trim(),
     imageUrl: null,
+    logoUrl: null,
+    logoPath: null,
     notes: form.notes.trim(),
     contacts,
   };

@@ -1,7 +1,9 @@
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import {
+  getIsoCertifications,
   getRegulatoryCertifications,
+  hasIsoCertifications,
   hasRegulatoryCertifications,
   normalizeProductCertification,
 } from "@/lib/product-certification";
@@ -12,27 +14,13 @@ interface CertificationCardProps {
   certification: ProductCertification;
 }
 
-function IsoRow({ label, value }: { label: string; value: string }) {
-  const display = value?.trim() || "—";
-  return (
-    <div className="rounded-xl bg-gray-50/80 px-4 py-3">
-      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold text-gray-900">{display}</p>
-    </div>
-  );
-}
-
-function hasIsoValue(cert: ProductCertification): boolean {
-  return [cert.iso1, cert.iso2, cert.iso3].some((value) => value?.trim());
-}
-
 export function CertificationCard({
   product,
   certification,
 }: CertificationCardProps) {
   const cert = normalizeProductCertification(certification);
+  const isoList = getIsoCertifications(cert);
+  const hasIso = hasIsoCertifications(cert);
   const regulatoryCerts = getRegulatoryCertifications(cert);
   const hasCerts = hasRegulatoryCertifications(cert);
   const productSystems = cert.productSystems.filter((system) => system.trim());
@@ -44,20 +32,22 @@ export function CertificationCard({
         Certification / Product System
       </h2>
 
-      {hasIsoValue(cert) ? (
-        <div className="mb-5 grid gap-3 sm:grid-cols-3">
-          <IsoRow label="ISO 1" value={cert.iso1} />
-          <IsoRow label="ISO 2" value={cert.iso2} />
-          <IsoRow label="ISO 3" value={cert.iso3} />
-        </div>
-      ) : (
-        <div className="mb-5 rounded-xl bg-gray-50/80 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-            ISO
-          </p>
-          <p className="mt-1 text-sm text-gray-400">—</p>
-        </div>
-      )}
+      <div className="mb-5">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+          ISO
+        </p>
+        {hasIso ? (
+          <div className="flex flex-wrap gap-2">
+            {isoList.map((item) => (
+              <Badge key={item} variant="default">
+                {item}
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-400">—</p>
+        )}
+      </div>
 
       <div className="mb-4">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -72,7 +62,7 @@ export function CertificationCard({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">No certification</p>
+          <p className="text-sm text-gray-400">—</p>
         )}
       </div>
 

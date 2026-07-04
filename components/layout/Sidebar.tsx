@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  APP_SHORT,
+  APP_TAGLINE,
   APP_TITLE,
   NAV_GROUPS,
   type NavItem,
@@ -59,15 +59,18 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
       <div className="border-b border-gray-100 px-5 py-5 sm:px-6 sm:py-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-sm">
-              FTI
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/logo.png"
+              alt="MKT Headquarter"
+              className="h-10 w-10 shrink-0 object-contain"
+            />
             <div className="min-w-0">
               <p className="text-sm font-bold leading-snug tracking-tight text-gray-900">
                 {APP_TITLE}
               </p>
               <p className="mt-0.5 text-[11px] font-medium text-gray-400">
-                {APP_SHORT}
+                {APP_TAGLINE}
               </p>
             </div>
           </div>

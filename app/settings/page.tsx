@@ -26,7 +26,7 @@ export default function SettingsPage() {
             General
           </h2>
           <div className="space-y-4">
-            <Input label="Workspace Name" defaultValue="MKT-FTI" readOnly />
+            <Input label="Workspace Name" defaultValue="MKT Headquarter" readOnly />
             <Input label="Default Currency" defaultValue="THB" readOnly />
             <Input label="Fiscal Year Start" defaultValue="January" readOnly />
           </div>

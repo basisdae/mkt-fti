@@ -14,6 +14,7 @@ import {
 } from "@/lib/product-notes";
 import { generateId } from "@/lib/generate-id";
 import { localNoteRepository } from "@/lib/repositories";
+import { useAuth } from "@/hooks/AuthStore";
 import type { ProductNote, ProductNoteAttachment } from "@/types/product";
 
 interface AddProductNoteInput {
@@ -32,6 +33,7 @@ interface ProductNotesStoreValue {
     typeFilter?: ProductNoteTypeFilter,
   ) => ProductNote[];
   addNote: (input: AddProductNoteInput) => ProductNote;
+  removeNotesForProduct: (productId: string) => void;
   noteCountForProduct: (productId: string) => number;
 }
 
@@ -40,6 +42,7 @@ const ProductNotesStoreContext = createContext<ProductNotesStoreValue | null>(
 );
 
 export function ProductNotesStoreProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<ProductNote[]>(() =>
     localNoteRepository.listInitial(),
   );
@@ -60,22 +63,34 @@ export function ProductNotesStoreProvider({ children }: { children: ReactNode })
     [notes],
   );
 
-  const addNote = useCallback((input: AddProductNoteInput): ProductNote => {
-    const now = new Date().toISOString();
-    const note: ProductNote = {
-      id: generateId(),
-      productId: input.productId,
-      type: input.type,
-      title: input.title.trim(),
-      body: input.body.trim(),
-      author: input.author ?? "You",
-      createdAt: now,
-      updatedAt: now,
-      attachments: input.attachments ?? [],
-    };
+  const addNote = useCallback(
+    (input: AddProductNoteInput): ProductNote => {
+      const now = new Date().toISOString();
+      const authorName =
+        input.author?.trim() ||
+        (user
+          ? `${user.displayName} (${user.role})`
+          : "Unknown user");
+      const note: ProductNote = {
+        id: generateId(),
+        productId: input.productId,
+        type: input.type,
+        title: input.title.trim(),
+        body: input.body.trim(),
+        author: authorName,
+        createdAt: now,
+        updatedAt: now,
+        attachments: input.attachments ?? [],
+      };
 
-    setNotes((prev) => [note, ...prev]);
-    return note;
+      setNotes((prev) => [note, ...prev]);
+      return note;
+    },
+    [user],
+  );
+
+  const removeNotesForProduct = useCallback((productId: string) => {
+    setNotes((prev) => prev.filter((note) => note.productId !== productId));
   }, []);
 
   const value = useMemo(
@@ -83,9 +98,16 @@ export function ProductNotesStoreProvider({ children }: { children: ReactNode })
       notes,
       getNotesForProduct,
       addNote,
+      removeNotesForProduct,
       noteCountForProduct,
     }),
-    [notes, getNotesForProduct, addNote, noteCountForProduct],
+    [
+      notes,
+      getNotesForProduct,
+      addNote,
+      removeNotesForProduct,
+      noteCountForProduct,
+    ],
   );
 
   return (

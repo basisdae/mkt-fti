@@ -72,6 +72,7 @@ export type ProductImageType =
   | "lifestyle"
   | "marketing"
   | "manual"
+  | "factory"
   | "other";
 
 export const PRODUCT_IMAGE_TYPE_LABELS: Record<ProductImageType, string> = {
@@ -93,6 +94,7 @@ export const PRODUCT_IMAGE_TYPE_LABELS: Record<ProductImageType, string> = {
   lifestyle: "Lifestyle",
   marketing: "Marketing",
   manual: "Manual",
+  factory: "Factory",
   other: "Other",
 };
 
@@ -103,7 +105,9 @@ export type ProductImageUsageTag =
   | "presentation"
   | "social_media"
   | "packaging"
-  | "manual";
+  | "manual"
+  | "internal"
+  | "dealer";
 
 export const PRODUCT_IMAGE_USAGE_LABELS: Record<ProductImageUsageTag, string> = {
   website: "Website",
@@ -113,6 +117,8 @@ export const PRODUCT_IMAGE_USAGE_LABELS: Record<ProductImageUsageTag, string> = 
   social_media: "Social Media",
   packaging: "Packaging",
   manual: "Manual",
+  internal: "Internal",
+  dealer: "Dealer",
 };
 
 export interface ProductGalleryImage {
@@ -128,6 +134,56 @@ export interface ProductGalleryImage {
   /** Usage channels this image is approved for. */
   usageTags?: ProductImageUsageTag[];
 }
+
+/** Product body size — separate from shipping carton (logistics-ready). */
+export interface ProductDimension {
+  /** Height in mm */
+  height: string;
+  /** Width in mm */
+  width: string;
+  /** Depth in mm */
+  depth: string;
+  /** Product weight in kg */
+  weight: string;
+}
+
+/** Shipping carton / packing data — reusable by logistics modules. */
+export interface PackagingInformation {
+  /** Carton width in mm */
+  cartonWidth: string;
+  /** Carton depth in mm */
+  cartonDepth: string;
+  /** Carton height in mm */
+  cartonHeight: string;
+  /** Gross weight in kg */
+  grossWeight: string;
+  /** Net weight in kg */
+  netWeight: string;
+  unitsPerCarton: string;
+  /** Cubic meters — auto from W×D×H/1e9 when dimensions filled */
+  cbm: string;
+}
+
+/** Technical specification — separate from core product create/edit. */
+export interface ProductSpecification {
+  material: string;
+  connector: string;
+  voltage: string;
+  power: string;
+  flowRate: string;
+  pressure: string;
+  productDimension: ProductDimension;
+  packaging: PackagingInformation;
+  installation: string;
+  warranty: string;
+  remark: string;
+}
+
+export type ProductSpecStatus =
+  | "not_started"
+  | "draft"
+  | "completed"
+  | "need_review";
 
 /** Core product record (no pricing summary or workflow status). */
 export interface Product {
@@ -159,6 +215,10 @@ export interface Product {
   customOptions: ProductCustomOptions;
   certification: ProductCertification;
   evaluationScorecard: ProductEvaluationScorecard;
+  /** Technical specs for resume export — optional, empty fields show as "-". */
+  specification?: ProductSpecification;
+  /** Spec workflow status for MKT / R&D tracking. */
+  specStatus?: ProductSpecStatus;
 }
 
 export type EvaluationScore = 1 | 2 | 3 | 4 | 5;
@@ -182,6 +242,8 @@ export interface ProductEvaluationScorecard {
   criteria: Record<EvaluationCriterionId, EvaluationCriterionInput>;
   evaluatedAt: string;
   evaluator: string;
+  overallComment: string;
+  nextAction: string;
 }
 
 export interface ProductPriceOption {
@@ -221,6 +283,8 @@ export interface ProductCertification {
   iso1: string;
   iso2: string;
   iso3: string;
+  /** User-selected ISO standards (array stored in certification jsonb). */
+  iso: string[];
   certifications: string[];
   productSystems: string[];
 }

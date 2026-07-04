@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Building2, ExternalLink, MapPin, User } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { SupplierLogo } from "@/components/supplier/SupplierLogo";
 import { WeChatButton } from "@/components/supplier/WeChatButton";
 import { cn, formatDate } from "@/lib/utils";
 import {
@@ -46,21 +47,14 @@ export function ProductLinkedSupplierCard({
       </div>
 
       <div className="flex flex-col gap-5 sm:flex-row">
-        <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-gray-300">
-          {supplier.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={supplier.imageUrl}
-              alt={supplier.factoryName}
-              className="h-full w-full rounded-2xl object-cover"
-            />
-          ) : (
-            <Building2 className="h-10 w-10" />
-          )}
-        </div>
+        <SupplierLogo
+          logoUrl={supplier.logoUrl}
+          name={supplier.factoryName}
+          size="lg"
+        />
 
         <div className="min-w-0 flex-1 space-y-4">
-          <div>
+          <div className="min-w-0">
             <Link
               href={`/suppliers/${supplier.id}`}
               className="text-lg font-bold text-gray-900 hover:text-primary"

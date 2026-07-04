@@ -4,9 +4,8 @@ interface ProductEditPageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: ProductEditPageProps) {
-  const { id } = await params;
-  return { title: `Edit Product ${id} | MKT-FTI` };
+export async function generateMetadata() {
+  return { title: "Edit Product" };
 }
 
 export default async function ProductEditPage({ params }: ProductEditPageProps) {

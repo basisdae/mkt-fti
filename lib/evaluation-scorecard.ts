@@ -229,5 +229,56 @@ export function createEmptyEvaluationScorecard(): ProductEvaluationScorecard {
     criteria,
     evaluatedAt: new Date().toISOString(),
     evaluator: "",
+    overallComment: "",
+    nextAction: "",
   };
+}
+
+export function normalizeEvaluationScorecard(
+  input?: Partial<ProductEvaluationScorecard> | null,
+): ProductEvaluationScorecard {
+  const empty = createEmptyEvaluationScorecard();
+  if (!input) return empty;
+
+  const criteria = { ...empty.criteria };
+  for (const template of EVALUATION_CRITERIA) {
+    const entry = input.criteria?.[template.id];
+    const rawScore = entry?.score;
+    const score =
+      rawScore === 1 ||
+      rawScore === 2 ||
+      rawScore === 3 ||
+      rawScore === 4 ||
+      rawScore === 5
+        ? rawScore
+        : 3;
+    criteria[template.id] = {
+      score,
+      note: entry?.note ?? "",
+    };
+  }
+
+  return {
+    criteria,
+    evaluatedAt: input.evaluatedAt || empty.evaluatedAt,
+    evaluator: input.evaluator ?? "",
+    overallComment: input.overallComment ?? "",
+    nextAction: input.nextAction ?? "",
+  };
+}
+
+export function cloneEvaluationScorecard(
+  scorecard: ProductEvaluationScorecard,
+): ProductEvaluationScorecard {
+  return normalizeEvaluationScorecard(
+    JSON.parse(JSON.stringify(scorecard)) as ProductEvaluationScorecard,
+  );
+}
+
+export function isEvaluationScorecardEqual(
+  a: ProductEvaluationScorecard,
+  b: ProductEvaluationScorecard,
+): boolean {
+  return JSON.stringify(normalizeEvaluationScorecard(a)) ===
+    JSON.stringify(normalizeEvaluationScorecard(b));
 }

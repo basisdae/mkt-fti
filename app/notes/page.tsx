@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ProductNotesView } from "@/features/notes/ProductNotesView";
 
 export const metadata = {
-  title: "Product Notes",
+  title: "Notes",
 };
 
 export default function NotesPage() {

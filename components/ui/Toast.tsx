@@ -1,15 +1,32 @@
 "use client";
 
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, X, XCircle } from "lucide-react";
 
 interface ToastProps {
+  title?: string;
   message: string;
   onDismiss: () => void;
   variant?: "success" | "error";
+  durationMs?: number;
 }
 
-export function Toast({ message, onDismiss, variant = "success" }: ToastProps) {
+export function Toast({
+  title,
+  message,
+  onDismiss,
+  variant = "success",
+  durationMs = 4000,
+}: ToastProps) {
+  useEffect(() => {
+    const timer = window.setTimeout(onDismiss, durationMs);
+    return () => window.clearTimeout(timer);
+  }, [onDismiss, durationMs]);
+
+  const resolvedTitle =
+    title ?? (variant === "success" ? "Success" : "Something went wrong");
+
   return (
     <div
       role="status"
@@ -20,16 +37,13 @@ export function Toast({ message, onDismiss, variant = "success" }: ToastProps) {
           : "border-red-200 bg-white",
       )}
     >
-      <CheckCircle2
-        className={cn(
-          "mt-0.5 h-5 w-5 shrink-0",
-          variant === "success" ? "text-success" : "text-fti-red",
-        )}
-      />
+      {variant === "success" ? (
+        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+      ) : (
+        <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-fti-red" />
+      )}
       <div className="flex-1">
-        <p className="text-sm font-semibold text-gray-900">
-          {variant === "success" ? "Product saved" : "Something went wrong"}
-        </p>
+        <p className="text-sm font-semibold text-gray-900">{resolvedTitle}</p>
         <p className="mt-0.5 text-sm text-gray-500">{message}</p>
       </div>
       <button

@@ -1,6 +1,7 @@
 import { evalExtras } from "@/lib/product-detail-defaults";
 import { defaultBrandStrategy } from "@/lib/brand-strategy";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
+import { createEmptyProductSpecification } from "@/lib/product-specification";
 import type {
   OemType,
   Product,
@@ -80,12 +81,15 @@ function inferFactoryLocation(supplier: string): string {
 
 export function emptyProductCertification(
   certifications: string[] = [],
+  iso: string[] = [],
 ): ProductCertification {
   const validCerts = certifications.filter((item) => item.trim());
+  const validIso = iso.map((item) => item.trim()).filter(Boolean);
   return {
     iso1: "",
     iso2: "",
     iso3: "",
+    iso: validIso,
     certifications: validCerts,
     productSystems: [],
   };
@@ -141,6 +145,7 @@ export function createProduct(seed: ProductSeedInput): Product {
       ...seed.certification,
     },
     evaluationScorecard: createEmptyEvaluationScorecard(),
+    specification: createEmptyProductSpecification(),
   };
 }
 
@@ -153,7 +158,7 @@ export function priceOption(
   wholesaleGp: number,
   dealerGp: number,
   label?: string,
-  leadTime = "45 days",
+  leadTime = "45",
 ): ProductPriceOption {
   return {
     id,

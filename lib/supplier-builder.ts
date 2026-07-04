@@ -14,6 +14,8 @@ export interface SupplierSeedInput {
   alibabaLink?: string;
   mainProductCategory?: string;
   imageUrl?: string | null;
+  logoUrl?: string | null;
+  logoPath?: string | null;
   notes?: string;
   contacts?: Omit<SupplierContact, "id" | "imageUrl">[];
   updatedAt: string;
@@ -53,6 +55,8 @@ export function createSupplier(seed: SupplierSeedInput): Supplier {
     alibabaLink: seed.alibabaLink ?? "",
     mainProductCategory: seed.mainProductCategory ?? "",
     imageUrl: seed.imageUrl ?? null,
+    logoUrl: seed.logoUrl ?? null,
+    logoPath: seed.logoPath ?? null,
     notes: seed.notes ?? "",
     contacts,
     updatedAt: seed.updatedAt,

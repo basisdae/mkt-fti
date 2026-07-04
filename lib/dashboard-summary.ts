@@ -1,3 +1,4 @@
+import { getEvaluationTotalScore } from "@/lib/evaluation-scorecard";
 import type { ProductView } from "@/types/product";
 
 export interface TodaySummaryMetrics {
@@ -65,11 +66,24 @@ export function getLatestProducts(
     .slice(0, limit);
 }
 
+/**
+ * Spotlight ranking:
+ * 1. Higher evaluation score first
+ * 2. If score tied, latest updated first
+ * 3. When scores are equal/default, latest products surface naturally
+ */
 export function getSpotlightProducts(
   products: ProductView[],
   limit = 8,
 ): ProductView[] {
   return [...products]
-    .sort((a, b) => b.opportunityScore - a.opportunityScore)
+    .sort((a, b) => {
+      const scoreA = getEvaluationTotalScore(a.evaluationScorecard);
+      const scoreB = getEvaluationTotalScore(b.evaluationScorecard);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return (
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+    })
     .slice(0, limit);
 }

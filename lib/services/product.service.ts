@@ -1,5 +1,13 @@
 import { createProduct, emptyProductCertification, priceOption } from "@/lib/product-builder";
-import { defaultBrandStrategy } from "@/lib/brand-strategy";
+import {
+  defaultBrandStrategy,
+  parseProductBrandKey,
+  resolveProductBrandLabel,
+} from "@/lib/brand-strategy";
+import {
+  parseLeadTimeDays,
+  serializeLeadTimeDays,
+} from "@/lib/lead-time";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
 import { generateId } from "@/lib/generate-id";
 import { syncCoverFields } from "@/lib/product-gallery";
@@ -9,12 +17,22 @@ import {
   type NewProductFormData,
 } from "@/types/product-form";
 import type {
+  FtiBrand,
   OemType,
   Product,
   ProductGalleryImage,
   ProductStatus,
   ProductView,
 } from "@/types/product";
+
+function brandFromForm(form: NewProductFormData): string {
+  return resolveProductBrandLabel(form.brandOption, form.brandCustom);
+}
+
+function currentBrandFromForm(form: NewProductFormData): FtiBrand | null {
+  if (!form.brandOption || form.brandOption === "other") return null;
+  return form.brandOption;
+}
 
 function slugCode(name: string): string {
   const words = name
@@ -51,12 +69,13 @@ export function buildProductBundleFromForm(
   const exchangeRate = options.exchangeRate;
   const wholesaleGp = (parseFloat(form.wholesaleGp) || 42) / 100;
   const dealerGp = (parseFloat(form.dealerGp) || 14) / 100;
-  const leadTime = form.leadTime.trim() || "—";
+  const leadTime = serializeLeadTimeDays(form.leadTime);
   const images = options.images ?? [];
   const cover = syncCoverFields(images, form.productName.trim());
   const notes = form.notes.trim();
   const productSystem = form.productSystem.trim();
-  const brand = form.brand.trim();
+  const brand = brandFromForm(form);
+  const currentBrand = currentBrandFromForm(form);
 
   const base = createProduct({
     id: productId,
@@ -81,12 +100,13 @@ export function buildProductBundleFromForm(
     imageAlt: cover.imageAlt,
     images,
     certifications: form.certifications,
-    certification: emptyProductCertification(form.certifications),
+    certification: emptyProductCertification(form.certifications, form.iso),
     brandStrategy: {
       factory: options.supplierName,
       internalProjectName: form.productName.trim(),
       businessUnit: productSystem,
       reason: "",
+      currentBrand,
     },
   });
 
@@ -95,6 +115,7 @@ export function buildProductBundleFromForm(
     brandStrategy: defaultBrandStrategy({
       ...base.brandStrategy,
       factory: options.supplierName,
+      currentBrand,
     }),
     evaluationScorecard: createEmptyEvaluationScorecard(),
   };
@@ -157,9 +178,17 @@ export function productViewToFormData(product: ProductView): NewProductFormData 
   const emptyPlaceholder = (value: string) =>
     !value || value === "—" ? "" : value;
 
+  const brandValue = emptyPlaceholder(product.brand);
+  const brandOptionFromField = parseProductBrandKey(brandValue);
+  const brandOption =
+    brandOptionFromField ||
+    product.brandStrategy.currentBrand ||
+    "";
+
   return {
     productName: product.name,
-    brand: emptyPlaceholder(product.brand),
+    brandOption,
+    brandCustom: brandOption === "other" ? brandValue : "",
     supplierId: product.supplierId,
     category: product.category,
     status: product.status,
@@ -176,16 +205,16 @@ export function productViewToFormData(product: ProductView): NewProductFormData 
       ? String(Math.round(firstTier.wholesaleGp * 100))
       : "42",
     dealerGp: firstTier ? String(Math.round(firstTier.dealerGp * 100)) : "14",
-    leadTime:
-      firstTier?.leadTime && firstTier.leadTime !== "—"
-        ? firstTier.leadTime
-        : "",
+    leadTime: parseLeadTimeDays(firstTier?.leadTime),
     oemAvailable: product.customOptions.oem,
     odmAvailable: product.customOptions.odm,
     packagingCustom: product.customOptions.packagingCustom,
     colorCustom: product.customOptions.colorCustom,
     specCustom: product.customOptions.specCustom,
-    certifications: [...product.certification.certifications],
+    iso: [...(product.certification.iso ?? [])],
+    isoCustom: "",
+    certifications: [...(product.certification.certifications ?? [])],
+    certificationCustom: "",
     productSystem: emptyPlaceholder(product.productSystem),
     notes: notesFromProduct(product),
   };
@@ -207,12 +236,13 @@ export function updateProductBundleFromForm(
   const exchangeRate = options.exchangeRate;
   const wholesaleGp = (parseFloat(form.wholesaleGp) || 42) / 100;
   const dealerGp = (parseFloat(form.dealerGp) || 14) / 100;
-  const leadTime = form.leadTime.trim() || "—";
+  const leadTime = serializeLeadTimeDays(form.leadTime);
   const images = options.images ?? existing.images ?? [];
   const cover = syncCoverFields(images, form.productName.trim());
   const notes = form.notes.trim();
   const productSystem = form.productSystem.trim();
-  const brand = form.brand.trim();
+  const brand = brandFromForm(form);
+  const currentBrand = currentBrandFromForm(form);
 
   const product: Product = {
     ...existing,
@@ -239,12 +269,16 @@ export function updateProductBundleFromForm(
       colorCustom: form.colorCustom,
       specCustom: form.specCustom,
     },
-    certification: emptyProductCertification(form.certifications),
+    certification: {
+      ...emptyProductCertification(form.certifications, form.iso),
+      productSystems: existing.certification?.productSystems ?? [],
+    },
     brandStrategy: {
       ...existing.brandStrategy,
       factory: options.supplierName,
       internalProjectName: form.productName.trim(),
       businessUnit: productSystem,
+      currentBrand,
     },
   };
 

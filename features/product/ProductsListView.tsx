@@ -1,32 +1,53 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PackageSearch } from "lucide-react";
 import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { ProductListHeader, ProductListRow } from "@/components/cards/ProductListRow";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { DeleteProductDialog } from "@/components/product/DeleteProductDialog";
 import {
   ProductSearchFilterPanel,
   productFiltersAreActive,
 } from "@/components/product/ProductSearchFilterPanel";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Toast } from "@/components/ui/Toast";
+import { useBrandStore } from "@/hooks/BrandStore";
+import { usePipelineStore } from "@/hooks/PipelineStore";
+import { useProductNotesStore } from "@/hooks/ProductNotesStore";
 import {
   applyProductFilters,
   DEFAULT_PRODUCT_FILTERS,
   type ProductFilterState,
 } from "@/lib/product-filters";
-import { useBrandStore } from "@/hooks/BrandStore";
+import { deleteProductFully } from "@/lib/services/product-delete";
+import {
+  createProductInSupabase,
+  isProductSupabaseEnabled,
+} from "@/lib/services/product-persist";
+import type { ProductView } from "@/types/product";
 
 export function ProductsListView() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { productsWithBrand: allProducts } = useBrandStore();
+  const { removeProduct, duplicateProduct, archiveProduct } =
+    usePipelineStore();
+  const { removeNotesForProduct } = useProductNotesStore();
 
   const [filters, setFilters] = useState<ProductFilterState>(
     DEFAULT_PRODUCT_FILTERS,
   );
+  const [pendingDelete, setPendingDelete] = useState<ProductView | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [toast, setToast] = useState<{
+    title: string;
+    message: string;
+    variant: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     const q = searchParams.get("q");
@@ -51,6 +72,78 @@ export function ProductsListView() {
 
   function clearFilters() {
     setFilters(DEFAULT_PRODUCT_FILTERS);
+  }
+
+  const dismissToast = useCallback(() => setToast(null), []);
+
+  async function handleDeleteConfirm() {
+    if (!pendingDelete) return;
+    const product = pendingDelete;
+    setDeleting(true);
+
+    try {
+      await deleteProductFully(product.id);
+      removeProduct(product.id);
+      removeNotesForProduct(product.id);
+      setPendingDelete(null);
+      setToast({
+        title: "Product deleted",
+        message: `"${product.name}" was permanently deleted.`,
+        variant: "success",
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to delete product";
+      setToast({
+        title: "Delete failed",
+        message,
+        variant: "error",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleDuplicate(product: ProductView) {
+    const bundle = duplicateProduct(product.id);
+    if (!bundle) {
+      setToast({
+        title: "Duplicate failed",
+        message: "Could not duplicate this product.",
+        variant: "error",
+      });
+      return;
+    }
+
+    try {
+      if (isProductSupabaseEnabled()) {
+        await createProductInSupabase(bundle);
+      }
+      setToast({
+        title: "Product duplicated",
+        message: `"${product.name}" was copied.`,
+        variant: "success",
+      });
+      router.push(`/products/${bundle.product.id}/edit`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Cloud sync failed";
+      setToast({
+        title: "Product duplicated locally",
+        message,
+        variant: "error",
+      });
+      router.push(`/products/${bundle.product.id}/edit`);
+    }
+  }
+
+  function handleArchive(product: ProductView) {
+    archiveProduct(product.id);
+    setToast({
+      title: "Product archived",
+      message: `"${product.name}" was archived and hidden from the list.`,
+      variant: "success",
+    });
   }
 
   return (
@@ -101,10 +194,36 @@ export function ProductsListView() {
 
           <div className="space-y-3">
             {filteredProducts.map((product) => (
-              <ProductListRow key={product.id} product={product} />
+              <ProductListRow
+                key={product.id}
+                product={product}
+                onDuplicate={handleDuplicate}
+                onArchive={handleArchive}
+                onDelete={setPendingDelete}
+              />
             ))}
           </div>
         </>
+      )}
+
+      {pendingDelete && (
+        <DeleteProductDialog
+          product={pendingDelete}
+          deleting={deleting}
+          onCancel={() => {
+            if (!deleting) setPendingDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+        />
+      )}
+
+      {toast && (
+        <Toast
+          title={toast.title}
+          message={toast.message}
+          variant={toast.variant}
+          onDismiss={dismissToast}
+        />
       )}
     </div>
   );

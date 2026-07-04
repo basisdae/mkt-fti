@@ -33,8 +33,8 @@ export function ProfitSummaryCards({ summary }: ProfitSummaryCardsProps) {
       accent: "border-primary/10 bg-card",
     },
     {
-      title: "Recommended Selling Price",
-      subtitle: `${summary.recommended.tier.moq.toLocaleString()} MOQ · optimal margin`,
+      title: "Recommended MOQ",
+      subtitle: `${summary.recommended.tier.moq.toLocaleString()} units · best FTI profit`,
       value: formatCurrencyTHB(summary.recommended.pricing.ftiSellingPrice),
       meta: `GP ${formatPercent(summary.recommended.pricing.wholesaleGpPercent)} · Profit ${formatCurrencyTHB(summary.recommended.pricing.ftiProfit)}`,
       accent: "border-primary/30 bg-gradient-to-br from-light-purple/40 to-card",

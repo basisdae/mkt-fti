@@ -1,3 +1,4 @@
+import type { ProductBrandOption } from "@/lib/brand-strategy";
 import { PIPELINE_STAGES } from "@/lib/constants";
 import { generateId } from "@/lib/generate-id";
 import type { ProductStatus } from "@/types/product";
@@ -26,7 +27,8 @@ export interface MoqOptionRow {
 
 export interface NewProductFormData {
   productName: string;
-  brand: string;
+  brandOption: ProductBrandOption;
+  brandCustom: string;
   supplierId: string | null;
   category: string;
   status: ProductStatus | "";
@@ -39,7 +41,10 @@ export interface NewProductFormData {
   packagingCustom: boolean;
   colorCustom: boolean;
   specCustom: boolean;
+  iso: string[];
+  isoCustom: string;
   certifications: string[];
+  certificationCustom: string;
   productSystem: string;
   notes: string;
 }
@@ -55,7 +60,8 @@ export function createMoqRow(): MoqOptionRow {
 
 export const INITIAL_FORM_DATA: NewProductFormData = {
   productName: "",
-  brand: "",
+  brandOption: "",
+  brandCustom: "",
   supplierId: null,
   category: "",
   status: "",
@@ -68,10 +74,22 @@ export const INITIAL_FORM_DATA: NewProductFormData = {
   packagingCustom: false,
   colorCustom: false,
   specCustom: false,
+  iso: [],
+  isoCustom: "",
   certifications: [],
+  certificationCustom: "",
   productSystem: "",
   notes: "",
 };
+
+export const ISO_OPTIONS = [
+  "ISO 9001",
+  "ISO 14001",
+  "ISO 45001",
+  "ISO 22000",
+  "ISO 13485",
+  "ISO 17025",
+] as const;
 
 export const CERTIFICATION_OPTIONS = [
   "TISI",
@@ -82,6 +100,16 @@ export const CERTIFICATION_OPTIONS = [
   "NSF",
   "CB",
   "Bluetooth SIG",
+  "WRAS",
+  "WQA",
+  "SGS",
+  "UL",
+  "ETL",
+  "LFGB",
+  "REACH",
+  "BPA Free",
+  "WaterMark",
+  "ISO",
 ] as const;
 
 export const PRODUCT_SYSTEM_OPTIONS = [

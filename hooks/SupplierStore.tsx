@@ -20,6 +20,7 @@ import {
   updateSupplierContact,
 } from "@/lib/services/suppliers";
 import { supplierFactoryPatchFromForm } from "@/lib/services/supplier.service";
+import { removeSupplierLogo } from "@/lib/supplier-logo-storage";
 import { removeSupplierFromStorage } from "@/lib/supplier-storage";
 import type {
   NewSupplierInput,
@@ -36,7 +37,7 @@ interface SupplierStoreValue {
   /** True after the initial Supabase fetch attempt completes. */
   hydrated: boolean;
   getSupplier: (id: string) => Supplier | undefined;
-  addSupplier: (input: NewSupplierInput) => Promise<void>;
+  addSupplier: (input: NewSupplierInput) => Promise<Supplier>;
   updateSupplier: (supplierId: string, patch: Partial<Supplier>) => Promise<void>;
   updateSupplierFromForm: (
     supplierId: string,
@@ -115,6 +116,7 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
       const created = await createSupplier(input);
       setSuppliers((prev) => [created, ...prev]);
       setError(null);
+      return created;
     } catch (err) {
       const message = toErrorMessage(err, "Failed to save supplier");
       setError(message);
@@ -238,6 +240,7 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
 
   const deleteSupplier = useCallback(async (supplierId: string) => {
     let snapshot: Supplier[] = [];
+    const existing = suppliers.find((supplier) => supplier.id === supplierId);
 
     setSuppliers((prev) => {
       snapshot = prev;
@@ -245,6 +248,9 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
     });
 
     try {
+      if (existing?.logoPath) {
+        await removeSupplierLogo(existing.logoPath).catch(() => undefined);
+      }
       await deleteSupplierRecord(supplierId);
       removeSupplierFromStorage(supplierId);
       setError(null);
@@ -252,7 +258,7 @@ export function SupplierStoreProvider({ children }: { children: ReactNode }) {
       setSuppliers(snapshot);
       setError(toErrorMessage(err, "Failed to delete supplier"));
     }
-  }, []);
+  }, [suppliers]);
 
   const updateContact = useCallback(
     async (

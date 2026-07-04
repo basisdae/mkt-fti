@@ -20,6 +20,18 @@ export function buildTierRows(tiers: ProductPriceOption[]): TierPricingRow[] {
   }));
 }
 
+/**
+ * Recommended MOQ: best FTI profit; if profit is tied, lowest MOQ wins.
+ * Does not change pricing formulas — only selects among calculated rows.
+ */
+export function getRecommendedTierRow(rows: TierPricingRow[]): TierPricingRow {
+  return rows.reduce((best, row) => {
+    if (row.pricing.ftiProfit > best.pricing.ftiProfit) return row;
+    if (row.pricing.ftiProfit < best.pricing.ftiProfit) return best;
+    return row.tier.moq < best.tier.moq ? row : best;
+  });
+}
+
 export function getProfitSummary(tiers: ProductPriceOption[]): ProfitSummary {
   const rows = buildTierRows(tiers);
 
@@ -35,13 +47,7 @@ export function getProfitSummary(tiers: ProductPriceOption[]): ProfitSummary {
     row.pricing.dealerGpPercent > best.pricing.dealerGpPercent ? row : best,
   );
 
-  const aboveThreshold = rows.filter((row) => !row.pricing.isLowGp);
-  const recommended =
-    aboveThreshold.length > 0
-      ? aboveThreshold.reduce((best, row) =>
-          row.pricing.ftiProfit > best.pricing.ftiProfit ? row : best,
-        )
-      : highestProfit;
+  const recommended = getRecommendedTierRow(rows);
 
   return { bestMoq, highestProfit, bestDealerMargin, recommended };
 }

@@ -8,7 +8,7 @@ const ibmPlexSansThai = IBM_Plex_Sans_Thai({
 });
 
 export const metadata = {
-  title: "เครื่องคำนวณยอดขายและกำไร",
+  title: "Simulator",
 };
 
 export default function SimulatorPage() {
