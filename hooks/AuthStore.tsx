@@ -22,6 +22,8 @@ import {
   getManagedUserByEmail,
   getManagedUserById,
 } from "@/lib/auth/user-registry";
+import { getAppUserByEmailFromSupabase } from "@/lib/services/app-users";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppUser, AuthSession } from "@/types/auth";
 
 interface AuthStoreValue {
@@ -62,29 +64,42 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(() => {
-    const current = readSessionFromStorage();
-    if (!current?.user) return;
-    const record =
-      getManagedUserById(current.user.id) ??
-      getManagedUserByEmail(current.user.email);
-    if (!record || !record.isActive) {
-      clearSession();
-      setSession(null);
-      return;
-    }
-    const user: AppUser = {
-      id: record.id,
-      email: record.email,
-      displayName: record.displayName,
-      role: record.role,
-      permissions:
-        record.permissions.length > 0
-          ? record.permissions
-          : getDefaultPermissionsForRole(record.role),
-    };
-    const next = createSession(user);
-    writeSession(next);
-    setSession(next);
+    void (async () => {
+      const current = readSessionFromStorage();
+      if (!current?.user) return;
+
+      let record =
+        getManagedUserById(current.user.id) ??
+        getManagedUserByEmail(current.user.email);
+
+      if (isSupabaseConfigured()) {
+        try {
+          record =
+            (await getAppUserByEmailFromSupabase(current.user.email)) ?? record;
+        } catch {
+          // keep local record
+        }
+      }
+
+      if (!record || !record.isActive) {
+        clearSession();
+        setSession(null);
+        return;
+      }
+      const user: AppUser = {
+        id: record.id,
+        email: record.email,
+        displayName: record.displayName,
+        role: record.role,
+        permissions:
+          record.permissions.length > 0
+            ? record.permissions
+            : getDefaultPermissionsForRole(record.role),
+      };
+      const next = createSession(user);
+      writeSession(next);
+      setSession(next);
+    })();
   }, []);
 
   const value = useMemo(

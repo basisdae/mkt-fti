@@ -37,8 +37,11 @@ function productToDbRow(product: Product, status: string) {
     brand_strategy: product.brandStrategy,
     custom_options: product.customOptions,
     certification: product.certification,
+    specification: product.specification ?? {},
+    spec_status: product.specStatus ?? "not_started",
     status,
     pipeline_stage: status,
+    is_archived: false,
     updated_at: product.updatedAt,
   };
 }

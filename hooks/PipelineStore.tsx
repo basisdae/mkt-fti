@@ -11,10 +11,6 @@ import {
 } from "react";
 import { PIPELINE_STAGE_LABELS, PIPELINE_STAGES } from "@/lib/constants";
 import { generateId } from "@/lib/generate-id";
-import {
-  loadPipelineSnapshot,
-  savePipelineSnapshot,
-} from "@/lib/pipeline-storage";
 import { syncCoverFields } from "@/lib/product-gallery";
 import {
   appendProductHistory,
@@ -26,7 +22,18 @@ import {
   removeProductHistory,
 } from "@/lib/product-history";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { listAllProductGalleryGrouped } from "@/lib/services/product-images";
+import {
+  archiveProductInSupabase,
+  loadProductCatalogFromSupabase,
+  updateProductPipelineInSupabase,
+} from "@/lib/services/product-load";
+import {
+  createProductInSupabase,
+  updateProductInSupabase,
+} from "@/lib/services/product-persist";
+import { deleteProductFully } from "@/lib/services/product-delete";
+import { saveProductSpecification } from "@/lib/services/product-specification-persist";
+import { upsertProductScorecard } from "@/lib/services/products";
 import {
   createPipelineMoveLog,
   initPipelineItems,
@@ -99,6 +106,12 @@ interface PipelineStoreValue {
     currentStage: ProductTimelineStage;
   };
   recentTimelineFeed: (ProductTimelineMovement & { productName: string })[];
+  /** True after first catalog load attempt finishes. */
+  hydrated: boolean;
+  /** Catalog load error (e.g. missing Supabase config). */
+  loadError: string | null;
+  /** Reload catalog from Supabase. */
+  refreshCatalog: () => Promise<void>;
 }
 
 const PipelineStoreContext = createContext<PipelineStoreValue | null>(null);
@@ -118,83 +131,79 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
   const [timelineMovements, setTimelineMovements] = useState<
     ProductTimelineMovement[]
   >(() => localTimelineRepository.listInitial());
-  const [archivedIds, setArchivedIds] = useState<string[]>([]);
   const [pipelineHydrated, setPipelineHydrated] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const snapshot = loadPipelineSnapshot();
-    setProductRecords(snapshot.productRecords);
-    setStatuses(snapshot.statuses);
-    setPriceOptions(snapshot.priceOptions);
-    try {
-      const raw = localStorage.getItem("mkt-fti-archived-products");
-      if (raw) {
-        const parsed = JSON.parse(raw) as unknown;
-        if (Array.isArray(parsed)) {
-          setArchivedIds(parsed.filter((id) => typeof id === "string"));
-        }
-      }
-    } catch {
-      // ignore
+  const refreshCatalog = useCallback(async () => {
+    if (!isSupabaseConfigured()) {
+      setProductRecords([]);
+      setStatuses({});
+      setPriceOptions([]);
+      setLoadError(
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY on local and Vercel.",
+      );
+      return;
     }
-    setPipelineHydrated(true);
+
+    setLoadError(null);
+    const catalog = await loadProductCatalogFromSupabase();
+    setProductRecords(catalog.productRecords);
+    setStatuses(catalog.statuses);
+    setPriceOptions(catalog.priceOptions);
   }, []);
 
   useEffect(() => {
-    if (!pipelineHydrated) return;
-    localStorage.setItem(
-      "mkt-fti-archived-products",
-      JSON.stringify(archivedIds),
-    );
-  }, [pipelineHydrated, archivedIds]);
-
-  useEffect(() => {
-    if (!pipelineHydrated) return;
-    savePipelineSnapshot({ productRecords, statuses, priceOptions });
-  }, [pipelineHydrated, productRecords, statuses, priceOptions]);
-
-  useEffect(() => {
-    if (!pipelineHydrated || !isSupabaseConfigured()) return;
-
     let cancelled = false;
 
-    async function hydrateGalleryFromSupabase() {
+    async function hydrateFromSupabase() {
       try {
-        const grouped = await listAllProductGalleryGrouped();
-        if (cancelled || grouped.size === 0) return;
+        if (!isSupabaseConfigured()) {
+          if (!cancelled) {
+            setProductRecords([]);
+            setStatuses({});
+            setPriceOptions([]);
+            setLoadError(
+              "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY on local and Vercel.",
+            );
+          }
+          return;
+        }
 
-        setProductRecords((prev) =>
-          prev.map((product) => {
-            const images = grouped.get(product.id);
-            if (!images?.length) return product;
-
-            const cover = syncCoverFields(images, product.name);
-            return {
-              ...product,
-              images,
-              imageUrl: cover.imageUrl,
-              imageAlt: cover.imageAlt,
-            };
-          }),
-        );
+        const catalog = await loadProductCatalogFromSupabase();
+        if (cancelled) return;
+        setProductRecords(catalog.productRecords);
+        setStatuses(catalog.statuses);
+        setPriceOptions(catalog.priceOptions);
+        setLoadError(null);
       } catch (error) {
-        console.warn("[PipelineStore] Failed to hydrate product gallery", error);
+        if (!cancelled) {
+          setProductRecords([]);
+          setStatuses({});
+          setPriceOptions([]);
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Failed to load products from Supabase",
+          );
+        }
+      } finally {
+        if (!cancelled) setPipelineHydrated(true);
       }
     }
 
-    void hydrateGalleryFromSupabase();
-
+    void hydrateFromSupabase();
     return () => {
       cancelled = true;
     };
-  }, [pipelineHydrated]);
+  }, []);
 
   const products = useMemo(() => {
-    const archived = new Set(archivedIds);
-    return localProductRepository
-      .listViews(productRecords, statuses, priceOptions)
-      .filter((product) => !archived.has(product.id));
-  }, [productRecords, statuses, priceOptions, archivedIds]);
+    return localProductRepository.listViews(
+      productRecords,
+      statuses,
+      priceOptions,
+    );
+  }, [productRecords, statuses, priceOptions]);
 
   const pipelineItems = useMemo(() => {
     return initPipelineItems(products).map((item) => {
@@ -293,6 +302,10 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       buildProductCreatedHistory(bundle.product.id, bundle.product.name),
     ]);
 
+    void createProductInSupabase(bundle).catch((error) => {
+      console.error("[PipelineStore] Failed to create product in Supabase", error);
+    });
+
     return bundle.product.id;
   }, []);
 
@@ -336,6 +349,10 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
         },
         ...prev,
       ]);
+
+      void updateProductInSupabase(input).catch((error) => {
+        console.error("[PipelineStore] Failed to update product in Supabase", error);
+      });
     },
     [productRecords, priceOptions, statuses],
   );
@@ -387,6 +404,10 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
           };
         }),
       );
+
+      void upsertProductScorecard(productId, scorecard).catch((error) => {
+        console.error("[PipelineStore] Failed to save scorecard", error);
+      });
     },
     [productRecords],
   );
@@ -420,6 +441,16 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
           };
         }),
       );
+
+      if (specification) {
+        void saveProductSpecification(
+          productId,
+          specification,
+          specStatus ?? "draft",
+        ).catch((error) => {
+          console.error("[PipelineStore] Failed to save specification", error);
+        });
+      }
     },
     [productRecords],
   );
@@ -445,8 +476,11 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       delete next[productId];
       return next;
     });
-    setArchivedIds((prev) => prev.filter((id) => id !== productId));
     removeProductHistory(productId);
+
+    void deleteProductFully(productId).catch((error) => {
+      console.error("[PipelineStore] Failed to delete product in Supabase", error);
+    });
   }, []);
 
   const duplicateProduct = useCallback(
@@ -491,9 +525,21 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const archiveProduct = useCallback((productId: string) => {
-    setArchivedIds((prev) =>
-      prev.includes(productId) ? prev : [...prev, productId],
+    setProductRecords((prev) =>
+      prev.filter((product) => product.id !== productId),
     );
+    setPriceOptions((prev) =>
+      prev.filter((option) => option.productId !== productId),
+    );
+    setStatuses((prev) => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
+
+    void archiveProductInSupabase(productId).catch((error) => {
+      console.error("[PipelineStore] Failed to archive product in Supabase", error);
+    });
   }, []);
 
   const moveProduct = useCallback(
@@ -544,6 +590,14 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
         },
       }));
 
+      void updateProductPipelineInSupabase(
+        productId,
+        nextStatus,
+        targetStage,
+      ).catch((error) => {
+        console.error("[PipelineStore] Failed to move product in Supabase", error);
+      });
+
       return true;
     },
     [statuses],
@@ -569,6 +623,9 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       getStageForProduct,
       getTimelineForProduct,
       recentTimelineFeed,
+      hydrated: pipelineHydrated,
+      loadError,
+      refreshCatalog,
     }),
     [
       products,
@@ -589,6 +646,9 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       getStageForProduct,
       getTimelineForProduct,
       recentTimelineFeed,
+      pipelineHydrated,
+      loadError,
+      refreshCatalog,
     ],
   );
 

@@ -15,6 +15,7 @@ import {
   adminCreateUser,
   adminDeleteUser,
   adminUpdateUser,
+  listUsersForAdmin,
 } from "@/lib/auth/admin-users";
 import {
   listAuthAuditLog,
@@ -27,7 +28,7 @@ import {
 } from "@/lib/auth/permission-catalog";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { APP_ROLE_LABELS } from "@/lib/auth/roles";
-import { listManagedUsersPublic } from "@/lib/auth/user-registry";
+import { listAuthAuditFromSupabase } from "@/lib/services/app-users";
 import { formatDate } from "@/lib/utils";
 import type { AppRole, ManagedUserPublic } from "@/types/auth";
 
@@ -114,10 +115,31 @@ export function ManageUsersView() {
 
   const permissionGroups = useMemo(() => groupPermissionCatalog(), []);
 
-  const refresh = useCallback(() => {
-    setUsers(listManagedUsersPublic());
-    setAudit(listAuthAuditLog().slice(0, 30));
-  }, []);
+  const refresh = useCallback(async () => {
+    if (!user || !canManageUsers(user)) return;
+    try {
+      const rows = await listUsersForAdmin(user);
+      setUsers(
+        rows.map((row) => ({
+          id: row.id,
+          email: row.email,
+          displayName: row.displayName,
+          role: row.role,
+          permissions: row.permissions,
+          isActive: row.isActive,
+          lastLoginAt: row.lastLoginAt,
+        })),
+      );
+      const remoteAudit = await listAuthAuditFromSupabase(30);
+      setAudit(
+        remoteAudit.length > 0
+          ? (remoteAudit as AuthAuditEntry[])
+          : listAuthAuditLog().slice(0, 30),
+      );
+    } catch {
+      setAudit(listAuthAuditLog().slice(0, 30));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!ready) return;
@@ -125,7 +147,7 @@ export function ManageUsersView() {
       router.replace("/settings");
       return;
     }
-    refresh();
+    void refresh();
   }, [ready, user, router, refresh]);
 
   if (!ready || !canManageUsers(user)) {
@@ -157,7 +179,7 @@ export function ManageUsersView() {
         if (!editor.newPassword.trim()) {
           throw new Error("Password is required for new users");
         }
-        adminCreateUser(user, {
+        await adminCreateUser(user, {
           email: editor.email,
           displayName: editor.displayName,
           role: editor.role,
@@ -170,7 +192,7 @@ export function ManageUsersView() {
           variant: "success",
         });
       } else if (editor.userId) {
-        adminUpdateUser(user, editor.userId, {
+        await adminUpdateUser(user, editor.userId, {
           displayName: editor.displayName,
           role: editor.role,
           isActive: editor.isActive,
@@ -189,7 +211,7 @@ export function ManageUsersView() {
         });
       }
       setEditor(null);
-      refresh();
+      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -204,13 +226,13 @@ export function ManageUsersView() {
     );
     if (!confirmed) return;
     try {
-      adminDeleteUser(user, target.id);
+      await adminDeleteUser(user, target.id);
       setToast({
         title: "User deleted",
         message: `${target.email} was removed.`,
         variant: "success",
       });
-      refresh();
+      await refresh();
     } catch (err) {
       setToast({
         title: "Delete failed",

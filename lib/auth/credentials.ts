@@ -4,6 +4,11 @@ import {
   listManagedUsers,
   recordUserLogin,
 } from "@/lib/auth/user-registry";
+import {
+  ensureSeedUsersInSupabase,
+  getAppUserByEmailFromSupabase,
+  upsertAppUserInSupabase,
+} from "@/lib/services/app-users";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppUser } from "@/types/auth";
 
@@ -28,7 +33,29 @@ function toAppUser(record: {
   };
 }
 
-async function loginWithLocalCredentials(
+async function loginWithSupabaseAppUsers(
+  email: string,
+  password: string,
+): Promise<AppUser | "invalid" | "inactive" | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  try {
+    await ensureSeedUsersInSupabase();
+    const match = await getAppUserByEmailFromSupabase(email);
+    if (!match) return null;
+    if (match.password !== password.trim()) return "invalid";
+    if (!match.isActive) return "inactive";
+
+    const lastLoginAt = new Date().toISOString();
+    await upsertAppUserInSupabase({ ...match, lastLoginAt });
+    return toAppUser({ ...match, lastLoginAt } as typeof match);
+  } catch {
+    // Table may not be migrated yet — fall back to local registry.
+    return null;
+  }
+}
+
+async function loginWithLocalRegistry(
   email: string,
   password: string,
 ): Promise<AppUser | "invalid" | "inactive" | null> {
@@ -40,7 +67,7 @@ async function loginWithLocalCredentials(
   return toAppUser(match);
 }
 
-async function loginWithSupabaseCredentials(
+async function loginWithSupabaseAuth(
   email: string,
   password: string,
 ): Promise<AppUser | null> {
@@ -101,7 +128,19 @@ export async function authenticateUser(
   const normalizedEmail = normalizeEmail(email);
   const normalizedPassword = password.trim();
 
-  const localResult = await loginWithLocalCredentials(
+  const appUserResult = await loginWithSupabaseAppUsers(
+    normalizedEmail,
+    normalizedPassword,
+  );
+  if (appUserResult === "inactive") {
+    throw new Error("This account is inactive. Contact an administrator.");
+  }
+  if (appUserResult === "invalid") {
+    throw new Error("Invalid email or password");
+  }
+  if (appUserResult) return appUserResult;
+
+  const localResult = await loginWithLocalRegistry(
     normalizedEmail,
     normalizedPassword,
   );
@@ -113,11 +152,11 @@ export async function authenticateUser(
   }
   if (localResult) return localResult;
 
-  const supabaseUser = await loginWithSupabaseCredentials(
+  const supabaseAuthUser = await loginWithSupabaseAuth(
     normalizedEmail,
     normalizedPassword,
   );
-  if (supabaseUser) return supabaseUser;
+  if (supabaseAuthUser) return supabaseAuthUser;
 
   throw new Error("Invalid email or password");
 }

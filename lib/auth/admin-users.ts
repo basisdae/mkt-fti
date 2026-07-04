@@ -1,13 +1,26 @@
 import { logAuthAudit } from "@/lib/auth/audit-log";
-import type { PermissionKey } from "@/lib/auth/permission-catalog";
+import {
+  getDefaultPermissionsForRole,
+  type PermissionKey,
+} from "@/lib/auth/permission-catalog";
 import {
   createManagedUser,
   deleteManagedUser,
   getManagedUserById,
+  listManagedUsers,
   permissionsEqual,
   updateManagedUser,
   type UpdateManagedUserInput,
 } from "@/lib/auth/user-registry";
+import { generateId } from "@/lib/generate-id";
+import {
+  deleteAppUserInSupabase,
+  ensureSeedUsersInSupabase,
+  insertAuthAuditInSupabase,
+  listAppUsersFromSupabase,
+  upsertAppUserInSupabase,
+} from "@/lib/services/app-users";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppRole, AppUser, ManagedUserRecord } from "@/types/auth";
 
 function assertAdmin(actor: AppUser) {
@@ -16,14 +29,75 @@ function assertAdmin(actor: AppUser) {
   }
 }
 
-export function adminUpdateUser(
+async function persistAudit(
+  entry: Parameters<typeof logAuthAudit>[0],
+): Promise<void> {
+  logAuthAudit(entry);
+  await insertAuthAuditInSupabase(entry).catch(() => undefined);
+}
+
+function applyUpdate(
+  current: ManagedUserRecord,
+  input: UpdateManagedUserInput,
+): ManagedUserRecord {
+  const nextRole = input.role ?? current.role;
+  return {
+    ...current,
+    displayName:
+      input.displayName !== undefined
+        ? input.displayName.trim() || current.displayName
+        : current.displayName,
+    role: nextRole,
+    permissions:
+      input.permissions !== undefined
+        ? input.permissions
+        : input.role !== undefined && input.role !== current.role
+          ? getDefaultPermissionsForRole(nextRole)
+          : current.permissions,
+    password:
+      input.newPassword !== undefined && input.newPassword.trim()
+        ? input.newPassword.trim()
+        : current.password,
+    isActive:
+      input.isActive !== undefined ? input.isActive : current.isActive,
+  };
+}
+
+export async function listUsersForAdmin(
+  actor: AppUser,
+): Promise<ManagedUserRecord[]> {
+  assertAdmin(actor);
+
+  if (isSupabaseConfigured()) {
+    try {
+      await ensureSeedUsersInSupabase();
+      return await listAppUsersFromSupabase();
+    } catch {
+      // fall through
+    }
+  }
+  return listManagedUsers();
+}
+
+export async function adminUpdateUser(
   actor: AppUser,
   userId: string,
   input: UpdateManagedUserInput,
-): ManagedUserRecord {
+): Promise<ManagedUserRecord> {
   assertAdmin(actor);
 
-  const current = getManagedUserById(userId);
+  let current: ManagedUserRecord | null = null;
+  if (isSupabaseConfigured()) {
+    try {
+      const users = await listAppUsersFromSupabase();
+      current = users.find((user) => user.id === userId) ?? null;
+    } catch {
+      current = getManagedUserById(userId);
+    }
+  } else {
+    current = getManagedUserById(userId);
+  }
+
   if (!current) {
     throw new Error("User not found");
   }
@@ -50,10 +124,21 @@ export function adminUpdateUser(
   const roleChanged =
     input.role !== undefined && input.role !== current.role;
 
-  const updated = updateManagedUser(userId, input);
+  const next = applyUpdate(current, input);
+  let updated = next;
+
+  if (isSupabaseConfigured()) {
+    try {
+      updated = await upsertAppUserInSupabase(next);
+    } catch {
+      updated = updateManagedUser(userId, input);
+    }
+  } else {
+    updated = updateManagedUser(userId, input);
+  }
 
   if (passwordChanged) {
-    logAuthAudit({
+    await persistAudit({
       action: "password_reset",
       actorId: actor.id,
       actorEmail: actor.email,
@@ -64,7 +149,7 @@ export function adminUpdateUser(
   }
 
   if (roleChanged) {
-    logAuthAudit({
+    await persistAudit({
       action: "role_changed",
       actorId: actor.id,
       actorEmail: actor.email,
@@ -75,7 +160,7 @@ export function adminUpdateUser(
   }
 
   if (permissionsChanged) {
-    logAuthAudit({
+    await persistAudit({
       action: "permission_changed",
       actorId: actor.id,
       actorEmail: actor.email,
@@ -89,7 +174,7 @@ export function adminUpdateUser(
     input.isActive !== undefined &&
     input.isActive !== current.isActive
   ) {
-    logAuthAudit({
+    await persistAudit({
       action: input.isActive ? "user_activated" : "user_deactivated",
       actorId: actor.id,
       actorEmail: actor.email,
@@ -103,7 +188,7 @@ export function adminUpdateUser(
     input.displayName !== undefined &&
     input.displayName.trim() !== current.displayName
   ) {
-    logAuthAudit({
+    await persistAudit({
       action: "user_updated",
       actorId: actor.id,
       actorEmail: actor.email,
@@ -116,7 +201,7 @@ export function adminUpdateUser(
   return updated;
 }
 
-export function adminCreateUser(
+export async function adminCreateUser(
   actor: AppUser,
   input: {
     email: string;
@@ -125,11 +210,33 @@ export function adminCreateUser(
     password: string;
     permissions?: PermissionKey[];
   },
-): ManagedUserRecord {
+): Promise<ManagedUserRecord> {
   assertAdmin(actor);
 
-  const created = createManagedUser(input);
-  logAuthAudit({
+  const record: ManagedUserRecord = {
+    id: generateId(),
+    email: input.email.trim().toLowerCase(),
+    password: input.password,
+    displayName: input.displayName.trim(),
+    role: input.role,
+    permissions:
+      input.permissions ?? getDefaultPermissionsForRole(input.role),
+    isActive: true,
+    lastLoginAt: null,
+  };
+
+  let created = record;
+  if (isSupabaseConfigured()) {
+    try {
+      created = await upsertAppUserInSupabase(record);
+    } catch {
+      created = createManagedUser(input);
+    }
+  } else {
+    created = createManagedUser(input);
+  }
+
+  await persistAudit({
     action: "user_created",
     actorId: actor.id,
     actorEmail: actor.email,
@@ -140,19 +247,33 @@ export function adminCreateUser(
   return created;
 }
 
-export function adminDeleteUser(actor: AppUser, userId: string): void {
+export async function adminDeleteUser(
+  actor: AppUser,
+  userId: string,
+): Promise<void> {
   assertAdmin(actor);
   if (actor.id === userId) {
     throw new Error("You cannot delete your own account");
   }
 
-  const current = getManagedUserById(userId);
+  let current = getManagedUserById(userId);
+  if (isSupabaseConfigured()) {
+    try {
+      const users = await listAppUsersFromSupabase();
+      current = users.find((user) => user.id === userId) ?? current;
+      await deleteAppUserInSupabase(userId);
+    } catch {
+      if (current) deleteManagedUser(userId);
+    }
+  } else if (current) {
+    deleteManagedUser(userId);
+  }
+
   if (!current) {
     throw new Error("User not found");
   }
 
-  deleteManagedUser(userId);
-  logAuthAudit({
+  await persistAudit({
     action: "user_deleted",
     actorId: actor.id,
     actorEmail: actor.email,

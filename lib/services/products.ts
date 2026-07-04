@@ -195,6 +195,24 @@ export async function getProductScorecard(
   return mapScorecardRow(data);
 }
 
+export async function listAllProductScorecards(): Promise<
+  Map<string, ProductEvaluationScorecard>
+> {
+  const supabase = getClient();
+  const { data, error } = await supabase.from("product_scorecards").select("*");
+  throwOnError(error);
+  const map = new Map<string, ProductEvaluationScorecard>();
+  for (const row of data ?? []) {
+    const productId = String(
+      (row as { product_id?: string }).product_id ?? "",
+    );
+    if (!productId) continue;
+    const mapped = mapScorecardRow(row);
+    if (mapped) map.set(productId, mapped);
+  }
+  return map;
+}
+
 export async function upsertProductScorecard(
   productId: string,
   scorecard: ProductEvaluationScorecard,

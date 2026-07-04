@@ -44,8 +44,13 @@ export function ProductsListView() {
   const canCreate = canCreateProducts(user);
   const canDelete = canDeleteProducts(user);
   const { productsWithBrand: allProducts } = useBrandStore();
-  const { removeProduct, duplicateProduct, archiveProduct } =
-    usePipelineStore();
+  const {
+    removeProduct,
+    duplicateProduct,
+    archiveProduct,
+    hydrated,
+    loadError,
+  } = usePipelineStore();
   const { removeNotesForProduct } = useProductNotesStore();
 
   const [filters, setFilters] = useState<ProductFilterState>(
@@ -167,6 +172,15 @@ export function ProductsListView() {
         </p>
       </div>
 
+      {loadError && (
+        <Card className="mb-4 border-fti-red/20 bg-red-50/50" padding="md">
+          <p className="text-sm font-medium text-fti-red">{loadError}</p>
+          <p className="mt-1 text-xs text-gray-500">
+            Local and production must use the same Supabase project credentials.
+          </p>
+        </Card>
+      )}
+
       <ProductSearchFilterPanel
         products={allProducts}
         filteredCount={filteredProducts.length}
@@ -175,7 +189,11 @@ export function ProductsListView() {
         onClearFilters={clearFilters}
       />
 
-      {allProducts.length === 0 ? (
+      {!hydrated ? (
+        <Card className="border-dashed" padding="lg">
+          <p className="text-sm text-gray-500">Loading products from Supabase…</p>
+        </Card>
+      ) : allProducts.length === 0 ? (
         <PageEmptyState
           icon={PackageSearch}
           title="ยังไม่มีสินค้า"

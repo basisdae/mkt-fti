@@ -1,8 +1,8 @@
 import type { AppRole } from "@/types/auth";
 
 /**
- * Pre-created accounts (no self-registration).
- * Admin can add more via local registry or Supabase Auth + app_profiles.
+ * Default accounts seeded into Supabase `app_users` only when missing.
+ * Never overwrites existing users, products, or suppliers.
  */
 export interface SeedUserRecord {
   id: string;
