@@ -2,6 +2,7 @@ import { defaultBrandStrategy } from "@/lib/brand-strategy";
 import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
 import { normalizeProductCertification } from "@/lib/product-certification";
 import { normalizeProductSpecification } from "@/lib/product-specification";
+import { mergeProductViews } from "@/lib/repositories/product.repository";
 import { listAllProductGalleryGrouped } from "@/lib/services/product-images";
 import {
   listAllProductScorecards,
@@ -17,6 +18,7 @@ import type {
   ProductSpecStatus,
   ProductStatus,
   ProductStatusEntry,
+  ProductView,
 } from "@/types/product";
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -274,4 +276,29 @@ export async function archiveProductInSupabase(
     }
     throw new Error(error.message);
   }
+}
+
+export async function restoreProductInSupabase(
+  productId: string,
+): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("products")
+    .update({
+      is_archived: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", productId);
+  if (error) throw new Error(error.message);
+}
+
+/** Draft products for Missing Data Center (status = draft). */
+export async function loadDraftProductViews(): Promise<ProductView[]> {
+  const { productRecords, statuses, priceOptions } =
+    await loadProductCatalogFromSupabase();
+
+  return mergeProductViews(productRecords, statuses, priceOptions).filter(
+    (product) => product.status === "draft",
+  );
 }

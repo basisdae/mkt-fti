@@ -21,10 +21,12 @@ import {
   buildSpecificationHistory,
   removeProductHistory,
 } from "@/lib/product-history";
+import { removeFromRecycleBin } from "@/lib/recycle-bin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import {
   archiveProductInSupabase,
   loadProductCatalogFromSupabase,
+  restoreProductInSupabase,
   updateProductPipelineInSupabase,
 } from "@/lib/services/product-load";
 import {
@@ -33,6 +35,7 @@ import {
 } from "@/lib/services/product-persist";
 import { deleteProductFully } from "@/lib/services/product-delete";
 import { saveProductSpecification } from "@/lib/services/product-specification-persist";
+import { saveProductMediaLinks } from "@/lib/services/product-media";
 import { upsertProductScorecard } from "@/lib/services/products";
 import {
   createPipelineMoveLog,
@@ -58,6 +61,7 @@ import type {
   Product,
   ProductEvaluationScorecard,
   ProductGalleryImage,
+  ProductMediaLink,
   ProductPriceOption,
   ProductStatusEntry,
   ProductTimelineMovement,
@@ -83,11 +87,17 @@ interface PipelineStoreValue {
   pipelineOverview: { stage: PipelineStage; label: string; count: number }[];
   moveProduct: (productId: string, targetStage: PipelineStage) => boolean;
   addProduct: (input: ProductCreateBundle) => string;
+  /** Register a product already persisted to Supabase (e.g. import). */
+  registerImportedProduct: (input: ProductCreateBundle) => void;
   updateProduct: (input: ProductCreateBundle) => void;
   updateProductGallery: (
     productId: string,
     images: ProductGalleryImage[],
   ) => void;
+  updateProductMediaLinks: (
+    productId: string,
+    links: ProductMediaLink[],
+  ) => Promise<void>;
   updateProductScorecard: (
     productId: string,
     scorecard: ProductEvaluationScorecard,
@@ -100,6 +110,14 @@ interface PipelineStoreValue {
   removeProduct: (productId: string) => void;
   duplicateProduct: (productId: string) => ProductCreateBundle | null;
   archiveProduct: (productId: string) => void;
+  restoreProduct: (
+    productId: string,
+    recycleBinEntryId: string,
+  ) => Promise<void>;
+  purgeProduct: (
+    productId: string,
+    recycleBinEntryId: string,
+  ) => Promise<void>;
   getStageForProduct: (productId: string) => PipelineStage | undefined;
   getTimelineForProduct: (productId: string) => {
     movements: ProductTimelineMovement[];
@@ -309,6 +327,46 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     return bundle.product.id;
   }, []);
 
+  const registerImportedProduct = useCallback((input: ProductCreateBundle) => {
+    const bundle = localProductRepository.createBundle(input);
+    const now = new Date().toISOString();
+    const priceOpts =
+      bundle.priceOptions.length > 0
+        ? bundle.priceOptions
+        : [
+            {
+              id: `${bundle.product.id}-default-moq`,
+              productId: bundle.product.id,
+              moq: 0,
+              usdCost: 0,
+              exchangeRate: 36,
+              wholesaleGp: 0.42,
+              dealerGp: 0.14,
+              leadTime: "",
+            },
+          ];
+
+    setProductRecords((prev) => [...prev, bundle.product]);
+    setPriceOptions((prev) => [...prev, ...priceOpts]);
+    setStatuses((prev) => ({
+      ...prev,
+      [bundle.product.id]: { ...bundle.status, updatedAt: now },
+    }));
+    setLogs((prev) => [
+      {
+        id: generateId(),
+        productId: bundle.product.id,
+        action: "Product imported",
+        detail: `Imported product: ${bundle.product.name}`,
+        updatedAt: now,
+      },
+      ...prev,
+    ]);
+    appendProductHistory([
+      buildProductCreatedHistory(bundle.product.id, bundle.product.name),
+    ]);
+  }, []);
+
   const updateProduct = useCallback(
     (input: ProductCreateBundle) => {
       const now = new Date().toISOString();
@@ -355,6 +413,21 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       });
     },
     [productRecords, priceOptions, statuses],
+  );
+
+  const updateProductMediaLinks = useCallback(
+    async (productId: string, links: ProductMediaLink[]) => {
+      const saved = await saveProductMediaLinks(productId, links);
+      const now = new Date().toISOString();
+      setProductRecords((prev) =>
+        prev.map((product) =>
+          product.id === productId
+            ? { ...product, mediaLinks: saved, updatedAt: now }
+            : product,
+        ),
+      );
+    },
+    [],
   );
 
   const updateProductGallery = useCallback(
@@ -542,6 +615,44 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const restoreProduct = useCallback(
+    async (productId: string, recycleBinEntryId: string) => {
+      await restoreProductInSupabase(productId);
+      removeFromRecycleBin(recycleBinEntryId);
+      await refreshCatalog();
+    },
+    [refreshCatalog],
+  );
+
+  const purgeProduct = useCallback(
+    async (productId: string, recycleBinEntryId: string) => {
+      await deleteProductFully(productId);
+      setProductRecords((prev) =>
+        prev.filter((product) => product.id !== productId),
+      );
+      setPriceOptions((prev) =>
+        prev.filter((option) => option.productId !== productId),
+      );
+      setStatuses((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+      setLogs((prev) => prev.filter((log) => log.productId !== productId));
+      setTimelineMovements((prev) =>
+        prev.filter((movement) => movement.productId !== productId),
+      );
+      setItemMeta((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+      removeProductHistory(productId);
+      removeFromRecycleBin(recycleBinEntryId);
+    },
+    [],
+  );
+
   const moveProduct = useCallback(
     (productId: string, targetStage: PipelineStage): boolean => {
       const current = statuses[productId];
@@ -613,13 +724,17 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       pipelineOverview,
       moveProduct,
       addProduct,
+      registerImportedProduct,
       updateProduct,
       updateProductGallery,
+      updateProductMediaLinks,
       updateProductScorecard,
       updateProductSpecification,
       removeProduct,
       duplicateProduct,
       archiveProduct,
+      restoreProduct,
+      purgeProduct,
       getStageForProduct,
       getTimelineForProduct,
       recentTimelineFeed,
@@ -636,13 +751,17 @@ export function PipelineStoreProvider({ children }: { children: ReactNode }) {
       pipelineOverview,
       moveProduct,
       addProduct,
+      registerImportedProduct,
       updateProduct,
       updateProductGallery,
+      updateProductMediaLinks,
       updateProductScorecard,
       updateProductSpecification,
       removeProduct,
       duplicateProduct,
       archiveProduct,
+      restoreProduct,
+      purgeProduct,
       getStageForProduct,
       getTimelineForProduct,
       recentTimelineFeed,

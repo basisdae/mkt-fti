@@ -19,11 +19,16 @@ import {
 import type {
   FtiBrand,
   OemType,
+  PipelineStage,
   Product,
   ProductGalleryImage,
   ProductStatus,
   ProductView,
 } from "@/types/product";
+
+function pipelineStageForStatus(status: ProductStatus): PipelineStage {
+  return status === "draft" ? "interested" : status;
+}
 
 function brandFromForm(form: NewProductFormData): string {
   return resolveProductBrandLabel(form.brandOption, form.brandCustom);
@@ -141,7 +146,7 @@ export function buildProductBundleFromForm(
     status: {
       productId,
       status,
-      pipelineStage: status,
+      pipelineStage: pipelineStageForStatus(status),
       updatedAt: now,
     },
     priceOptions:
@@ -303,7 +308,7 @@ export function updateProductBundleFromForm(
     status: {
       productId,
       status,
-      pipelineStage: status,
+      pipelineStage: pipelineStageForStatus(status),
       updatedAt: now,
     },
     priceOptions:

@@ -1,3 +1,24 @@
+export type SupplierGalleryCategory =
+  | "factory_visit"
+  | "production_line"
+  | "warehouse"
+  | "laboratory"
+  | "showroom"
+  | "certificate"
+  | "office"
+  | "other";
+
+export interface SupplierGalleryImage {
+  id: string;
+  supplierId: string;
+  imageUrl: string;
+  imagePath: string;
+  altText: string;
+  category: SupplierGalleryCategory;
+  sortOrder: number;
+  isCover: boolean;
+}
+
 export interface SupplierContact {
   id: string;
   contactName: string;

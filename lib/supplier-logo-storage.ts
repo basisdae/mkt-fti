@@ -42,10 +42,14 @@ function extensionFromFile(file: File): string {
   }
 }
 
-function publicUrl(path: string): string {
+export function publicSupplierLogoUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!base) return path;
   return `${base}/storage/v1/object/public/${BUCKET}/${path}`;
+}
+
+function publicUrl(path: string): string {
+  return publicSupplierLogoUrl(path);
 }
 
 /** suppliers/{supplierId}/logo-{timestamp}.{ext} */

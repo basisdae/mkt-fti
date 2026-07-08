@@ -1,4 +1,5 @@
 export type ProductStatus =
+  | "draft"
   | "interested"
   | "researching"
   | "contact_factory"
@@ -12,6 +13,49 @@ export type ProductStatus =
   | "received"
   | "ready_launch"
   | "launched";
+
+export type ProductMediaType =
+  | "source_page"
+  | "hidden_video_ref"
+  | "product_video"
+  | "youtube"
+  | "vimeo"
+  | "bilibili"
+  | "alibaba_video"
+  | "alibaba_link"
+  | "google_drive"
+  | "website"
+  | "embed_other"
+  | "manual_pdf"
+  | "factory_source";
+
+export interface ProductMediaLink {
+  id: string;
+  productId: string;
+  title: string;
+  mediaType: ProductMediaType;
+  url: string;
+  embedUrl: string;
+  platform: string;
+  videoId: string;
+  videoFileName: string;
+  coverImageUrl: string;
+  duration: string;
+  isActive: boolean;
+  sortOrder: number;
+  remark: string;
+}
+
+/** Product tag assignment with optional joined display fields. */
+export interface ProductTagLink {
+  id: string;
+  productId: string;
+  tagId: string;
+  customLabel: string | null;
+  label?: string;
+  groupKey?: string;
+  groupName?: string;
+}
 
 export type PipelineStage =
   | "interested"
@@ -219,6 +263,10 @@ export interface Product {
   specification?: ProductSpecification;
   /** Spec workflow status for MKT / R&D tracking. */
   specStatus?: ProductSpecStatus;
+  /** External media / source links (product_media_links). */
+  mediaLinks?: ProductMediaLink[];
+  /** Tag assignments for classification export and filters. */
+  tagLinks?: ProductTagLink[];
 }
 
 export type EvaluationScore = 1 | 2 | 3 | 4 | 5;

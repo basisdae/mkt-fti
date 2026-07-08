@@ -35,6 +35,16 @@ export function calculatePricing(tier: ProductPriceOption): PricingResult {
   };
 }
 
+/** Lowest MOQ tier for export summaries; prefers tiers with moq > 0. */
+export function getLowestMoqPriceTier(
+  options: ProductPriceOption[],
+): ProductPriceOption | undefined {
+  if (options.length === 0) return undefined;
+  const withMoq = options.filter((option) => option.moq > 0);
+  const pool = withMoq.length > 0 ? withMoq : options;
+  return [...pool].sort((a, b) => a.moq - b.moq)[0];
+}
+
 export interface SimulatorCalcInput {
   pricing: PricingResult;
   expectedQty: number;

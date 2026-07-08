@@ -24,6 +24,13 @@ export const APP_TAGLINE = APP_DESCRIPTION;
 export const APP_AUTHOR = "Function International PCL.";
 export const APP_THEME_COLOR = "#7A1F2B";
 export const APP_VERSION = "MKT Headquarter MVP v0.1";
+export const APP_LAST_UPDATE = "July 2026";
+export const APP_RELEASE_NOTES = [
+  "Product import wizard with draft status for incomplete rows",
+  "Missing Data Center for draft products",
+  "Product media assets and supplier gallery",
+  "Workspace home, favorites, and keyboard shortcuts",
+] as const;
 
 export const DESIGN_TOKENS = {
   primary: "#695CFF",
@@ -64,6 +71,7 @@ export const NAV_GROUPS = [
 ] as const;
 
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
+  draft: "Draft",
   interested: "Interested",
   researching: "Researching",
   contact_factory: "Contact Factory",

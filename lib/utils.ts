@@ -43,6 +43,11 @@ export function getStatusColor(status: ProductStatus): {
     ProductStatus,
     { bg: string; text: string; badge: "default" | "success" | "warning" | "danger" | "muted" }
   > = {
+    draft: {
+      bg: "bg-gray-100",
+      text: "text-gray-500",
+      badge: "muted",
+    },
     interested: {
       bg: "bg-gray-100",
       text: "text-gray-600",
@@ -110,7 +115,13 @@ export function getStatusColor(status: ProductStatus): {
     },
   };
 
-  return map[status];
+  const fallback = {
+    bg: "bg-gray-100",
+    text: "text-gray-600",
+    badge: "muted" as const,
+  };
+
+  return map[status] ?? fallback;
 }
 
 const TIME_AGO_STRINGS = [

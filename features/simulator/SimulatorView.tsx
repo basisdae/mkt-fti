@@ -60,7 +60,11 @@ function SimulatorDivider() {
   return <div className="my-5 h-px bg-[#EEF0F6]" role="separator" />;
 }
 
-export function SimulatorView() {
+export function SimulatorView({
+  projectId: _projectId,
+}: {
+  projectId?: string;
+} = {}) {
   const catalogProducts = useLiveProducts();
   const [productId, setProductId] = useState("");
   const [tierId, setTierId] = useState("");

@@ -7,8 +7,8 @@ import type { ProductStatus } from "@/types/product";
 export function isStatusBeyondContactFactory(
   status: ProductStatus | "",
 ): boolean {
-  if (!status) return false;
-  const idx = PIPELINE_STAGES.indexOf(status);
+  if (!status || status === "draft") return false;
+  const idx = PIPELINE_STAGES.indexOf(status as (typeof PIPELINE_STAGES)[number]);
   const contactIdx = PIPELINE_STAGES.indexOf("contact_factory");
   if (idx === -1 || contactIdx === -1) return false;
   return idx > contactIdx;
