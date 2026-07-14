@@ -6,6 +6,7 @@ import { ArrowLeft, ClipboardList, Clock3, Pencil, StickyNote } from "lucide-rea
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
+import { OutputFunctionBadges } from "@/components/product/OutputFunctionBadges";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { ProductResumeExportButton } from "@/components/product/ProductResumeExport";
 import { useAuth } from "@/hooks/AuthStore";
@@ -13,7 +14,13 @@ import {
   canEditProducts,
   canEditProductSpecs,
 } from "@/lib/auth/permissions";
-import { formatProductBrand } from "@/lib/brand-strategy";
+import {
+  formatCapacityLDisplay,
+  formatGpdDisplay,
+  formatRatedFlowLhDisplay,
+  getProductPerformanceFromSpecification,
+  hasProductPerformance,
+} from "@/lib/product-performance";
 import {
   getSpecActionLabel,
   getSpecStatusBadgeClasses,
@@ -29,6 +36,46 @@ interface ProductDetailHeaderProps {
   imageAlt?: string;
 }
 
+function PerformanceIdentityFields({
+  product,
+}: {
+  product: ProductView;
+}) {
+  const performance = getProductPerformanceFromSpecification(
+    product.specification,
+  );
+  if (!hasProductPerformance(performance)) return null;
+
+  const rows = [
+    {
+      label: "Rated Flow",
+      value: formatRatedFlowLhDisplay(performance.ratedFlowLh),
+    },
+    { label: "GPD", value: formatGpdDisplay(performance.gpd) },
+    { label: "Capacity", value: formatCapacityLDisplay(performance.capacityL) },
+  ].filter((row) => row.value !== "—");
+
+  if (rows.length === 0) return null;
+
+  return (
+    <dl className="grid gap-2 sm:grid-cols-3">
+      {rows.map((row) => (
+        <div
+          key={row.label}
+          className="rounded-xl border border-gray-100 bg-gray-50/70 px-3 py-2"
+        >
+          <dt className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            {row.label}
+          </dt>
+          <dd className="mt-0.5 text-sm font-semibold text-gray-900">
+            {row.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function ProductDetailHeader({
   product,
   imagePreviewUrl,
@@ -39,6 +86,7 @@ export function ProductDetailHeader({
   const canEdit = canEditProducts(user);
   const canEditSpec = canEditProductSpecs(user);
   const specStatus = resolveProductSpecStatus(product);
+  const model = product.productSystem?.trim();
 
   return (
     <div className="mb-8">
@@ -51,8 +99,8 @@ export function ProductDetailHeader({
             className="p-2"
           />
 
-          <div className="flex-1">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
               <StatusBadge status={product.status} />
               <EvaluationScoreBadge
                 scorecard={product.evaluationScorecard}
@@ -66,19 +114,39 @@ export function ProductDetailHeader({
               >
                 Spec: {PRODUCT_SPEC_STATUS_LABELS[specStatus]}
               </span>
-              <span className="text-xs text-gray-400">{product.code}</span>
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 lg:text-3xl">
-              {product.name}
-            </h1>
-            <p className="mt-2 text-sm font-medium text-gray-600">
-              Brand: {formatProductBrand(product.brand)}
-              {product.supplier ? ` · ${product.supplier}` : ""}
-            </p>
-            <p className="mt-3 max-w-2xl text-sm text-gray-400">
-              {product.description}
-            </p>
+            <section aria-label="Product identity" className="space-y-3">
+              <div>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+                  Output Function
+                </p>
+                <OutputFunctionBadges tagLinks={product.tagLinks} />
+              </div>
+
+              <p className="font-mono text-xs font-semibold tracking-wide text-gray-500">
+                {product.code?.trim() || "—"}
+              </p>
+
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900 lg:text-3xl">
+                  {product.name}
+                </h1>
+                {model ? (
+                  <p className="mt-1 text-sm font-medium text-gray-600">
+                    Model {model}
+                  </p>
+                ) : null}
+              </div>
+
+              <PerformanceIdentityFields product={product} />
+            </section>
+
+            {product.description?.trim() ? (
+              <p className="mt-3 max-w-2xl text-sm text-gray-400">
+                {product.description}
+              </p>
+            ) : null}
 
             <p className="mt-3 text-xs text-gray-400">
               Updated {timeAgo(product.updatedAt)}

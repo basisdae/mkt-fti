@@ -5,7 +5,11 @@ import { notFound } from "next/navigation";
 import { useLiveProducts, usePipelineStore } from "@/hooks/PipelineStore";
 import { ProductDetailView } from "@/features/product/ProductDetailView";
 import { syncCoverFields } from "@/lib/product-gallery";
+import { listProductRelatedLinkSet } from "@/lib/services/product-related";
+import type { ProductRelatedLinkSet } from "@/lib/services/product-related";
 import { listProductImages } from "@/lib/services/product-images";
+import { loadProductWaterTreatmentContext } from "@/lib/services/water-treatment";
+import type { ProductWaterTreatmentContext } from "@/lib/services/water-treatment";
 import { isProductSupabaseEnabled } from "@/lib/services/product-persist";
 import type {
   ProductEvaluationScorecard,
@@ -24,6 +28,12 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
   const [remoteImages, setRemoteImages] = useState<ProductGalleryImage[] | null>(
     null,
   );
+  const [relatedLinkSet, setRelatedLinkSet] = useState<ProductRelatedLinkSet>({
+    outgoing: [],
+    incoming: [],
+  });
+  const [waterTreatmentContext, setWaterTreatmentContext] =
+    useState<ProductWaterTreatmentContext>({ config: null, stages: [] });
 
   useEffect(() => {
     if (!isProductSupabaseEnabled()) return;
@@ -36,6 +46,46 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
       })
       .catch(() => {
         if (!cancelled) setRemoteImages(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [productId]);
+
+  useEffect(() => {
+    if (!isProductSupabaseEnabled()) return;
+
+    let cancelled = false;
+
+    listProductRelatedLinkSet(productId)
+      .then((set) => {
+        if (!cancelled) setRelatedLinkSet(set);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRelatedLinkSet({ outgoing: [], incoming: [] });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [productId]);
+
+  useEffect(() => {
+    if (!isProductSupabaseEnabled()) return;
+
+    let cancelled = false;
+
+    loadProductWaterTreatmentContext(productId)
+      .then((context) => {
+        if (!cancelled) setWaterTreatmentContext(context);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWaterTreatmentContext({ config: null, stages: [] });
+        }
       });
 
     return () => {
@@ -76,6 +126,11 @@ export function ProductDetailClient({ productId }: ProductDetailClientProps) {
       product={displayProduct}
       onGalleryChange={handleGalleryChange}
       onScorecardSaved={handleScorecardSaved}
+      relatedOutgoing={relatedLinkSet.outgoing}
+      relatedIncoming={relatedLinkSet.incoming}
+      onRelatedLinksChange={setRelatedLinkSet}
+      waterTreatmentContext={waterTreatmentContext}
+      onWaterTreatmentContextChange={setWaterTreatmentContext}
     />
   );
 }

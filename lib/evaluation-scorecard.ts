@@ -10,6 +10,8 @@ export const EVALUATION_CRITERIA: {
   id: EvaluationCriterionId;
   label: string;
   weight: number;
+  /** Evaluator guidance shown under the criterion name. */
+  helpText?: string;
 }[] = [
   { id: "market_potential", label: "ศักยภาพทางการตลาด", weight: 20 },
   { id: "innovation_interest", label: "ความน่าสนใจของนวัตกรรม", weight: 15 },
@@ -17,7 +19,13 @@ export const EVALUATION_CRITERIA: {
   { id: "price_competitiveness", label: "ความสามารถในการแข่งขันด้านราคา", weight: 15 },
   { id: "oem_opportunity", label: "โอกาสในการทำ OEM", weight: 10 },
   { id: "brand_fit", label: "ความเหมาะสมกับแบรนด์ FTI", weight: 10 },
-  { id: "marketing_potential", label: "ศักยภาพด้านการตลาด", weight: 10 },
+  {
+    id: "marketing_potential",
+    label: "ความพร้อมในการทำตลาด",
+    weight: 10,
+    helpText:
+      "Go-to-Market Readiness — ประเมินความง่ายในการเปิดตัว, สื่อการตลาดที่มีอยู่, เรื่องราวของสินค้า (product storytelling), ความพร้อมของตลาด และความซับซ้อนในการ launch",
+  },
   { id: "supplier_reliability", label: "ความน่าเชื่อถือของผู้ผลิต", weight: 5 },
 ];
 
@@ -34,6 +42,7 @@ export interface EvaluationCriterionComputed {
   score: EvaluationScore;
   weightedScore: number;
   note: string;
+  helpText?: string;
 }
 
 export interface EvaluationResult {
@@ -68,6 +77,7 @@ export function computeEvaluationResult(
         score,
         weightedScore: computeWeightedScore(score, template.weight),
         note,
+        helpText: template.helpText,
       };
     },
   );

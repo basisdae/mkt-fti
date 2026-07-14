@@ -8,6 +8,11 @@ import type {
 import type { DashboardBrandFilter, ProductBrandFilter } from "@/lib/brand-strategy";
 import { matchesBrandFilter, matchesProductBrandFilter } from "@/lib/brand-strategy";
 import { getEvaluationTotalScore } from "@/lib/evaluation-scorecard";
+import { getOutputFunctionSearchTokens } from "@/lib/output-function";
+import {
+  getProductPerformanceFromSpecification,
+  getProductPerformanceSearchTokens,
+} from "@/lib/product-performance";
 
 export interface ProductFilterState {
   query: string;
@@ -50,9 +55,14 @@ export function matchesProductSearch(
   const q = query.trim().toLowerCase();
   if (!q) return true;
 
+  const performance = getProductPerformanceFromSpecification(
+    product.specification,
+  );
+
   const haystack = [
     product.name,
     product.code,
+    product.productSystem,
     product.supplier,
     product.brand,
     product.brandStrategy.factory,
@@ -60,6 +70,8 @@ export function matchesProductSearch(
     product.brandStrategy.businessUnit,
     product.factoryLocation,
     product.factoryContact,
+    ...getOutputFunctionSearchTokens(product.tagLinks),
+    ...getProductPerformanceSearchTokens(performance),
   ]
     .join(" ")
     .toLowerCase();

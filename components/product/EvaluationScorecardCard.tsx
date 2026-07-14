@@ -251,6 +251,11 @@ export function EvaluationScorecardCard({
                     <p className="text-sm font-semibold text-gray-900">
                       {row.label}
                     </p>
+                    {row.helpText && (
+                      <p className="mt-1 text-xs leading-relaxed text-gray-500">
+                        {row.helpText}
+                      </p>
+                    )}
                     {row.note && (
                       <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
                         {row.note}

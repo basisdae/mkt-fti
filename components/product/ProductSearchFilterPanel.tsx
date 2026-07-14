@@ -55,6 +55,8 @@ interface ProductSearchFilterPanelProps {
     value: ProductFilterState[K],
   ) => void;
   onClearFilters: () => void;
+  advancedOpen?: boolean;
+  onAdvancedOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
@@ -64,9 +66,18 @@ export function ProductSearchFilterPanel({
   filters,
   onFilterChange,
   onClearFilters,
+  advancedOpen: advancedOpenProp,
+  onAdvancedOpenChange,
   className,
 }: ProductSearchFilterPanelProps) {
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpenInternal, setAdvancedOpenInternal] = useState(false);
+  const advancedOpen = advancedOpenProp ?? advancedOpenInternal;
+
+  function setAdvancedOpen(open: boolean) {
+    if (onAdvancedOpenChange) onAdvancedOpenChange(open);
+    else setAdvancedOpenInternal(open);
+  }
+
   const suppliers = useMemo(() => getUniqueSuppliers(products), [products]);
   const businessUnits = useMemo(
     () => getUniqueBusinessUnits(products),
@@ -160,7 +171,7 @@ export function ProductSearchFilterPanel({
         <div className="border-t border-gray-100 pt-3">
           <button
             type="button"
-            onClick={() => setAdvancedOpen((open) => !open)}
+            onClick={() => setAdvancedOpen(!advancedOpen)}
             className="flex items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-700"
             aria-expanded={advancedOpen}
           >

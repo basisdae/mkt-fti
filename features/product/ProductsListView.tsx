@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PackageSearch } from "lucide-react";
+import { FileSpreadsheet, PackageSearch } from "lucide-react";
 import { PageEmptyState } from "@/components/empty/PageEmptyState";
 import { ProductListHeader, ProductListRow } from "@/components/cards/ProductListRow";
 import { DeleteProductDialog } from "@/components/product/DeleteProductDialog";
+import { ProductsExportModal } from "@/components/product/ProductsExportModal";
 import {
   ProductSearchFilterPanel,
   productFiltersAreActive,
@@ -29,6 +30,15 @@ import {
   DEFAULT_PRODUCT_FILTERS,
   type ProductFilterState,
 } from "@/lib/product-filters";
+import {
+  clearProductsListSession,
+  getAppMainScrollElement,
+  getAppMainScrollTop,
+  loadProductsListSession,
+  saveProductsListSession,
+  setAppMainScrollTop,
+  wasProductsListPageReload,
+} from "@/lib/products-list-session";
 import { deleteProductFully } from "@/lib/services/product-delete";
 import {
   createProductInSupabase,
@@ -56,8 +66,13 @@ export function ProductsListView() {
   const [filters, setFilters] = useState<ProductFilterState>(
     DEFAULT_PRODUCT_FILTERS,
   );
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const scrollRestoreYRef = useRef<number | null>(null);
+  const sessionHydratedRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState<ProductView | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{
     title: string;
     message: string;
@@ -65,18 +80,120 @@ export function ProductsListView() {
   } | null>(null);
 
   useEffect(() => {
+    if (sessionHydratedRef.current) return;
+    sessionHydratedRef.current = true;
+
     const q = searchParams.get("q");
-    if (q) {
+
+    if (wasProductsListPageReload()) {
+      clearProductsListSession();
+      scrollRestoreYRef.current = null;
+      if (q) setFilters((prev) => ({ ...prev, query: q }));
+      return;
+    }
+
+    const saved = loadProductsListSession();
+    if (saved) {
+      setFilters(q ? { ...saved.filters, query: q } : saved.filters);
+      setAdvancedOpen(saved.advancedOpen);
+      scrollRestoreYRef.current = saved.scrollY;
+    } else if (q) {
       setFilters((prev) => ({ ...prev, query: q }));
     }
   }, [searchParams]);
+
+  const persistListSession = useCallback(() => {
+    saveProductsListSession({
+      filters,
+      scrollY: getAppMainScrollTop(),
+      advancedOpen,
+    });
+  }, [filters, advancedOpen]);
+
+  useEffect(() => {
+    persistListSession();
+  }, [persistListSession]);
+
+  useEffect(() => {
+    const main = getAppMainScrollElement();
+    if (!main) return;
+
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        saveProductsListSession({
+          filters,
+          scrollY: main.scrollTop,
+          advancedOpen,
+        });
+      });
+    };
+
+    main.addEventListener("scroll", onScroll, { passive: true });
+    return () => main.removeEventListener("scroll", onScroll);
+  }, [filters, advancedOpen]);
+
+  useEffect(() => {
+    return () => {
+      saveProductsListSession({
+        filters,
+        scrollY: getAppMainScrollTop(),
+        advancedOpen,
+      });
+    };
+  }, [filters, advancedOpen]);
 
   const filteredProducts = useMemo(
     () => applyProductFilters(allProducts, filters),
     [allProducts, filters],
   );
 
+  useLayoutEffect(() => {
+    if (scrollRestoreYRef.current == null || !hydrated) return;
+
+    const scrollY = scrollRestoreYRef.current;
+    scrollRestoreYRef.current = null;
+
+    requestAnimationFrame(() => {
+      setAppMainScrollTop(scrollY);
+    });
+  }, [hydrated, filteredProducts.length]);
+
   const hasActiveFilters = productFiltersAreActive(filters);
+
+  const visibleSelectedCount = useMemo(
+    () =>
+      filteredProducts.filter((product) => selectedIds.has(product.id)).length,
+    [filteredProducts, selectedIds],
+  );
+
+  const allVisibleSelected =
+    filteredProducts.length > 0 &&
+    visibleSelectedCount === filteredProducts.length;
+  const someVisibleSelected =
+    visibleSelectedCount > 0 && !allVisibleSelected;
+
+  function toggleProductSelected(productId: string, selected: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(productId);
+      else next.delete(productId);
+      return next;
+    });
+  }
+
+  function toggleSelectAllVisible(selected: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const product of filteredProducts) {
+        if (selected) next.add(product.id);
+        else next.delete(product.id);
+      }
+      return next;
+    });
+  }
 
   function updateFilter<K extends keyof ProductFilterState>(
     key: K,
@@ -164,12 +281,27 @@ export function ProductsListView() {
   return (
     <div className="page-shell">
       <div className="page-header-block">
-        <h1 className="page-title">Products</h1>
-        <p className="page-description">
-          {canEdit
-            ? "All sourcing products with pricing, MOQ, and margin overview."
-            : "Product catalog (read only) · pricing, MOQ, and supplier context."}
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="page-title">Products</h1>
+            <p className="page-description">
+              {canEdit
+                ? "All sourcing products with pricing, MOQ, and margin overview."
+                : "Product catalog (read only) · pricing, MOQ, and supplier context."}
+            </p>
+          </div>
+          {hydrated && allProducts.length > 0 ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="gap-2 self-start"
+              onClick={() => setExportOpen(true)}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export Excel
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {loadError && (
@@ -187,6 +319,8 @@ export function ProductsListView() {
         filters={filters}
         onFilterChange={updateFilter}
         onClearFilters={clearFilters}
+        advancedOpen={advancedOpen}
+        onAdvancedOpenChange={setAdvancedOpen}
       />
 
       {!hydrated ? (
@@ -226,7 +360,12 @@ export function ProductsListView() {
         </Card>
       ) : (
         <>
-          <ProductListHeader />
+          <ProductListHeader
+            showSelection
+            allSelected={allVisibleSelected}
+            someSelected={someVisibleSelected}
+            onSelectAll={toggleSelectAllVisible}
+          />
 
           <div className="space-y-3">
             {filteredProducts.map((product) => (
@@ -235,9 +374,14 @@ export function ProductsListView() {
                 product={product}
                 readOnly={!canEdit}
                 canDelete={canDelete}
+                selected={selectedIds.has(product.id)}
+                onSelectedChange={(selected) =>
+                  toggleProductSelected(product.id, selected)
+                }
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
                 onDelete={setPendingDelete}
+                onBeforeNavigateToDetail={persistListSession}
               />
             ))}
           </div>
@@ -263,6 +407,30 @@ export function ProductsListView() {
           onDismiss={dismissToast}
         />
       )}
+
+      <ProductsExportModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        allProducts={allProducts}
+        filteredProducts={filteredProducts}
+        filters={filters}
+        selectedIds={selectedIds}
+        generatedBy={user?.displayName || user?.email}
+        onSuccess={(fileName, productCount) => {
+          setToast({
+            title: "Export complete",
+            message: `Downloaded ${fileName} (${productCount} products).`,
+            variant: "success",
+          });
+        }}
+        onError={(message) => {
+          setToast({
+            title: "Export failed",
+            message,
+            variant: "error",
+          });
+        }}
+      />
     </div>
   );
 }

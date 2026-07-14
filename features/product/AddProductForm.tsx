@@ -69,7 +69,6 @@ import {
   INITIAL_FORM_DATA,
   ISO_OPTIONS,
   isStatusBeyondContactFactory,
-  PRODUCT_SYSTEM_OPTIONS,
   type NewProductFormData,
 } from "@/types/product-form";
 import type { ProductView } from "@/types/product";
@@ -81,11 +80,6 @@ const categoryOptions = Object.entries(PRODUCT_CATEGORY_LABELS).map(
 const statusOptions = Object.entries(PRODUCT_STATUS_LABELS).map(
   ([value, label]) => ({ value, label }),
 );
-
-const systemOptions = PRODUCT_SYSTEM_OPTIONS.map((s) => ({
-  value: s,
-  label: s,
-}));
 
 function FormSection({
   title,
@@ -645,6 +639,14 @@ export function ProductForm({
                   <LinkedSupplierSummaryCard supplier={selectedSupplier} />
                 </div>
               )}
+              <div className="sm:col-span-2">
+                <Input
+                  label="Model"
+                  placeholder="e.g. AW-RF02R"
+                  value={form.productSystem}
+                  onChange={(e) => updateField("productSystem", e.target.value)}
+                />
+              </div>
               <div>
                 <Select
                   label="Product Category *"
@@ -977,15 +979,6 @@ export function ProductForm({
                 />
               </div>
             </div>
-            <Select
-              label="Product System"
-              options={[
-                { value: "", label: "Select system" },
-                ...systemOptions,
-              ]}
-              value={form.productSystem}
-              onChange={(e) => updateField("productSystem", e.target.value)}
-            />
           </FormSection>
 
           <FormSection title="Notes">

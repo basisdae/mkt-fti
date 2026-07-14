@@ -1,7 +1,16 @@
+import {
+  createEmptyProductPerformance,
+  formatCapacityLDisplay,
+  formatGpdDisplay,
+  formatRatedFlowLhDisplay,
+  hasProductPerformance,
+  normalizeProductPerformance,
+} from "@/lib/product-performance";
 import type {
   PackagingInformation,
   Product,
   ProductDimension,
+  ProductPerformance,
   ProductSpecification,
   ProductSpecStatus,
 } from "@/types/product";
@@ -46,6 +55,7 @@ export function createEmptyProductSpecification(): ProductSpecification {
     power: "",
     flowRate: "",
     pressure: "",
+    performance: createEmptyProductPerformance(),
     productDimension: createEmptyProductDimension(),
     packaging: createEmptyPackagingInformation(),
     installation: "",
@@ -154,6 +164,10 @@ export function normalizeProductSpecification(
     cbm: str(packagingInput.cbm) || str(legacy.cbm) || "",
   });
 
+  const performance = normalizeProductPerformance(
+    asRecord(legacy.performance),
+  );
+
   return {
     material: str(legacy.material),
     connector: str(legacy.connector) || str(legacy.plugType),
@@ -161,6 +175,7 @@ export function normalizeProductSpecification(
     power: str(legacy.power),
     flowRate: str(legacy.flowRate),
     pressure: str(legacy.pressure),
+    performance,
     productDimension,
     packaging,
     installation: str(legacy.installation),
@@ -211,6 +226,7 @@ export function hasProductSpecification(
     hasText(spec.power) ||
     hasText(spec.flowRate) ||
     hasText(spec.pressure) ||
+    hasProductPerformance(spec.performance) ||
     hasDimensionValues(spec.productDimension) ||
     hasPackagingValues(spec.packaging) ||
     hasText(spec.installation) ||
@@ -373,6 +389,9 @@ export function flattenSpecificationFields(
     { field: "Power", value: spec.power },
     { field: "Flow Rate", value: spec.flowRate },
     { field: "Pressure", value: spec.pressure },
+    { field: "GPD", value: spec.performance.gpd },
+    { field: "Rated Flow (L/H)", value: spec.performance.ratedFlowLh },
+    { field: "Capacity (L)", value: spec.performance.capacityL },
     { field: "Height (H)", value: spec.productDimension.height },
     { field: "Width (W)", value: spec.productDimension.width },
     { field: "Depth (D)", value: spec.productDimension.depth },
@@ -425,8 +444,15 @@ export function getResumeSpecSections(
     {
       title: "Performance",
       rows: [
-        { label: "Flow Rate", value: resumeField(spec.flowRate) },
-        { label: "Pressure", value: resumeField(spec.pressure) },
+        {
+          label: "Rated Flow",
+          value: formatRatedFlowLhDisplay(spec.performance.ratedFlowLh),
+        },
+        { label: "GPD", value: formatGpdDisplay(spec.performance.gpd) },
+        {
+          label: "Capacity",
+          value: formatCapacityLDisplay(spec.performance.capacityL),
+        },
       ],
     },
     {

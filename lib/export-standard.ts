@@ -49,6 +49,16 @@ export function buildProductExportFileName(date = new Date()): string {
   return `MKT_HQ_Product_Export_${datePart}_${timePart}.xlsx`;
 }
 
+/** MKT_HQ_Products_{ScopeSlug}_YYYYMMDD_HHMM.xlsx */
+export function buildProductsListExportFileName(
+  scopeSlug: string,
+  date = new Date(),
+): string {
+  const { datePart, timePart } = getExportDateParts(date);
+  const slug = sanitizeExportFileName(scopeSlug, 48) || "Export";
+  return `MKT_HQ_Products_${slug}_${datePart}_${timePart}.xlsx`;
+}
+
 /** MKT_HQ_Supplier_Export_YYYYMMDD_HHMM.xlsx */
 export function buildSupplierExportFileName(date = new Date()): string {
   const { datePart, timePart } = getExportDateParts(date);

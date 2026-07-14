@@ -27,6 +27,7 @@ export type ActivityAction =
   | "supplier.deleted"
   | "export.backup"
   | "export.product_master"
+  | "export.products_list"
   | "export.suppliers"
   | "export.sales_plan";
 
@@ -51,6 +52,7 @@ const ACTIVITY_ACTIONS = new Set<string>([
   "supplier.deleted",
   "export.backup",
   "export.product_master",
+  "export.products_list",
   "export.suppliers",
   "export.sales_plan",
 ]);
@@ -134,6 +136,8 @@ export function formatActivityLabel(action: string): string {
       return "Data backup exported";
     case "export.product_master":
       return "Product master exported";
+    case "export.products_list":
+      return "Products list exported";
     case "export.suppliers":
       return "Supplier list exported";
     case "export.sales_plan":

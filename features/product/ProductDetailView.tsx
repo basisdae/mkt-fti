@@ -19,6 +19,8 @@ import { ProfitSummaryCards } from "@/components/product/ProfitSummaryCards";
 import { ImagePreviewModal } from "@/components/product/ImagePreviewModal";
 import { ProductGalleryEditor } from "@/components/product/ProductGalleryEditor";
 import { ProductHistoryLog } from "@/components/product/ProductHistoryLog";
+import { ProductRelatedProductsCard } from "@/components/product/ProductRelatedProductsCard";
+import { ProductWaterTreatmentCard } from "@/components/product/ProductWaterTreatmentCard";
 import { ProductTimeline } from "@/components/product/ProductTimeline";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -47,12 +49,19 @@ import {
   resolveProductSpecStatus,
 } from "@/lib/product-specification";
 import { cn, formatDate, timeAgo } from "@/lib/utils";
-import type { ProductGalleryImage, ProductView } from "@/types/product";
+import type { ProductGalleryImage, ProductRelatedLink, ProductView } from "@/types/product";
+import type { ProductRelatedLinkSet } from "@/lib/services/product-related";
+import type { ProductWaterTreatmentContext } from "@/lib/services/water-treatment";
 
 interface ProductDetailViewProps {
   product: ProductView;
   onGalleryChange?: (images: ProductGalleryImage[]) => void;
   onScorecardSaved?: (scorecard: ProductView["evaluationScorecard"]) => void;
+  relatedOutgoing?: ProductRelatedLink[];
+  relatedIncoming?: ProductRelatedLink[];
+  onRelatedLinksChange?: (set: ProductRelatedLinkSet) => void;
+  waterTreatmentContext?: ProductWaterTreatmentContext;
+  onWaterTreatmentContextChange?: (context: ProductWaterTreatmentContext) => void;
 }
 
 function parseTab(value: string | null): ProductDetailTabId {
@@ -71,6 +80,11 @@ export function ProductDetailView({
   product,
   onGalleryChange,
   onScorecardSaved,
+  relatedOutgoing = [],
+  relatedIncoming = [],
+  onRelatedLinksChange,
+  waterTreatmentContext = { config: null, stages: [] },
+  onWaterTreatmentContextChange,
 }: ProductDetailViewProps) {
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -238,6 +252,21 @@ export function ProductDetailView({
               readOnly={!canEdit}
             />
           </div>
+
+          <ProductRelatedProductsCard
+            productId={product.id}
+            outgoing={relatedOutgoing}
+            incoming={relatedIncoming}
+            onLinksChange={onRelatedLinksChange ?? (() => {})}
+            canEdit={canEdit}
+          />
+
+          <ProductWaterTreatmentCard
+            productId={product.id}
+            context={waterTreatmentContext}
+            onContextChange={onWaterTreatmentContextChange ?? (() => {})}
+            canEdit={canEdit}
+          />
 
           <Card className="mb-6" padding="lg">
             <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">

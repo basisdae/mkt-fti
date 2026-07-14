@@ -32,6 +32,9 @@ import type { ProductView } from "@/types/product";
 export const PRODUCT_LIST_GRID =
   "md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,1.1fr)_repeat(5,minmax(0,0.9fr))_minmax(0,0.8fr)_minmax(0,1.35fr)]";
 
+export const PRODUCT_LIST_GRID_WITH_SELECTION =
+  "md:grid md:grid-cols-[auto_minmax(0,2fr)_minmax(0,1.1fr)_repeat(5,minmax(0,0.9fr))_minmax(0,0.8fr)_minmax(0,1.35fr)]";
+
 const COLUMN_DIVIDER =
   "md:border-r md:border-[#F1F2F7] md:px-4 md:py-4 last:md:border-r-0";
 
@@ -39,9 +42,12 @@ interface ProductListRowProps {
   product: ProductView;
   readOnly?: boolean;
   canDelete?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (selected: boolean) => void;
   onDuplicate: (product: ProductView) => void;
   onArchive: (product: ProductView) => void;
   onDelete: (product: ProductView) => void;
+  onBeforeNavigateToDetail?: () => void;
 }
 
 function MetricCell({
@@ -109,22 +115,45 @@ export function ProductListRow({
   product,
   readOnly = false,
   canDelete = true,
+  selected = false,
+  onSelectedChange,
   onDuplicate,
   onArchive,
   onDelete,
+  onBeforeNavigateToDetail,
 }: ProductListRowProps) {
   const router = useRouter();
   const statusStyle = getStatusColor(product.status);
   const lowGp = isLowProfitMargin(product.gpPercent);
   const pipelineStep = formatPipelineStep(product.pipelineStage);
+  const showSelection = Boolean(onSelectedChange);
+  const gridClass = showSelection ? PRODUCT_LIST_GRID_WITH_SELECTION : PRODUCT_LIST_GRID;
 
   return (
     <div
       className={cn(
         "group grid grid-cols-1 gap-3 rounded-[20px] border border-gray-100 bg-card shadow-sm shadow-gray-200/40 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-[var(--shadow-card-hover)] md:gap-0 md:px-0 md:py-0",
-        PRODUCT_LIST_GRID,
+        gridClass,
       )}
     >
+      {showSelection ? (
+        <div
+          className={cn(
+            COLUMN_DIVIDER,
+            "flex items-center px-4 py-4 md:justify-center md:pl-4 md:pr-2",
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={selected}
+            aria-label={`Select ${product.name}`}
+            onChange={(event) => onSelectedChange?.(event.target.checked)}
+            onClick={(event) => event.stopPropagation()}
+            className="h-4 w-4 rounded accent-primary"
+          />
+        </div>
+      ) : null}
+
       {/* Product — left aligned */}
       <div
         className={cn(
@@ -132,7 +161,11 @@ export function ProductListRow({
           "min-w-0 px-4 py-4 md:py-5 md:pl-6 md:text-left",
         )}
       >
-        <Link href={`/products/${product.id}`} className="flex gap-3">
+        <Link
+          href={`/products/${product.id}`}
+          className="flex gap-3"
+          onClick={() => onBeforeNavigateToDetail?.()}
+        >
           <ProductImageDisplay
             src={product.imageUrl}
             alt={resolveProductImageAlt(product)}
@@ -235,7 +268,10 @@ export function ProductListRow({
       >
         <ActionButton
           label="View"
-          onClick={() => router.push(`/products/${product.id}`)}
+          onClick={() => {
+            onBeforeNavigateToDetail?.();
+            router.push(`/products/${product.id}`);
+          }}
         >
           <Eye className="h-3.5 w-3.5" />
         </ActionButton>
@@ -272,7 +308,17 @@ export function ProductListRow({
   );
 }
 
-export function ProductListHeader() {
+export function ProductListHeader({
+  showSelection = false,
+  allSelected = false,
+  someSelected = false,
+  onSelectAll,
+}: {
+  showSelection?: boolean;
+  allSelected?: boolean;
+  someSelected?: boolean;
+  onSelectAll?: (selected: boolean) => void;
+} = {}) {
   const headers = [
     { label: "Product", align: "left" as const },
     { label: "Supplier", align: "center" as const },
@@ -284,14 +330,36 @@ export function ProductListHeader() {
     { label: "Updated", align: "center" as const },
     { label: "Actions", align: "right" as const },
   ];
+  const gridClass = showSelection
+    ? PRODUCT_LIST_GRID_WITH_SELECTION
+    : PRODUCT_LIST_GRID;
 
   return (
     <div
       className={cn(
         "mb-3 hidden rounded-[20px] border border-gray-100 bg-gray-50/80 md:px-0 md:py-0",
-        PRODUCT_LIST_GRID,
+        gridClass,
       )}
     >
+      {showSelection ? (
+        <div
+          className={cn(
+            COLUMN_DIVIDER,
+            "flex items-center justify-center py-3 pl-4 pr-2",
+          )}
+        >
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(element) => {
+              if (element) element.indeterminate = someSelected && !allSelected;
+            }}
+            aria-label="Select all products"
+            onChange={(event) => onSelectAll?.(event.target.checked)}
+            className="h-4 w-4 rounded accent-primary"
+          />
+        </div>
+      ) : null}
       {headers.map((header, index) => (
         <div
           key={header.label}

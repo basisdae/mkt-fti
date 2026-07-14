@@ -3,7 +3,9 @@ import { createEmptyEvaluationScorecard } from "@/lib/evaluation-scorecard";
 import { normalizeProductCertification } from "@/lib/product-certification";
 import { normalizeProductSpecification } from "@/lib/product-specification";
 import { mergeProductViews } from "@/lib/repositories/product.repository";
+import { normalizeWaterOutputs } from "@/lib/water-outputs";
 import { listAllProductGalleryGrouped } from "@/lib/services/product-images";
+import { listAllProductTagLinks } from "@/lib/services/product-tags";
 import {
   listAllProductScorecards,
   listProducts,
@@ -122,6 +124,7 @@ function mapProductRow(
       exclusive: Boolean(customOptionsRaw.exclusive),
       customLevel: String(customOptionsRaw.customLevel ?? ""),
       customNotes: String(customOptionsRaw.customNotes ?? ""),
+      waterOutputs: normalizeWaterOutputs(customOptionsRaw.waterOutputs),
     },
     certification: normalizeProductCertification(
       row.certification as Product["certification"] | null | undefined,
@@ -169,7 +172,7 @@ export async function loadProductCatalogFromSupabase(): Promise<{
     );
   }
 
-  const [rows, priceOptions, galleryGrouped, scorecardByProduct] =
+  const [rows, priceOptions, galleryGrouped, scorecardByProduct, tagLinksByProduct] =
     await Promise.all([
       listProducts(),
       listAllMoqPrices(),
@@ -177,6 +180,7 @@ export async function loadProductCatalogFromSupabase(): Promise<{
       listAllProductScorecards().catch(
         () => new Map<string, Product["evaluationScorecard"]>(),
       ),
+      listAllProductTagLinks().catch(() => new Map()),
     ]);
 
   const productRecords: Product[] = [];
@@ -201,6 +205,7 @@ export async function loadProductCatalogFromSupabase(): Promise<{
         product.imageAlt = cover.alt || product.name;
       }
     }
+    product.tagLinks = tagLinksByProduct.get(id) ?? [];
     productRecords.push(product);
 
     const status = String(row.status ?? "interested") as ProductStatus;

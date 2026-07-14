@@ -57,6 +57,71 @@ export interface ProductTagLink {
   groupName?: string;
 }
 
+export type ProductRelationType =
+  | "consumable"
+  | "spare_part"
+  | "accessory"
+  | "compatible"
+  | "bundle";
+
+/** Directed link to another product (no duplicated product data). */
+export interface ProductRelatedLink {
+  id: string;
+  productId: string;
+  relatedProductId: string;
+  relationType: ProductRelationType;
+  sortOrder: number;
+}
+
+export type WaterMainSystem =
+  | "ro"
+  | "uf"
+  | "nf"
+  | "mf"
+  | "uv"
+  | "carbon"
+  | "sediment"
+  | "softener"
+  | "mineral"
+  | "alkaline"
+  | "hydrogen"
+  | "other";
+
+export type FiltrationComponentType =
+  | "pp_sediment"
+  | "cto_carbon"
+  | "gac_carbon"
+  | "ro_membrane"
+  | "uf_membrane"
+  | "nf_membrane"
+  | "mineral"
+  | "alkaline"
+  | "post_carbon"
+  | "resin"
+  | "softener"
+  | "uv"
+  | "other";
+
+export interface ProductWaterTreatment {
+  productId: string;
+  mainSystems: WaterMainSystem[];
+}
+
+export interface ProductFiltrationStage {
+  id: string;
+  productId: string;
+  sortOrder: number;
+  componentType: FiltrationComponentType;
+  displayName: string;
+  specification: string;
+  quantity: number;
+  replaceable: boolean;
+  replacementInterval: string;
+  /** Stage-only FK — independent from product_related_links. */
+  relatedProductId: string | null;
+  notes: string;
+}
+
 export type PipelineStage =
   | "interested"
   | "researching"
@@ -208,6 +273,13 @@ export interface PackagingInformation {
   cbm: string;
 }
 
+/** Structured product performance — stored at specification.performance (numeric strings). */
+export interface ProductPerformance {
+  gpd: string;
+  ratedFlowLh: string;
+  capacityL: string;
+}
+
 /** Technical specification — separate from core product create/edit. */
 export interface ProductSpecification {
   material: string;
@@ -216,6 +288,7 @@ export interface ProductSpecification {
   power: string;
   flowRate: string;
   pressure: string;
+  performance: ProductPerformance;
   productDimension: ProductDimension;
   packaging: PackagingInformation;
   installation: string;
@@ -267,6 +340,8 @@ export interface Product {
   mediaLinks?: ProductMediaLink[];
   /** Tag assignments for classification export and filters. */
   tagLinks?: ProductTagLink[];
+  /** Outgoing related-product links (product_related_links). */
+  relatedLinks?: ProductRelatedLink[];
 }
 
 export type EvaluationScore = 1 | 2 | 3 | 4 | 5;
@@ -325,6 +400,8 @@ export interface ProductCustomOptions {
   exclusive: boolean;
   customLevel: string;
   customNotes: string;
+  /** Core water output capabilities — not classification tags. */
+  waterOutputs?: string[];
 }
 
 export interface ProductCertification {

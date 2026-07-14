@@ -23,6 +23,7 @@ import {
   formatTagExportCell,
   type ProductTagGroupWithTags,
 } from "@/lib/product-tags";
+import { getProductPerformanceFromSpecification } from "@/lib/product-performance";
 import type { ProductView } from "@/types/product";
 
 /** Column headers for future Excel import mapping. */
@@ -90,6 +91,9 @@ export async function exportProductMasterExcel(
     "Brand",
     "Supplier",
     "Model",
+    "GPD",
+    "Rated Flow (L/H)",
+    "Capacity (L)",
     "Category",
     "Status",
     "Score",
@@ -121,13 +125,19 @@ export async function exportProductMasterExcel(
       const tagCells = tagGroups.map((group) =>
         formatTagExportCell(product.tagLinks, group.key, "|"),
       );
+      const performance = getProductPerformanceFromSpecification(
+        product.specification,
+      );
 
       sheet.addRow([
         exportCell(product.code),
         exportCell(product.name),
         exportCell(formatProductBrand(product.brand)),
         exportCell(product.supplier),
-        "", // Model — not stored on product yet
+        exportCell(product.productSystem),
+        exportCell(performance.gpd),
+        exportCell(performance.ratedFlowLh),
+        exportCell(performance.capacityL),
         exportCell(categoryLabel),
         exportCell(PRODUCT_STATUS_LABELS[product.status] ?? product.status),
         exportCell(getEvaluationTotalScore(product.evaluationScorecard)),
@@ -155,6 +165,10 @@ export async function exportProductMasterExcel(
       sheet.addRow([
         exportCell(product.code),
         exportCell(product.name),
+        "",
+        "",
+        "",
+        "",
         "",
         "",
         "",

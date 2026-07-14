@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import type {
   PackagingInformation,
   ProductDimension,
+  ProductPerformance,
   ProductSpecification,
   ProductSpecStatus,
   ProductView,
@@ -129,6 +130,16 @@ export function ProductSpecForm({ product }: ProductSpecFormProps) {
       productDimension: {
         ...prev.productDimension,
         [key]: value,
+      },
+    }));
+  }
+
+  function updatePerformance(key: keyof ProductPerformance, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      performance: {
+        ...prev.performance,
+        [key]: sanitizeNumericInput(value),
       },
     }));
   }
@@ -284,7 +295,36 @@ export function ProductSpecForm({ product }: ProductSpecFormProps) {
           </div>
         </SectionCard>
 
-        <SectionCard title="Performance" description="Operating performance">
+        <SectionCard
+          title="Performance"
+          description="Structured numeric performance — stored separately from legacy free-text fields"
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            <UnitField
+              label="Rated Flow"
+              unit="L/H"
+              placeholder="e.g. 11.7"
+              value={form.performance.ratedFlowLh}
+              onChange={(value) => updatePerformance("ratedFlowLh", value)}
+            />
+            <UnitField
+              label="GPD"
+              unit="GPD"
+              placeholder="e.g. 75"
+              value={form.performance.gpd}
+              onChange={(value) => updatePerformance("gpd", value)}
+            />
+            <UnitField
+              label="Capacity"
+              unit="L"
+              placeholder="e.g. 2.0"
+              value={form.performance.capacityL}
+              onChange={(value) => updatePerformance("capacityL", value)}
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard title="Legacy Performance Notes" description="Optional free-text fields kept for older records">
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
               label="Flow Rate"

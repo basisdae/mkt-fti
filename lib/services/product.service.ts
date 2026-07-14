@@ -123,6 +123,14 @@ export function buildProductBundleFromForm(
       currentBrand,
     }),
     evaluationScorecard: createEmptyEvaluationScorecard(),
+    customOptions: {
+      ...base.customOptions,
+      oem: form.oemAvailable,
+      odm: form.odmAvailable,
+      packagingCustom: form.packagingCustom,
+      colorCustom: form.colorCustom,
+      specCustom: form.specCustom,
+    },
   };
 
   const priceOptions = form.moqOptions
