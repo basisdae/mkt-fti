@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { BrandContextStack } from "@/components/product/BrandContextStack";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
@@ -140,9 +141,12 @@ export function ProductListRow({
           />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-start gap-2">
-              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
+              <ProductCardTitle
+                as="p"
+                className="min-w-0 flex-1 group-hover:text-primary"
+              >
                 {product.name}
-              </p>
+              </ProductCardTitle>
               <EvaluationScoreBadge
                 scorecard={product.evaluationScorecard}
                 compact

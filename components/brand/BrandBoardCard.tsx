@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Building2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { useBrandStore } from "@/hooks/BrandStore";
 import { FTI_BRAND_LABELS, FTI_BRAND_OPTIONS, formatFtiBrand } from "@/lib/brand-strategy";
@@ -29,9 +30,9 @@ export function BrandBoardCard({
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/products/${product.id}`}
-          className="text-sm font-semibold text-gray-900 hover:text-primary"
+          className="min-w-0 flex-1 hover:text-primary"
         >
-          {product.name}
+          <ProductCardTitle as="span">{product.name}</ProductCardTitle>
         </Link>
         <EvaluationScoreBadge
           scorecard={product.evaluationScorecard}

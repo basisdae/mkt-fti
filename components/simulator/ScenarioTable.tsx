@@ -40,6 +40,7 @@ interface ScenarioTableProps {
   rows: ScenarioRow[];
   onChange: (rows: ScenarioRow[]) => void;
   historyRevision?: number;
+  sectionTitle?: string;
 }
 
 const compactField =
@@ -83,6 +84,7 @@ export function ScenarioTable({
   rows,
   onChange,
   historyRevision = 0,
+  sectionTitle,
 }: ScenarioTableProps) {
   const products = useLiveProducts();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -196,7 +198,7 @@ export function ScenarioTable({
       <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <h2 className="text-base font-semibold text-gray-900">
-            {t.scenarioTitle}
+            {sectionTitle ?? t.scenarioTitle}
           </h2>
           <p className="mt-1 text-xs text-amber-700/90">{t.simulationDisclaimer}</p>
         </div>

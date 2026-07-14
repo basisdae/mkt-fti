@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { BrandContextStack } from "@/components/product/BrandContextStack";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { PRODUCT_STATUS_LABELS } from "@/lib/constants";
 import {
   formatCurrencyTHB,
@@ -36,15 +37,18 @@ export function ProductCard({ product, compact }: ProductCardProps) {
       )}
 
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
             {product.code}
           </p>
-          <h3 className="mt-1 text-base font-semibold text-gray-900 group-hover:text-primary">
+          <ProductCardTitle
+            size="base"
+            className="mt-1 group-hover:text-primary"
+          >
             {product.name}
-          </h3>
+          </ProductCardTitle>
         </div>
-        <Badge variant={statusStyle.badge}>
+        <Badge variant={statusStyle.badge} className="shrink-0">
           {PRODUCT_STATUS_LABELS[product.status]}
         </Badge>
       </div>

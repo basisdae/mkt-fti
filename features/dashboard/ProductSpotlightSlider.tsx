@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useMemo, useRef } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { ProductCardTitle, productCardTitleClassName } from "@/components/product/ProductCardTitle";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { Card } from "@/components/ui/Card";
@@ -86,9 +87,12 @@ function SpotlightCard({ product, rank, featured = false }: SpotlightCardProps) 
         >
           <div>
             <h3
-              className={cn(
-                "line-clamp-2 font-semibold leading-snug text-gray-900 group-hover:text-primary",
-                featured ? "text-[15px] sm:text-base" : "text-sm",
+              className={productCardTitleClassName(
+                featured ? "base" : "sm",
+                cn(
+                  "group-hover:text-primary",
+                  featured && "text-[15px] sm:text-base",
+                ),
               )}
             >
               {product.name}

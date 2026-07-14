@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { BrandContextStack } from "@/components/product/BrandContextStack";
 import { Card } from "@/components/ui/Card";
@@ -39,9 +40,9 @@ export function OpportunityRow({ product, rank }: OpportunityRowProps) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
+        <ProductCardTitle className="group-hover:text-primary">
           {product.name}
-        </p>
+        </ProductCardTitle>
         <p className="truncate text-xs text-gray-400">{product.supplier}</p>
       </div>
 
@@ -130,10 +131,10 @@ export function DashboardProductCard({ product }: DashboardProductCardProps) {
             className="mb-3 border-0 bg-transparent px-0 py-0"
           />
           <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-primary">
+            <div className="min-w-0 flex-1">
+              <ProductCardTitle className="group-hover:text-primary">
                 {product.name}
-              </p>
+              </ProductCardTitle>
               <p className="mt-0.5 truncate text-xs text-gray-400">
                 {product.supplier}
               </p>

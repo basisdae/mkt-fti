@@ -250,161 +250,170 @@ export function SimulatorView({
           </PageEmptyState>
         </>
       ) : (
-      <div className="grid gap-6 lg:grid-cols-5">
-        <Card className="lg:col-span-2" interactive>
-          <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
-            {t.inputsTitle}
-          </h2>
-
-          <SimulatorSection title={t.sectionProductSelection}>
-            <div className="flex items-center gap-4 rounded-xl border border-[#EEF0F6] bg-[#FBFBFD] p-3">
-              <ProductImageDisplay
-                src={product?.imageUrl}
-                alt={product ? resolveProductImageAlt(product) : "—"}
-                size="md"
-                className="p-1.5"
-              />
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[#1F2937]">
-                  {product?.name}
-                </p>
-                <p className="truncate text-xs text-[#8A94A6]">
-                  {product?.supplier}
-                </p>
-              </div>
-            </div>
-
-            <Select
-              label={t.selectProduct}
-              labelClassName={fieldLabelClass}
-              options={productOptions}
-              value={productId}
-              onChange={handleProductChange}
-            />
-            <Select
-              label={t.moqTier}
-              labelClassName={fieldLabelClass}
-              options={moqOptions}
-              value={activeTierId}
-              onChange={(e) => setTierId(e.target.value)}
-            />
-          </SimulatorSection>
-
-          <SimulatorDivider />
-
-          <SimulatorSection title={t.sectionSalesTarget}>
-            <Input
-              label={t.targetRevenue}
-              labelClassName={fieldLabelClass}
-              type="number"
-              min={0}
-              value={targetRevenue}
-              onChange={(e) =>
-                setTargetRevenue(Number(e.target.value) || 0)
-              }
-            />
-            <Input
-              label={t.expectedQty}
-              labelClassName={fieldLabelClass}
-              type="number"
-              min={0}
-              value={expectedQty}
-              onChange={(e) => setExpectedQty(Number(e.target.value) || 0)}
-            />
-          </SimulatorSection>
-
-          <SimulatorDivider />
-
-          <SimulatorSection title={t.sectionResultPreview}>
-            {pricing && <SimulatorUnitPreview pricing={pricing} />}
-
-            {lowMargin && (
-              <div className="warning-banner">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                {t.lowMarginWarning}
-              </div>
-            )}
-          </SimulatorSection>
-
-          <div className="mt-5">
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={handleAddToScenario}
-              disabled={expectedQty <= 0}
+        <>
+          <div className="grid items-start gap-6 md:grid-cols-5">
+            <Card
+              className="md:col-span-2 md:sticky md:top-4"
+              interactive
             >
-              <Plus className="h-4 w-4" />
-              {t.addToScenario}
-            </Button>
-          </div>
-        </Card>
+              <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
+                {t.productDetailTitle}
+              </h2>
 
-        <div className="lg:col-span-3">
-          <SimulatorKpiGrid>
-            <SimulatorKpiCard
-              label={t.summaryRevenue}
-              value={formatCurrencyTHB(result.revenue)}
-              subtitle={t.revenueCalcHint(
-                qtyLabel,
-                formatCurrencyTHB(sellingPrice),
+              <SimulatorSection title={t.sectionProductSelection}>
+                <div className="flex items-center gap-4 rounded-xl border border-[#EEF0F6] bg-[#FBFBFD] p-3">
+                  <ProductImageDisplay
+                    src={product?.imageUrl}
+                    alt={product ? resolveProductImageAlt(product) : "—"}
+                    size="md"
+                    className="p-1.5"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#1F2937]">
+                      {product?.name}
+                    </p>
+                    <p className="truncate text-xs text-[#8A94A6]">
+                      {product?.supplier}
+                    </p>
+                  </div>
+                </div>
+
+                <Select
+                  label={t.selectProduct}
+                  labelClassName={fieldLabelClass}
+                  options={productOptions}
+                  value={productId}
+                  onChange={handleProductChange}
+                />
+                <Select
+                  label={t.moqTier}
+                  labelClassName={fieldLabelClass}
+                  options={moqOptions}
+                  value={activeTierId}
+                  onChange={(e) => setTierId(e.target.value)}
+                />
+              </SimulatorSection>
+
+              <SimulatorDivider />
+
+              <SimulatorSection title={t.sectionResultPreview}>
+                {pricing && <SimulatorUnitPreview pricing={pricing} />}
+              </SimulatorSection>
+            </Card>
+
+            <Card className="min-w-0 md:col-span-3" interactive>
+              <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
+                {t.salesPlanSimulatorTitle}
+              </h2>
+
+              <SimulatorSection title={t.sectionSalesTarget}>
+                <Input
+                  label={t.targetRevenue}
+                  labelClassName={fieldLabelClass}
+                  type="number"
+                  min={0}
+                  value={targetRevenue}
+                  onChange={(e) =>
+                    setTargetRevenue(Number(e.target.value) || 0)
+                  }
+                />
+                <Input
+                  label={t.expectedQty}
+                  labelClassName={fieldLabelClass}
+                  type="number"
+                  min={0}
+                  value={expectedQty}
+                  onChange={(e) => setExpectedQty(Number(e.target.value) || 0)}
+                />
+              </SimulatorSection>
+
+              <SimulatorDivider />
+
+              <SimulatorKpiGrid>
+                <SimulatorKpiCard
+                  label={t.summaryRevenue}
+                  value={formatCurrencyTHB(result.revenue)}
+                  subtitle={t.revenueCalcHint(
+                    qtyLabel,
+                    formatCurrencyTHB(sellingPrice),
+                  )}
+                  icon={TrendingUp}
+                  variant="neutral"
+                />
+                <SimulatorKpiCard
+                  label={t.summaryTotalCost}
+                  value={formatCurrencyTHB(result.totalCost)}
+                  subtitle={t.costCalcHint(
+                    qtyLabel,
+                    formatCurrencyTHB(pricing?.costThb ?? 0),
+                  )}
+                  icon={Receipt}
+                  variant="neutral"
+                />
+                <SimulatorKpiCard
+                  label={t.summaryGrossProfit}
+                  value={formatCurrencyTHB(result.grossProfit)}
+                  subtitle={t.profitMarginHint(
+                    formatPercent(result.grossProfitPercent),
+                  )}
+                  icon={CircleDollarSign}
+                  variant={lowMargin ? "profit-warn" : "profit"}
+                />
+                <SimulatorKpiCard
+                  label={t.summaryProfitPercent}
+                  value={formatPercent(result.grossProfitPercent)}
+                  subtitle={t.profitMarginHint(
+                    formatPercent(result.grossProfitPercent),
+                  )}
+                  icon={Percent}
+                  variant={lowMargin ? "profit-warn" : "profit"}
+                />
+                <SimulatorKpiCard
+                  label={t.summaryExcessTarget}
+                  value={formatCurrencyTHB(Math.abs(revenueGap))}
+                  subtitle={
+                    exceedsTarget ? t.excessAboveTarget : t.excessBelowTarget
+                  }
+                  icon={Target}
+                  variant={exceedsTarget ? "goal" : "warn"}
+                />
+                <SimulatorKpiCard
+                  label={t.summaryQtyRequired}
+                  value={t.qtyUnits(qtyForTarget)}
+                  subtitle={
+                    exceedsTarget
+                      ? t.qtyRequiredHint(formatCurrencyTHB(sellingPrice))
+                      : t.qtyRequiredGapHint(
+                          additionalQtyNeeded.toLocaleString("th-TH"),
+                        )
+                  }
+                  icon={Hash}
+                  variant="goal"
+                />
+              </SimulatorKpiGrid>
+
+              {lowMargin && (
+                <div className="warning-banner mt-4">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {t.lowMarginWarning}
+                </div>
               )}
-              icon={TrendingUp}
-              variant="neutral"
-            />
-            <SimulatorKpiCard
-              label={t.summaryTotalCost}
-              value={formatCurrencyTHB(result.totalCost)}
-              subtitle={t.costCalcHint(
-                qtyLabel,
-                formatCurrencyTHB(pricing?.costThb ?? 0),
-              )}
-              icon={Receipt}
-              variant="neutral"
-            />
-            <SimulatorKpiCard
-              label={t.summaryGrossProfit}
-              value={formatCurrencyTHB(result.grossProfit)}
-              subtitle={t.profitMarginHint(
-                formatPercent(result.grossProfitPercent),
-              )}
-              icon={CircleDollarSign}
-              variant={lowMargin ? "profit-warn" : "profit"}
-            />
-            <SimulatorKpiCard
-              label={t.summaryProfitPercent}
-              value={formatPercent(result.grossProfitPercent)}
-              subtitle={t.profitMarginHint(
-                formatPercent(result.grossProfitPercent),
-              )}
-              icon={Percent}
-              variant={lowMargin ? "profit-warn" : "profit"}
-            />
-            <SimulatorKpiCard
-              label={t.summaryExcessTarget}
-              value={formatCurrencyTHB(Math.abs(revenueGap))}
-              subtitle={
-                exceedsTarget ? t.excessAboveTarget : t.excessBelowTarget
-              }
-              icon={Target}
-              variant={exceedsTarget ? "goal" : "warn"}
-            />
-            <SimulatorKpiCard
-              label={t.summaryQtyRequired}
-              value={t.qtyUnits(qtyForTarget)}
-              subtitle={
-                exceedsTarget
-                  ? t.qtyRequiredHint(formatCurrencyTHB(sellingPrice))
-                  : t.qtyRequiredGapHint(
-                      additionalQtyNeeded.toLocaleString("th-TH"),
-                    )
-              }
-              icon={Hash}
-              variant="goal"
-            />
-          </SimulatorKpiGrid>
-        </div>
-      </div>
+
+              <div className="mt-5">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="w-full"
+                  onClick={handleAddToScenario}
+                  disabled={expectedQty <= 0}
+                >
+                  <Plus className="h-4 w-4" />
+                  {t.addToScenario}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </>
       )}
 
       <div className="mt-8">
@@ -412,6 +421,9 @@ export function SimulatorView({
           rows={scenarioRows}
           onChange={handleScenarioChange}
           historyRevision={scenarioRevision}
+          sectionTitle={
+            catalogProducts.length > 0 ? t.multiProductSummaryTitle : undefined
+          }
         />
       </div>
     </div>

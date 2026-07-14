@@ -6,6 +6,9 @@ export const SIMULATOR_COPY = {
     "ทดลองใส่จำนวนขาย เพื่อดูยอดขายรวม ต้นทุนรวม และกำไรโดยประมาณ",
 
   inputsTitle: "ข้อมูลสำหรับคำนวณ",
+  productDetailTitle: "Product Detail",
+  salesPlanSimulatorTitle: "Sales Plan Simulator",
+  multiProductSummaryTitle: "Multi Product Summary",
   sectionProductSelection: "เลือกสินค้า",
   sectionSalesTarget: "ตั้งเป้าการขาย",
   sectionResultPreview: "ผลคำนวณต่อชิ้น",

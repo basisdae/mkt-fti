@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Building2, Package, Star } from "lucide-react";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { Card } from "@/components/ui/Card";
 import { FavoriteStar } from "@/components/ui/FavoriteStar";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -63,9 +64,11 @@ export function FavoritesView() {
                       <div className="min-w-0 flex-1">
                         <Link
                           href={`/products/${product.id}`}
-                          className="text-sm font-semibold text-gray-900 hover:text-primary"
+                          className="block hover:text-primary"
                         >
-                          {product.name}
+                          <ProductCardTitle as="span">
+                            {product.name}
+                          </ProductCardTitle>
                         </Link>
                         <p className="mt-0.5 truncate text-xs text-gray-500">
                           {product.code}

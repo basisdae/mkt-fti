@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Tags,
 } from "lucide-react";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -174,9 +175,12 @@ export function MissingDataCenterView() {
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-gray-900">
+                    <ProductCardTitle
+                      as="p"
+                      className="min-w-0 flex-1"
+                    >
                       {product.name}
-                    </p>
+                    </ProductCardTitle>
                     <StatusBadge status={product.status} />
                   </div>
                   <p className="mt-0.5 text-xs text-gray-500">

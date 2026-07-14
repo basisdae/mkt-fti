@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Award, ArrowRight } from "lucide-react";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
 import { Card } from "@/components/ui/Card";
@@ -81,9 +82,7 @@ export function TopCandidateProductsCard({
                   className="p-1"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-gray-900">
-                    {product.name}
-                  </p>
+                  <ProductCardTitle>{product.name}</ProductCardTitle>
                   <span
                     className={cn(
                       "mt-1 inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold",

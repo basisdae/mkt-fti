@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import {
   PIPELINE_STAGE_LABELS,
@@ -100,9 +101,9 @@ export function PipelineCard({
             frameClassName="mx-auto mb-3 w-full max-w-[88px] aspect-square h-auto"
             className="p-2"
           />
-          <p className="text-sm font-semibold text-gray-900">
+          <ProductCardTitle as="p" className="group-hover:text-primary">
             {item.productName}
-          </p>
+          </ProductCardTitle>
           <p className="mt-1 truncate text-xs text-gray-500">{item.supplier}</p>
           <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-gray-400">
             {item.latestNote}
