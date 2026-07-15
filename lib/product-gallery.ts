@@ -49,6 +49,17 @@ export function syncCoverFields(
   };
 }
 
+/** Cover gallery image, then first gallery image, then legacy imageUrl. */
+export function resolveProductViewImageUrl(product: {
+  images?: ProductGalleryImage[];
+  imageUrl?: string | null;
+}): string | null {
+  const fromGallery = getCoverImageUrl(product.images ?? []);
+  if (fromGallery?.trim()) return fromGallery.trim();
+  const legacy = product.imageUrl?.trim();
+  return legacy || null;
+}
+
 export function galleryImagesToItems(
   images: ProductGalleryImage[],
 ): ProductGalleryItem[] {

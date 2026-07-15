@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -25,6 +28,13 @@ export function ProductImageDisplay({
   showPlaceholder = true,
 }: ProductImageDisplayProps) {
   const sizeClass = PRODUCT_IMAGE_SIZE_CLASSES[size];
+  const [broken, setBroken] = useState(false);
+
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
+
+  const displaySrc = broken ? null : src?.trim() || null;
 
   return (
     <div
@@ -34,11 +44,12 @@ export function ProductImageDisplay({
         frameClassName,
       )}
     >
-      {src ? (
+      {displaySrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
+          src={displaySrc}
           alt={alt}
+          onError={() => setBroken(true)}
           className={cn(
             "h-full w-full object-contain p-1.5 sm:p-2",
             className,

@@ -6,8 +6,11 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ProductCardTitle } from "@/components/product/ProductCardTitle";
 import { EvaluationScoreBadge } from "@/components/product/EvaluationScoreBadge";
+import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
 import { useBrandStore } from "@/hooks/BrandStore";
 import { FTI_BRAND_LABELS, FTI_BRAND_OPTIONS, formatFtiBrand } from "@/lib/brand-strategy";
+import { resolveProductImageAlt } from "@/lib/product-image";
+import { resolveProductViewImageUrl } from "@/lib/product-gallery";
 import { cn } from "@/lib/utils";
 import type { FtiBrand, ProductView } from "@/types/product";
 
@@ -27,26 +30,41 @@ export function BrandBoardCard({
 
   return (
     <Card padding="md" className={cn("shadow-sm", className)}>
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/products/${product.id}`}
-          className="min-w-0 flex-1 hover:text-primary"
-        >
-          <ProductCardTitle as="span">{product.name}</ProductCardTitle>
-        </Link>
-        <EvaluationScoreBadge
-          scorecard={product.evaluationScorecard}
-          compact
-          showStatus
+      <div className="flex items-start gap-3">
+        <ProductImageDisplay
+          src={resolveProductViewImageUrl(product)}
+          alt={resolveProductImageAlt(product)}
+          size="md"
+          frameClassName="h-16 w-16 shrink-0 rounded-xl bg-gray-50/90 sm:h-20 sm:w-20"
+          className="p-1"
         />
-      </div>
 
-      <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-500">
-        <Building2 className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">
-          {product.supplier || "No supplier linked"}
-        </span>
-      </p>
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/products/${product.id}`}
+            className="block hover:text-primary"
+          >
+            <ProductCardTitle as="span" className="line-clamp-2">
+              {product.name}
+            </ProductCardTitle>
+          </Link>
+
+          <div className="mt-1.5">
+            <EvaluationScoreBadge
+              scorecard={product.evaluationScorecard}
+              compact
+              showStatus
+            />
+          </div>
+
+          <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
+            <Building2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="line-clamp-1">
+              {product.supplier || "No supplier linked"}
+            </span>
+          </p>
+        </div>
+      </div>
 
       <div className="mt-3 space-y-2">
         <div>
