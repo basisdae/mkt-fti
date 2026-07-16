@@ -5,6 +5,7 @@ import {
   canExportGiftPlans,
   canViewGiftPlans,
 } from "@/lib/auth/permissions";
+import { PRIMARY_MKT_SUPPORT_EMAIL } from "@/lib/auth/gift-plan-operators";
 import { getDefaultPermissionsForRole } from "@/lib/auth/permission-catalog";
 import type { AppUser } from "@/types/auth";
 
@@ -45,6 +46,29 @@ const adminLegacyPerms: AppUser = {
 assert.equal(canViewGiftPlans(adminLegacyPerms), true);
 assert.equal(canAccessPath(adminLegacyPerms, "/gift-plans"), true);
 assert.equal(canAccessPath(adminLegacyPerms, "/gift-plans/catalog"), true);
+
+const mktSupportLegacy: AppUser = {
+  id: "user-mkt-support",
+  email: PRIMARY_MKT_SUPPORT_EMAIL,
+  displayName: "MKT Support",
+  role: "rnd",
+  permissions: getDefaultPermissionsForRole("rnd"),
+};
+assert.equal(canViewGiftPlans(mktSupportLegacy), true);
+assert.equal(canEditGiftPlans(mktSupportLegacy), true);
+assert.equal(canAccessPath(mktSupportLegacy, "/gift-plans"), true);
+
+const mktHqStale: AppUser = {
+  id: "user-mkt-hq-stale",
+  email: "custom.mkt@functioninter.co.th",
+  displayName: "MKT HQ Stale",
+  role: "mkt_hq",
+  permissions: getDefaultPermissionsForRole("mkt_hq").filter(
+    (key) => !key.startsWith("gift_plans."),
+  ),
+};
+assert.equal(canViewGiftPlans(mktHqStale), true);
+assert.equal(canEditGiftPlans(mktHqStale), true);
 
 assert.equal(canViewGiftPlans(rnd), false);
 assert.equal(canEditGiftPlans(rnd), false);

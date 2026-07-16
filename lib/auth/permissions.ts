@@ -8,13 +8,19 @@ import {
   getDefaultPermissionsForRole,
   type PermissionKey,
 } from "@/lib/auth/permission-catalog";
+import {
+  GIFT_PLAN_OPERATOR_PERMISSIONS,
+  isGiftPlanOperatorEmail,
+} from "@/lib/auth/gift-plan-operators";
 import type { AppUser } from "@/types/auth";
 
 type PermissionSource =
-  | Pick<AppUser, "permissions" | "role">
+  | Pick<AppUser, "permissions" | "role" | "email">
   | PermissionKey[]
   | null
   | undefined;
+
+const GIFT_PLAN_PERMISSION_KEYS = GIFT_PLAN_OPERATOR_PERMISSIONS as readonly PermissionKey[];
 
 function permissionSet(source: PermissionSource): Set<PermissionKey> {
   if (!source) return new Set();
@@ -25,10 +31,27 @@ function permissionSet(source: PermissionSource): Set<PermissionKey> {
     return new Set(getDefaultPermissionsForRole("admin"));
   }
 
-  const list = source.permissions;
-  return new Set(
-    list?.length ? list : getDefaultPermissionsForRole(source.role),
+  // MKT HQ template includes Gift Plans; merge defaults so stale stored perms still work.
+  if (source.role === "mkt_hq") {
+    return new Set([
+      ...getDefaultPermissionsForRole("mkt_hq"),
+      ...(source.permissions ?? []),
+    ]);
+  }
+
+  const perms = new Set(
+    source.permissions?.length
+      ? source.permissions
+      : getDefaultPermissionsForRole(source.role),
   );
+
+  if (source.email && isGiftPlanOperatorEmail(source.email)) {
+    for (const key of GIFT_PLAN_PERMISSION_KEYS) {
+      perms.add(key);
+    }
+  }
+
+  return perms;
 }
 
 export function hasPermission(

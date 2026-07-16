@@ -14,6 +14,7 @@ import type { AppRole, ManagedUserPublic, ManagedUserRecord } from "@/types/auth
 
 const AUTH_DELETED_USERS_KEY = "mkt-fti-auth-deleted-users";
 export const PRIMARY_ADMIN_EMAIL = "mkt.dir@functioninter.co.th";
+export { PRIMARY_MKT_SUPPORT_EMAIL } from "@/lib/auth/gift-plan-operators";
 const PRIMARY_ADMIN_ID = "user-system-admin";
 
 function normalizeEmail(email: string): string {
