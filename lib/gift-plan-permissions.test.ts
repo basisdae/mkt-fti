@@ -31,6 +31,20 @@ assert.equal(canAccessPath(mktHq, "/gift-plans/catalog"), true);
 
 assert.equal(canViewGiftPlans(admin), true);
 assert.equal(canEditGiftPlans(admin), true);
+assert.equal(canAccessPath(admin, "/gift-plans"), true);
+
+const adminLegacyPerms: AppUser = {
+  id: "user-system-admin",
+  email: "mkt.dir@functioninter.co.th",
+  displayName: "System Administrator",
+  role: "admin",
+  permissions: getDefaultPermissionsForRole("admin").filter(
+    (key) => !key.startsWith("gift_plans."),
+  ),
+};
+assert.equal(canViewGiftPlans(adminLegacyPerms), true);
+assert.equal(canAccessPath(adminLegacyPerms, "/gift-plans"), true);
+assert.equal(canAccessPath(adminLegacyPerms, "/gift-plans/catalog"), true);
 
 assert.equal(canViewGiftPlans(rnd), false);
 assert.equal(canEditGiftPlans(rnd), false);

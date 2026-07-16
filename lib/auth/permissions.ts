@@ -5,20 +5,30 @@ import {
 } from "@/lib/constants";
 import {
   NAV_PERMISSION_MAP,
+  getDefaultPermissionsForRole,
   type PermissionKey,
 } from "@/lib/auth/permission-catalog";
 import type { AppUser } from "@/types/auth";
 
 type PermissionSource =
-  | Pick<AppUser, "permissions">
+  | Pick<AppUser, "permissions" | "role">
   | PermissionKey[]
   | null
   | undefined;
 
 function permissionSet(source: PermissionSource): Set<PermissionKey> {
   if (!source) return new Set();
-  const list = Array.isArray(source) ? source : source.permissions;
-  return new Set(list ?? []);
+  if (Array.isArray(source)) return new Set(source);
+
+  // Admin always has full access in app layer — matches gift_plan_can_view/edit() RLS.
+  if (source.role === "admin") {
+    return new Set(getDefaultPermissionsForRole("admin"));
+  }
+
+  const list = source.permissions;
+  return new Set(
+    list?.length ? list : getDefaultPermissionsForRole(source.role),
+  );
 }
 
 export function hasPermission(
