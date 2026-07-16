@@ -1,3 +1,4 @@
+import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth/gift-plan-operators";
 import {
   getDefaultPermissionsForRole,
   normalizePermissions,
@@ -144,6 +145,36 @@ export async function ensureSeedUsersInSupabase(): Promise<void> {
       lastLoginAt: null,
     });
   }
+}
+
+/**
+ * Primary admin seed credentials always win — matches local user-registry behavior.
+ * Keeps app_users password in sync after deploy without manual SQL.
+ */
+export async function syncPrimaryAdminFromSeedInSupabase(): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+
+  const seed = SEED_USERS.find(
+    (user) => user.email.trim().toLowerCase() === PRIMARY_ADMIN_EMAIL,
+  );
+  if (!seed) return;
+
+  const email = seed.email.trim().toLowerCase();
+  const existing = await getAppUserByEmailFromSupabase(email);
+  const permissions = getDefaultPermissionsForRole(seed.role);
+
+  await upsertAppUserInSupabase({
+    id: existing?.id ?? seed.id,
+    email,
+    password: seed.password,
+    displayName: existing?.displayName?.trim() || seed.displayName,
+    role: seed.role,
+    permissions: existing?.permissions?.length
+      ? existing.permissions
+      : permissions,
+    isActive: existing?.isActive ?? true,
+    lastLoginAt: existing?.lastLoginAt ?? null,
+  });
 }
 
 export async function listAuthAuditFromSupabase(limit = 30) {

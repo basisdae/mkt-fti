@@ -7,6 +7,7 @@ import {
 import {
   ensureSeedUsersInSupabase,
   getAppUserByEmailFromSupabase,
+  syncPrimaryAdminFromSeedInSupabase,
   upsertAppUserInSupabase,
 } from "@/lib/services/app-users";
 import { establishSupabaseAuthSession } from "@/lib/auth/supabase-session-bridge";
@@ -42,6 +43,7 @@ async function loginWithSupabaseAppUsers(
 
   try {
     await ensureSeedUsersInSupabase();
+    await syncPrimaryAdminFromSeedInSupabase();
     const match = await getAppUserByEmailFromSupabase(email);
     if (!match) return null;
     if (match.password !== password.trim()) return "invalid";
