@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 
 interface DeleteGiftPlanDialogProps {
   open: boolean;
@@ -28,14 +29,11 @@ export function DeleteGiftPlanDialog({
         className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-gray-900">Delete Gift Plan</h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Delete <strong>{planName}</strong>? This removes all tiers and gift items.
-          This cannot be undone.
-        </p>
+        <h2 className="text-lg font-semibold text-gray-900">{t.deleteGiftPlanTitle}</h2>
+        <p className="mt-2 text-sm text-gray-600">{t.deleteGiftPlanBody(planName)}</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancel
+            {t.cancel}
           </Button>
           <Button
             type="button"
@@ -43,7 +41,7 @@ export function DeleteGiftPlanDialog({
             disabled={deleting}
             onClick={onConfirm}
           >
-            {deleting ? "Deleting…" : "Delete"}
+            {deleting ? t.deleting : t.delete}
           </Button>
         </div>
       </div>

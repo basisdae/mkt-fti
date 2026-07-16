@@ -11,7 +11,12 @@ import {
   Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { formatGiftMoney, formatGiftPercent } from "@/lib/gift-plan-format";
+import {
+  formatGiftMoney,
+  formatGiftPercent,
+  GIFT_PLAN_STATUS_LABELS,
+} from "@/lib/gift-plan-format";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanListSummary } from "@/types/gift-plan";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -48,6 +53,9 @@ export function GiftPlanCard({
 }: GiftPlanCardProps) {
   const archived = plan.is_archived;
   const draft = plan.status === "draft" && !archived;
+  const statusLabel = archived
+    ? t.statusArchived
+    : GIFT_PLAN_STATUS_LABELS[plan.status];
 
   return (
     <article
@@ -72,7 +80,7 @@ export function GiftPlanCard({
                     : "bg-emerald-50 text-emerald-700",
               )}
             >
-              {archived ? "Archived" : draft ? "Draft" : plan.status}
+              {statusLabel}
             </span>
           </div>
           <p className="mt-1 text-xs text-gray-500">
@@ -92,7 +100,7 @@ export function GiftPlanCard({
                 event.stopPropagation();
                 onToggleMenu();
               }}
-              aria-label="Plan actions"
+              aria-label={t.planActions}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -106,7 +114,7 @@ export function GiftPlanCard({
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                   onClick={onOpen}
                 >
-                  <FolderOpen className="h-4 w-4" /> Open
+                  <FolderOpen className="h-4 w-4" /> {t.open}
                 </button>
                 {canExport ? (
                   <button
@@ -114,7 +122,7 @@ export function GiftPlanCard({
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                     onClick={onExport}
                   >
-                    <Download className="h-4 w-4" /> Export
+                    <Download className="h-4 w-4" /> {t.export}
                   </button>
                 ) : null}
                 {canEdit ? (
@@ -124,14 +132,14 @@ export function GiftPlanCard({
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                       onClick={onDuplicate}
                     >
-                      <Copy className="h-4 w-4" /> Duplicate
+                      <Copy className="h-4 w-4" /> {t.duplicate}
                     </button>
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                       onClick={onRename}
                     >
-                      <Pencil className="h-4 w-4" /> Rename
+                      <Pencil className="h-4 w-4" /> {t.rename}
                     </button>
                     {archived ? (
                       <button
@@ -139,7 +147,7 @@ export function GiftPlanCard({
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                         onClick={onUnarchive}
                       >
-                        <ArchiveRestore className="h-4 w-4" /> Unarchive
+                        <ArchiveRestore className="h-4 w-4" /> {t.restore}
                       </button>
                     ) : (
                       <button
@@ -147,7 +155,7 @@ export function GiftPlanCard({
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                         onClick={onArchive}
                       >
-                        <Archive className="h-4 w-4" /> Archive
+                        <Archive className="h-4 w-4" /> {t.archive}
                       </button>
                     )}
                     <button
@@ -155,7 +163,7 @@ export function GiftPlanCard({
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fti-red hover:bg-red-50"
                       onClick={onDelete}
                     >
-                      <Trash2 className="h-4 w-4" /> Delete
+                      <Trash2 className="h-4 w-4" /> {t.delete}
                     </button>
                   </>
                 ) : null}
@@ -167,13 +175,13 @@ export function GiftPlanCard({
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
         <div>
-          <dt className="text-gray-400">Customers</dt>
+          <dt className="text-gray-400">{t.customers}</dt>
           <dd className="font-medium text-gray-800">
             {plan.total_customers.toLocaleString()}
           </dd>
         </div>
         <div>
-          <dt className="text-gray-400">Gift Units</dt>
+          <dt className="text-gray-400">{t.giftUnits}</dt>
           <dd className="font-medium text-gray-800">
             {plan.total_gift_units.toLocaleString()}
           </dd>
@@ -181,19 +189,19 @@ export function GiftPlanCard({
         {showCosts ? (
           <>
             <div>
-              <dt className="text-gray-400">Actual Cost</dt>
+              <dt className="text-gray-400">{t.actualCost}</dt>
               <dd className="font-medium text-gray-800">
                 {formatGiftMoney(plan.total_actual_cost)}
               </dd>
             </div>
             <div>
-              <dt className="text-gray-400">Est. Value</dt>
+              <dt className="text-gray-400">{t.estValue}</dt>
               <dd className="font-medium text-gray-800">
                 {formatGiftMoney(plan.total_estimated_value)}
               </dd>
             </div>
             <div className="col-span-2">
-              <dt className="text-gray-400">Budget %</dt>
+              <dt className="text-gray-400">{t.budgetPercent}</dt>
               <dd className="font-medium text-gray-800">
                 {formatGiftPercent(plan.budget_percent)}
               </dd>
@@ -201,7 +209,7 @@ export function GiftPlanCard({
           </>
         ) : (
           <div className="col-span-2">
-            <dt className="text-gray-400">Est. Value</dt>
+            <dt className="text-gray-400">{t.estValue}</dt>
             <dd className="font-medium text-gray-800">
               {formatGiftMoney(plan.total_estimated_value)}
             </dd>
@@ -210,7 +218,7 @@ export function GiftPlanCard({
       </dl>
 
       <p className="mt-3 text-[11px] text-gray-400">
-        Updated {formatDate(plan.updated_at)}
+        {t.updated} {formatDate(plan.updated_at)}
       </p>
     </article>
   );

@@ -18,6 +18,7 @@ import {
   buildCommunicationReport,
 } from "@/lib/gift-plan-communication";
 import { getAuthenticatedSupabaseForActions } from "@/lib/supabase/authenticated-server";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   GiftPlanCommunicationReport,
@@ -54,7 +55,7 @@ async function requireView(): Promise<ActionResult<ActionAuth>> {
     !canEditGiftPlans(user) &&
     !canExportGiftPlans(user)
   ) {
-    return fail("You do not have permission to access gift plans.");
+    return fail(t.noPermissionGiftPlans);
   }
 
   return { ok: true, data: { user, supabase } };
@@ -64,7 +65,7 @@ async function requireEdit(): Promise<ActionResult<ActionAuth>> {
   const view = await requireView();
   if (!view.ok) return view;
   if (!canEditGiftPlans(view.data.user)) {
-    return fail("You do not have permission to edit gift plans.");
+    return fail(t.noPermissionEditGiftPlans);
   }
   return view;
 }
@@ -73,7 +74,7 @@ async function requireExport(): Promise<ActionResult<ActionAuth>> {
   const view = await requireView();
   if (!view.ok) return view;
   if (!canExportGiftPlans(view.data.user)) {
-    return fail("You do not have permission to export gift plans.");
+    return fail(t.noPermissionExportGiftPlans);
   }
   return view;
 }
@@ -104,9 +105,9 @@ function validateTierNames(
   const seen = new Set<string>();
   for (const tier of tiers) {
     const normalized = normalizeTierName(tier.name).toLowerCase();
-    if (!normalized) return "Every tier must have a name.";
+    if (!normalized) return t.everyTierMustHaveName;
     if (seen.has(normalized) || tierNamesConflict(tiers, tier.id, tier.name)) {
-      return `Duplicate tier name "${tier.name}" in this plan.`;
+      return t.duplicateTierName(tier.name);
     }
     seen.add(normalized);
   }
@@ -210,11 +211,11 @@ export async function getGiftPlanEditorBundleAction(
   const auth = await requireView();
   if (!auth.ok) return auth;
   if (!canEditGiftPlans(auth.data.user)) {
-    return fail("You do not have permission to edit gift plans.");
+    return fail(t.noPermissionEditGiftPlans);
   }
 
   const bundle = await loadBundle(planId, auth.data.supabase);
-  if (!bundle) return fail("Gift plan not found.");
+  if (!bundle) return fail(t.giftPlanNotFound);
   return { ok: true, data: bundle };
 }
 
@@ -225,7 +226,7 @@ export async function getGiftPlanCommunicationReportAction(
   if (!auth.ok) return auth;
 
   const bundle = await loadBundle(planId, auth.data.supabase);
-  if (!bundle) return fail("Gift plan not found.");
+  if (!bundle) return fail(t.giftPlanNotFound);
 
   const report = buildCommunicationReport(bundle);
   assertCommunicationReportSafe(report);
@@ -241,7 +242,7 @@ export async function createGiftPlanAction(input: {
 
   const { user, supabase } = auth.data;
   const name = input.name.trim();
-  if (!name) return fail("Plan name is required.");
+  if (!name) return fail(t.planNameRequired);
 
   const now = new Date().toISOString();
 
@@ -258,7 +259,7 @@ export async function createGiftPlanAction(input: {
     .select("id")
     .single();
 
-  if (error || !data) return fail(error?.message ?? "Could not create gift plan.");
+  if (error || !data) return fail(error?.message ?? t.couldNotCreateGiftPlan);
   return { ok: true, data: { id: data.id as string } };
 }
 
@@ -288,7 +289,7 @@ export async function saveGiftPlanAction(
       current?.updated_at &&
       current.updated_at !== payload.expected_updated_at
     ) {
-      return fail("This plan was updated elsewhere. Reload before saving.");
+      return fail(t.planUpdatedElsewhere);
     }
   }
 
@@ -316,7 +317,7 @@ export async function saveGiftPlanAction(
   if (planError) return fail(planError.message);
 
   const existingBundle = await loadBundle(planId, supabase);
-  if (!existingBundle) return fail("Gift plan not found.");
+  if (!existingBundle) return fail(t.giftPlanNotFound);
 
   const incomingTierIds = new Set(payload.tiers.map((tier) => tier.id));
   const tiersToDelete = existingBundle.tiers
@@ -421,7 +422,7 @@ export async function duplicateGiftPlanAction(
 
   const { user, supabase } = auth.data;
   const bundle = await loadBundle(planId, supabase);
-  if (!bundle) return fail("Gift plan not found.");
+  if (!bundle) return fail(t.giftPlanNotFound);
 
   const now = new Date().toISOString();
   const groupMap = new Map<string, string>();
@@ -429,7 +430,7 @@ export async function duplicateGiftPlanAction(
   const { data: newPlan, error: planError } = await supabase
     .from("gift_plans")
     .insert({
-      name: (newName?.trim() || `${bundle.plan.name} Copy`).slice(0, 200),
+      name: (newName?.trim() || `${bundle.plan.name}${t.planCopySuffix}`).slice(0, 200),
       campaign_year: bundle.plan.campaign_year,
       campaign_headline: bundle.plan.campaign_headline,
       description: bundle.plan.description,
@@ -448,7 +449,7 @@ export async function duplicateGiftPlanAction(
     .select("id")
     .single();
 
-  if (planError || !newPlan) return fail(planError?.message ?? "Could not duplicate plan.");
+  if (planError || !newPlan) return fail(planError?.message ?? t.couldNotDuplicatePlan);
 
   const newPlanId = newPlan.id as string;
 
@@ -462,7 +463,7 @@ export async function duplicateGiftPlanAction(
       })
       .select("id")
       .single();
-    if (error || !inserted) return fail(error?.message ?? "Could not duplicate purchase group.");
+    if (error || !inserted) return fail(error?.message ?? t.couldNotDuplicatePurchaseGroup);
     groupMap.set(group.id, inserted.id as string);
   }
 
@@ -482,7 +483,7 @@ export async function duplicateGiftPlanAction(
       })
       .select("id")
       .single();
-    if (error || !inserted) return fail(error?.message ?? "Could not duplicate tier.");
+    if (error || !inserted) return fail(error?.message ?? t.couldNotDuplicateTier);
     tierMap.set(tier.id, inserted.id as string);
   }
 
@@ -557,7 +558,7 @@ export async function renameGiftPlanAction(
   if (!auth.ok) return auth;
 
   const trimmed = name.trim();
-  if (!trimmed) return fail("Plan name is required.");
+  if (!trimmed) return fail(t.planNameRequired);
 
   const { user, supabase } = auth.data;
   const { error } = await supabase
@@ -583,16 +584,16 @@ export async function createPurchaseGroupAction(input: {
   if (!auth.ok) return auth;
 
   if (input.item_ids.length < 2) {
-    return fail("Select at least two gift items to create a purchase group.");
+    return fail(t.selectAtLeastTwoItems);
   }
 
   const { supabase } = auth.data;
   const bundle = await loadBundle(input.plan_id, supabase);
-  if (!bundle) return fail("Gift plan not found.");
+  if (!bundle) return fail(t.giftPlanNotFound);
 
   const selected = bundle.items.filter((item) => input.item_ids.includes(item.id));
   if (selected.length !== input.item_ids.length) {
-    return fail("One or more selected items were not found.");
+    return fail(t.itemsNotFound);
   }
 
   const issues = checkPurchaseGroupCompatibility(selected);
@@ -610,7 +611,7 @@ export async function createPurchaseGroupAction(input: {
     .single();
 
   if (groupError || !group) {
-    return fail(groupError?.message ?? "Could not create purchase group.");
+    return fail(groupError?.message ?? t.couldNotCreatePurchaseGroup);
   }
 
   const { error: updateError } = await supabase
@@ -628,7 +629,7 @@ export async function ungroupGiftItemsAction(
   const auth = await requireEdit();
   if (!auth.ok) return auth;
 
-  if (itemIds.length === 0) return fail("No items selected.");
+  if (itemIds.length === 0) return fail(t.noItemsSelected);
 
   const { error } = await auth.data.supabase
     .from("gift_plan_items")
@@ -666,7 +667,7 @@ export async function getGiftPlanExportBundleAction(
   if (!auth.ok) return auth;
 
   const bundle = await loadBundle(planId, auth.data.supabase);
-  if (!bundle) return fail("Gift plan not found.");
+  if (!bundle) return fail(t.giftPlanNotFound);
 
   const tiersForPurchasing = bundle.tiers.map((tier) => ({
     name: tier.name,

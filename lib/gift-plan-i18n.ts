@@ -1,0 +1,325 @@
+/** Thai UI copy for the Gift Plans module (display only — enums/DB unchanged). */
+
+export const GIFT_PLAN_COPY = {
+  navGiftPlans: "แผนของขวัญลูกค้า",
+  navGiftCatalog: "คลังของพรีเมียมและของแจก",
+
+  // Home
+  homeEyebrow: "แผนของขวัญลูกค้า",
+  homeTitle: "แผนของขวัญลูกค้า",
+  homeSubtitle:
+    "ฝ่ายการตลาดจัดทำแผนของขวัญลูกค้าที่นี่ ส่งออกรายงานสื่อสารให้ฝ่ายขายและกราฟิก — ฝ่ายขายไม่เข้าใช้โมดูลนี้",
+  giftCatalog: "คลังของพรีเมียมและของแจก",
+  newPlan: "สร้างแผนใหม่",
+  tabActive: "ใช้งาน",
+  tabDraft: "แบบร่าง",
+  tabArchived: "เก็บถาวร",
+  searchPlans: "ค้นหาแผน…",
+  sortLastUpdated: "อัปเดตล่าสุด",
+  sortName: "เรียงตามชื่อ",
+  sortCampaignYear: "ปีแคมเปญ",
+  loadingPlans: "กำลังโหลดแผนของขวัญ…",
+  emptyPlans: "ยังไม่มีแผนในแท็บนี้ สร้างแผนใหม่เพื่อเริ่มต้น",
+  exportPlan: "ส่งออกแผน",
+
+  // Plan card
+  statusArchived: "เก็บถาวร",
+  statusDraft: "แบบร่าง",
+  open: "เปิด",
+  duplicate: "ทำสำเนา",
+  rename: "เปลี่ยนชื่อ",
+  archive: "เก็บถาวร",
+  restore: "กู้คืน",
+  delete: "ลบ",
+  customers: "ลูกค้า",
+  giftUnits: "จำนวนของขวัญ",
+  updated: "อัปเดต",
+  planActions: "เมนูแผน",
+  actualCost: "ต้นทุนจริง",
+  estValue: "มูลค่าประเมิน",
+  budgetPercent: "เปอร์เซ็นต์งบ",
+  export: "ส่งออก",
+
+  // Dialogs — plan
+  newGiftPlanTitle: "สร้างแผนของขวัญใหม่",
+  newPlanSubtitle:
+    "หลังจากสร้างแล้ว บันทึกแผนเพื่อเก็บข้อมูลลงระบบ",
+  planNameLabel: "ชื่อแผน *",
+  planNamePlaceholder: "เช่น Q4 Premium Campaign",
+  campaignYearLabel: "ปีแคมเปญ *",
+  createPlan: "สร้างแผน",
+  creating: "กำลังสร้าง…",
+  renameGiftPlanTitle: "เปลี่ยนชื่อแผน",
+  deleteGiftPlanTitle: "ลบแผนของขวัญ",
+  deleteGiftPlanBody: (name: string) =>
+    `ลบแผน "${name}" ถาวรหรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+  deleting: "กำลังลบ…",
+  cancel: "ยกเลิก",
+  save: "บันทึก",
+  saving: "กำลังบันทึก…",
+
+  // Detail
+  loadingPlan: "กำลังโหลดแผนของขวัญ…",
+
+  // Editor
+  editorEyebrow: "แผนของขวัญลูกค้า",
+  editorTitle: "แก้ไขแผนของขวัญ",
+  editorSubtitle: "จัด Tier ของขวัญ ตรวจงบประมาณ และส่งออกรายงานสื่อสาร",
+  refresh: "รีเฟรช",
+  previewCommunication: "ดูตัวอย่างรายงานสื่อสาร",
+  exportCommunication: "ส่งออกรายงานสื่อสาร",
+  exportExcel: "ส่งออก Excel",
+  savePlan: "บันทึกแผน",
+  campaign: "แคมเปญ",
+  campaignYear: "ปีแคมเปญ",
+  campaignHeadline: "หัวข้อแคมเปญ",
+  campaignHeadlinePlaceholder: "หัวข้อสำหรับรายงานสื่อสาร (ไม่บังคับ)",
+  owner: "ผู้รับผิดชอบ",
+  status: "สถานะ",
+  totalCustomerSales: "ยอดขายลูกค้ารวม",
+  maxActualCostBudget: "งบต้นทุนจริงสูงสุด",
+  budgetLimitPercent: "เปอร์เซ็นต์งบจำกัด",
+  description: "รายละเอียด",
+  campaignConditions: "เงื่อนไขแคมเปญ",
+  approvalNotes: "หมายเหตุการอนุมัติ",
+  tiersAndGifts: "Tier และรายการของขวัญ",
+  addTier: "เพิ่ม Tier",
+  linkPurchasing: "จัดกลุ่มจัดซื้อ",
+  unlinkPurchasing: "ยกเลิกกลุ่มจัดซื้อ",
+  tierName: "ชื่อ Tier",
+  customerCount: "จำนวนลูกค้า",
+  salesThreshold: "เกณฑ์ยอดขาย",
+  thresholdLabel: "ป้ายเกณฑ์ยอดขาย",
+  tierDescription: "รายละเอียด Tier",
+  openCatalog: "เปิดคลังของพรีเมียม",
+  removeTier: "ลบ Tier",
+  unsavedChanges: "มีการแก้ไขที่ยังไม่ได้บันทึก",
+  saved: "บันทึกแล้ว",
+  recoverDraft: "กู้คืนแบบร่างที่ยังไม่ได้บันทึกจากเบราว์เซอร์หรือไม่?",
+  saveBeforeExport:
+    "บันทึกแผนก่อนส่งออก เพื่อให้ไฟล์ตรงกับข้อมูลล่าสุด",
+  saveBeforeCommunication:
+    "บันทึกแผนก่อนดูตัวอย่างหรือส่งออกรายงานสื่อสาร",
+  discardReload: "ยกเลิกการแก้ไขและโหลดข้อมูลจากเซิร์ฟเวอร์ใหม่หรือไม่?",
+
+  // Catalog page
+  catalogEyebrow: "แผนของขวัญลูกค้า",
+  catalogTitle: "คลังของพรีเมียมและของแจก",
+  catalogSubtitle:
+    "จัดการรายการของขวัญสำหรับเลือกเข้าแผน — แยกจาก Product และ Supplier",
+  backToGiftPlans: "← กลับแผนของขวัญลูกค้า",
+  addGift: "เพิ่มของพรีเมียม/ของแจก",
+  searchNameOrCode: "ค้นหาจากชื่อหรือรหัส…",
+  allCategories: "ทุกหมวดหมู่",
+  allSources: "ทุกแหล่งที่มา",
+  allStatus: "ทุกสถานะ",
+  sortByName: "เรียงตามชื่อ",
+  sortLatestUpdated: "อัปเดตล่าสุด",
+  sortActualCost: "ต้นทุนจริง",
+  sortEstValue: "มูลค่าประเมิน",
+  showArchived: "แสดงรายการที่เก็บถาวร",
+  loadingCatalog: "กำลังโหลดคลัง…",
+  deleteCatalogConfirm: (name: string) => `ลบ "${name}" หรือไม่?`,
+  catalogInUseArchive:
+    "รายการนี้ถูกใช้ในแผนของขวัญแล้ว กรุณาเก็บถาวรแทนการลบ",
+
+  // Catalog form
+  addCatalogItem: "เพิ่มรายการของพรีเมียม",
+  editCatalogItem: "แก้ไขรายการของพรีเมียม",
+  giftName: "ชื่อของพรีเมียม/ของแจก",
+  internalCode: "รหัสภายใน",
+  unit: "หน่วย",
+  unitOther: "ระบุหน่วยเอง",
+  category: "หมวดหมู่",
+  source: "แหล่งที่มา",
+  defaultActualCost: "ต้นทุนจริงเริ่มต้น",
+  defaultActualCostHint:
+    "ใช้เป็นค่าเริ่มต้นเมื่อเลือกเข้าแผน สามารถแก้เฉพาะแผนได้",
+  defaultEstValue: "มูลค่าประเมินเริ่มต้น",
+  defaultEstValueHint:
+    "มูลค่าที่ใช้สื่อสารกับฝ่ายขายหรือลูกค้า อาจสูงกว่าต้นทุนจริง",
+  supplierName: "ชื่อผู้จำหน่าย",
+  specification: "รายละเอียด / รุ่น / รูปแบบ",
+  notes: "หมายเหตุ",
+  image: "รูปภาพ",
+  sectionPricing: "ราคาและต้นทุน",
+  sectionDetails: "รายละเอียดเพิ่มเติม",
+
+  // Image upload
+  imageDropHint: "ลากรูปมาวางหรือคลิกเพื่อเลือก",
+  imageFormatHint: "JPG, JPEG, PNG, WEBP · สูงสุด 5 MB",
+  chooseImage: "เลือกรูปจากเครื่อง",
+  uploadImage: "อัปโหลดรูปภาพ",
+  replaceImage: "เปลี่ยนรูปภาพ",
+  removeImage: "ลบรูปภาพ",
+  removeImageConfirm: "ลบรูปภาพออกจากรายการนี้หรือไม่?",
+  uploadingImage: "กำลังอัปโหลดรูป…",
+  noImage: "ไม่มีรูปภาพ",
+  catalogImageUploadFailedEdit:
+    "บันทึกรายการแล้ว แต่อัปโหลดรูปไม่สำเร็จ กรุณาแก้ไขรายการแล้วลองอัปโหลดใหม่",
+  catalogImageUploadFailedNew: (id: string) =>
+    `บันทึกรายการแล้ว (รหัส ${id.slice(0, 8)}…) แต่อัปโหลดรูปไม่สำเร็จ กรุณาแก้ไขรายการแล้วลองอัปโหลดใหม่`,
+
+  // Catalog card / picker
+  estLabel: "ประเมิน",
+  perCustomer: "ต่อลูกค้า",
+  addedToTier: (tier: string) => `เพิ่มแล้วใน ${tier}`,
+  usedInOtherTiers: "ใช้ใน Tier อื่น:",
+  editQtyInTier: (tier: string) => `แก้จำนวนใน ${tier}`,
+  addToTier: (tier: string) => `เพิ่มเข้า ${tier}`,
+  pickerTitle: "เลือกของจากคลัง",
+  pickerSubtitle: "เลือกของเข้า Tier โดยไม่ปิดแบบร่าง",
+  selectTierFirst: "เลือก Tier ก่อนเพื่อเพิ่มของจากคลัง",
+
+  // Tier cart
+  selectedGifts: "ของขวัญที่เลือก",
+  addGiftToTier: "เพิ่มของขวัญ",
+  qtyPerCustomer: "จำนวนต่อลูกค้า",
+  required: "จำเป็น",
+  unitActualCost: "ต้นทุนจริงต่อหน่วย",
+  estGiftValue: "มูลค่าประเมินต่อหน่วย",
+  estValuePerUnit: "มูลค่าประเมิน/หน่วย",
+  edit: "แก้ไข",
+  remove: "นำออก",
+  emptyCart: "ยังไม่มีของใน Tier นี้",
+  emptyCartHint: "ยังไม่มีของใน Tier นี้ — เปิดคลังเพื่อเลือกของ",
+  openCatalogPicker: "เปิดคลังของพรีเมียม",
+  untitledGift: "ไม่มีชื่อ",
+  actualPerCust: "ต้นทุน",
+  estPerCust: "ประเมิน",
+  perCust: "ต่อลูกค้า",
+  tierTotalActual: "ต้นทุนรวม Tier",
+  removeFromTierConfirm: (name: string) =>
+    `นำ "${name}" ออกจาก Tier นี้หรือไม่?`,
+  increaseExistingQty: "เพิ่มจำนวนในรายการเดิม",
+
+  // Add to tier dialog
+  addGiftToTierTitle: "เพิ่มของเข้า Tier",
+  quantityPerCustomer: "จำนวนต่อลูกค้า",
+  addToPlan: "เพิ่มเข้าแผน",
+
+  // Duplicate in tier
+  duplicateGiftTitle: "ของซ้ำใน Tier",
+  duplicateGiftBody:
+    "รายการนี้มีอยู่ใน Tier แล้ว ต้องการเพิ่มเป็นรายการแยกหรือไม่?",
+  duplicateGiftBodyNamed: (gift: string, tier: string) =>
+    `"${gift}" มีอยู่ใน Tier ${tier} แล้ว ต้องการทำอย่างไร?`,
+  addAsSeparate: "เพิ่มเป็นรายการแยก",
+
+  // Summary / basket
+  campaignSummary: "สรุปแคมเปญ",
+  activeTierSummary: "สรุป Tier ที่กำลังเลือก",
+  costPerCustomer: "ต้นทุน/คน",
+  valuePerCustomer: "มูลค่า/คน",
+  tierTotalCost: "ต้นทุนรวม Tier",
+  planBasket: "ชุดของขวัญในแผนนี้",
+  tierCount: "จำนวน Tier",
+  totalCustomers: "ลูกค้ารวม",
+  customerListSoon: "รายชื่อลูกค้า — เร็วๆ นี้",
+  giftItems: "รายการของขวัญ",
+  giftUnitsTotal: "จำนวนของขวัญรวม",
+  totalActualCost: "ต้นทุนจริงรวม",
+  totalEstimatedValue: "มูลค่าประเมินรวม",
+  budgetUsed: "ใช้งบแล้ว",
+  remainingBudget: "งบคงเหลือ",
+  voucherCost: "ต้นทุนบัตรกำนัล",
+  premiumCost: "ต้นทุนของพรีเมียม",
+  actualBudgetPercent: "เปอร์เซ็นต์งบจริง",
+  purchasingSummary: "สรุปการจัดซื้อ",
+  purchasingGroup: "กลุ่มจัดซื้อ",
+  tierCol: "Tier",
+  actualPerCustomerCol: "ต้นทุน/คน",
+  estPerCustomerCol: "มูลค่า/คน",
+  totalActualCol: "ต้นทุนรวม",
+  totalEstimatedCol: "มูลค่ารวม",
+
+  // Communication report
+  communicationTitle: "รายงานสื่อสารฝ่ายขาย",
+  communicationSubtitle:
+    "ตัวอย่างอ่านอย่างเดียวสำหรับฝ่ายขายและกราฟิก",
+  customerGiftRights: "สิทธิ์ของขวัญลูกค้า",
+  voucherValue: "มูลค่าบัตรกำนัล",
+  received: "ได้รับ:",
+  giftPolicy: "นโยบายของขวัญ",
+  conditionsNotes: "เงื่อนไข / หมายเหตุ",
+  totalGiftValuePerCustomer: "มูลค่าของขวัญรวม",
+  baht: "บาท",
+  tierPrefix: "Tier",
+  cumulativePurchase: (label: string) => `ยอดซื้อสะสม ${label}`,
+  printPdf: "พิมพ์ / PDF",
+  generated: "สร้างเมื่อ",
+  close: "ปิด",
+
+  // Tier tabs / overview
+  overviewTab: "ภาพรวม",
+  scrollTiersLeft: "เลื่อน Tier ซ้าย",
+  scrollTiersRight: "เลื่อน Tier ขวา",
+  unsavedStar: "ยังไม่บันทึก*",
+  noGiftsSelected: "ยังไม่เลือกของ",
+  itemsLabel: (n: number) => `${n} รายการ`,
+
+  // Editor extras
+  groupForPurchasing: "จัดกลุ่มจัดซื้อ",
+  ungroup: "ยกเลิกกลุ่ม",
+  deleteGroup: "ลบกลุ่ม",
+  untitledGroup: "กลุ่มไม่มีชื่อ",
+  exportFullWorkbook: "ส่งออก Excel เต็ม",
+  groupAnyway: "จัดกลุ่มต่อไปหรือไม่?",
+  giftPolicyLabel: "นโยบายของขวัญ",
+  statusActive: "ใช้งาน",
+  addToTierButton: "เพิ่มเข้า Tier",
+
+  // Page metadata
+  metadataGiftPlans: "แผนของขวัญลูกค้า",
+  metadataGiftCatalog: "คลังของพรีเมียมและของแจก",
+  metadataGiftPlan: "แผนของขวัญ",
+  metadataNewGiftPlan: "สร้างแผนของขวัญใหม่",
+
+  // Warnings
+  warningUnsaved: "มีการแก้ไขที่ยังไม่ได้บันทึก",
+  warningNoTiers: "เพิ่มอย่างน้อย 1 Tier ในแผน",
+  warningTierNoCustomers: (name: string) =>
+    `Tier "${name}" ยังไม่มีจำนวนลูกค้า`,
+  warningTierNoItems: (name: string) =>
+    `Tier "${name}" ยังไม่เลือกของขวัญ`,
+  warningItemNoCost: (gift: string, tier: string) =>
+    `"${gift}" ใน ${tier} ยังไม่มีต้นทุนจริงต่อหน่วย`,
+  warningItemNoValue: (gift: string, tier: string) =>
+    `"${gift}" ใน ${tier} ยังไม่มีมูลค่าประเมิน`,
+  warningOverBudget: "ต้นทุนจริงรวมเกินงบสูงสุด",
+  warningDupCatalog: (tiers: string) =>
+    `รายการคลังเดียวกันอยู่ในหลาย Tier (${tiers}) ตรวจสอบกลุ่มจัดซื้อก่อนส่งออก`,
+
+  // Purchase group compatibility
+  pgDifferentSuppliers: "รายการที่เลือกมีผู้จำหน่ายต่างกัน",
+  pgDifferentSources: "รายการที่เลือกมีแหล่งที่มาต่างกัน",
+  pgDifferentCosts: "รายการที่เลือกมีต้นทุนจริงต่อหน่วยต่างกัน",
+  pgDifferentSpecs: "รายการที่เลือกมีรายละเอียด/หมายเหตุต่างกัน",
+
+  // Errors (server fallbacks)
+  giftNameRequired: "กรุณาระบุชื่อของพรีเมียม/ของแจก",
+  noPermissionGiftPlans: "คุณไม่มีสิทธิ์เข้าถึงแผนของขวัญลูกค้า",
+  noPermissionEditGiftPlans: "คุณไม่มีสิทธิ์แก้ไขแผนของขวัญลูกค้า",
+  noPermissionExportGiftPlans: "คุณไม่มีสิทธิ์ส่งออกแผนของขวัญลูกค้า",
+  noPermissionGiftCatalog: "คุณไม่มีสิทธิ์เข้าถึงคลังของพรีเมียม",
+  noPermissionEditGiftCatalog: "คุณไม่มีสิทธิ์แก้ไขคลังของพรีเมียม",
+  catalogNotFound: "ไม่พบรายการในคลัง",
+  catalogCreateFailed: "ไม่สามารถสร้างรายการในคลังได้",
+  planNameRequired: "กรุณาระบุชื่อแผน",
+  giftPlanNotFound: "ไม่พบแผนของขวัญ",
+  planUpdatedElsewhere:
+    "แผนนี้ถูกอัปเดตที่อื่น กรุณาโหลดใหม่ก่อนบันทึก",
+  couldNotCreateGiftPlan: "ไม่สามารถสร้างแผนได้",
+  couldNotDuplicatePlan: "ไม่สามารถทำสำเนาแผนได้",
+  couldNotDuplicatePurchaseGroup: "ไม่สามารถทำสำเนากลุ่มจัดซื้อได้",
+  couldNotDuplicateTier: "ไม่สามารถทำสำเนา Tier ได้",
+  everyTierMustHaveName: "ทุก Tier ต้องมีชื่อ",
+  duplicateTierName: (name: string) =>
+    `ชื่อ Tier "${name}" ซ้ำในแผนนี้`,
+  selectAtLeastTwoItems:
+    "เลือกอย่างน้อย 2 รายการเพื่อสร้างกลุ่มจัดซื้อ",
+  itemsNotFound: "ไม่พบรายการที่เลือก",
+  couldNotCreatePurchaseGroup: "ไม่สามารถสร้างกลุ่มจัดซื้อได้",
+  noItemsSelected: "ยังไม่ได้เลือกรายการ",
+  planCopySuffix: " สำเนา",
+} as const;

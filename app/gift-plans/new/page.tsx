@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "New Gift Plan",
+  title: "สร้างแผนของขวัญใหม่",
 };
 
 export default function NewGiftPlanPage() {

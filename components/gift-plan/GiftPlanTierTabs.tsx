@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { TierTabMeta } from "@/lib/gift-plan-tier-navigation";
 
 export type TierTabSelection = "overview" | string;
@@ -47,7 +48,7 @@ export function GiftPlanTierTabs({
     <div className={cn("relative", className)}>
       <button
         type="button"
-        aria-label="Scroll tiers left"
+        aria-label={t.scrollTiersLeft}
         onClick={() => scrollBy(-180)}
         className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-gray-200 bg-white p-1 shadow-sm md:block"
       >
@@ -55,7 +56,7 @@ export function GiftPlanTierTabs({
       </button>
       <button
         type="button"
-        aria-label="Scroll tiers right"
+        aria-label={t.scrollTiersRight}
         onClick={() => scrollBy(180)}
         className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-gray-200 bg-white p-1 shadow-sm md:block"
       >
@@ -77,7 +78,7 @@ export function GiftPlanTierTabs({
               : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
           )}
         >
-          <p className="text-sm font-semibold">ภาพรวม</p>
+          <p className="text-sm font-semibold">{t.overviewTab}</p>
           <p className="text-[11px] text-gray-500">{tabs.length} Tier</p>
         </button>
 
@@ -103,15 +104,15 @@ export function GiftPlanTierTabs({
             <p className="mt-0.5 text-[11px] text-gray-500">
               {tab.customerCount.toLocaleString()} ลูกค้า ·{" "}
               {tab.itemCount > 0
-                ? `${tab.itemCount} รายการ`
-                : "ยังไม่เลือกของ"}
+                ? t.itemsLabel(tab.itemCount)
+                : t.noGiftsSelected}
             </p>
           </button>
         ))}
 
         {dirty ? (
           <span className="self-center px-2 text-[11px] font-medium text-amber-600">
-            Unsaved*
+            {t.unsavedStar}
           </span>
         ) : null}
       </div>

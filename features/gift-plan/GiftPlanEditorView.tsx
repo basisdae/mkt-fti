@@ -63,6 +63,7 @@ import type {
 import {
   GIFT_PLAN_STATUS_LABELS,
 } from "@/lib/gift-plan-format";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { generateId } from "@/lib/generate-id";
 import { tierNamesConflict } from "@/lib/gift-plan-calculations";
 import { deriveGiftPlanEditorWarnings } from "@/lib/gift-plan-editor-warnings";
@@ -182,9 +183,7 @@ export function GiftPlanEditorView({
   useEffect(() => {
     const draft = readGiftPlanDraft(payload.plan.id);
     if (draft && isDraftNewerThanServer(draft, serverUpdatedAt)) {
-      const recover = window.confirm(
-        "Recover unsaved draft changes from this browser?",
-      );
+      const recover = window.confirm(t.recoverDraft);
       if (recover) {
         setPayload(draft.payload);
         setDirty(true);
@@ -245,7 +244,7 @@ export function GiftPlanEditorView({
 
   async function handleExport() {
     if (dirty) {
-      window.alert("Save the plan before exporting so the file matches the latest saved data.");
+      window.alert(t.saveBeforeExport);
       return;
     }
     const result = await getGiftPlanExportBundleAction(payload.plan.id);
@@ -259,9 +258,7 @@ export function GiftPlanEditorView({
 
   function ensureSavedForCommunication(): boolean {
     if (!dirty) return true;
-    window.alert(
-      "Save the plan before previewing or exporting the communication report.",
-    );
+    window.alert(t.saveBeforeCommunication);
     return false;
   }
 
@@ -387,9 +384,7 @@ export function GiftPlanEditorView({
 
   async function handleRefresh() {
     if (dirty) {
-      const discard = window.confirm(
-        "Discard unsaved changes and reload from server?",
-      );
+      const discard = window.confirm(t.discardReload);
       if (!discard) return;
     }
     setSaveError(null);
@@ -417,7 +412,7 @@ export function GiftPlanEditorView({
     const issues = checkPurchaseGroupCompatibility(selected);
     if (issues.length > 0 && !force) {
       const confirmGroup = window.confirm(
-        `${issues.map((issue) => issue.message).join("\n")}\n\nGroup anyway?`,
+        `${issues.map((issue) => issue.message).join("\n")}\n\n${t.groupAnyway}`,
       );
       if (!confirmGroup) return;
     }
@@ -484,14 +479,14 @@ export function GiftPlanEditorView({
       <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Gift Plan Editor
+            {t.editorEyebrow}
           </p>
           <h1 className="mt-1 text-2xl font-semibold text-gray-900">
             {payload.plan.name}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             {payload.plan.campaign_year} · {GIFT_PLAN_STATUS_LABELS[payload.plan.status]}
-            {dirty ? " · Unsaved changes" : " · Saved"}
+            {dirty ? ` · ${t.unsavedChanges}` : ` · ${t.saved}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -499,29 +494,29 @@ export function GiftPlanEditorView({
             variant="ghost"
             onClick={() => router.push("/gift-plans/catalog")}
           >
-            Gift Catalog
+            {t.giftCatalog}
           </Button>
           <Button variant="secondary" onClick={() => void handleRefresh()}>
             <RefreshCw className="h-4 w-4" />
-            Refresh
+            {t.refresh}
           </Button>
           <Button variant="secondary" onClick={() => void handlePreviewCommunication()}>
             <Eye className="h-4 w-4" />
-            Preview Communication Report
+            {t.previewCommunication}
           </Button>
           <Button variant="secondary" onClick={() => void handleExportCommunication()}>
             <FileText className="h-4 w-4" />
-            Export Communication Report
+            {t.exportCommunication}
           </Button>
           {canExport ? (
             <Button variant="secondary" onClick={() => void handleExport()}>
               <Download className="h-4 w-4" />
-              Export Full Workbook
+              {t.exportFullWorkbook}
             </Button>
           ) : null}
           <Button onClick={() => void handleSave()} disabled={saving || !dirty}>
             <Save className="h-4 w-4" />
-            {saving ? "Saving…" : "Save Plan"}
+            {saving ? t.saving : t.savePlan}
           </Button>
         </div>
       </header>
@@ -544,10 +539,10 @@ export function GiftPlanEditorView({
       ) : null}
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-900">Campaign</h2>
+        <h2 className="text-sm font-semibold text-gray-900">{t.campaign}</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <Input
-            label="Plan Name"
+            label={t.planNameLabel.replace(" *", "")}
             value={payload.plan.name}
             onChange={(e) =>
               updatePayload((current) => ({
@@ -557,7 +552,7 @@ export function GiftPlanEditorView({
             }
           />
           <Input
-            label="Campaign Year"
+            label={t.campaignYear}
             type="number"
             value={String(payload.plan.campaign_year)}
             onChange={(e) =>
@@ -571,7 +566,7 @@ export function GiftPlanEditorView({
             }
           />
           <Input
-            label="Campaign Headline"
+            label={t.campaignHeadline}
             value={payload.plan.campaign_headline}
             onChange={(e) =>
               updatePayload((current) => ({
@@ -579,10 +574,10 @@ export function GiftPlanEditorView({
                 plan: { ...current.plan, campaign_headline: e.target.value },
               }))
             }
-            placeholder="Optional headline for communication report"
+            placeholder={t.campaignHeadlinePlaceholder}
           />
           <Input
-            label="Owner"
+            label={t.owner}
             value={payload.plan.owner}
             onChange={(e) =>
               updatePayload((current) => ({
@@ -592,7 +587,7 @@ export function GiftPlanEditorView({
             }
           />
           <Select
-            label="Status"
+            label={t.status}
             value={payload.plan.status}
             onChange={(e) =>
               updatePayload((current) => ({
@@ -609,7 +604,7 @@ export function GiftPlanEditorView({
             }))}
           />
           <Input
-            label="Total Customer Sales"
+            label={t.totalCustomerSales}
             type="number"
             value={String(payload.plan.total_customer_sales)}
             onChange={(e) =>
@@ -623,7 +618,7 @@ export function GiftPlanEditorView({
             }
           />
           <Input
-            label="Max Actual Cost Budget"
+            label={t.maxActualCostBudget}
             type="number"
             value={
               payload.plan.max_actual_cost_budget != null
@@ -643,7 +638,7 @@ export function GiftPlanEditorView({
             }
           />
           <Input
-            label="Budget Limit %"
+            label={t.budgetLimitPercent}
             type="number"
             value={
               payload.plan.budget_limit_percent != null
@@ -664,7 +659,7 @@ export function GiftPlanEditorView({
           />
           <div className="md:col-span-2">
             <Textarea
-              label="Description"
+              label={t.description}
               rows={2}
               value={payload.plan.description}
               onChange={(e) =>
@@ -676,7 +671,7 @@ export function GiftPlanEditorView({
             />
           </div>
           <Textarea
-            label="Campaign Conditions"
+            label={t.campaignConditions}
             rows={3}
             value={payload.plan.campaign_conditions}
             onChange={(e) =>
@@ -687,7 +682,7 @@ export function GiftPlanEditorView({
             }
           />
           <Textarea
-            label="Approval Notes"
+            label={t.approvalNotes}
             rows={3}
             value={payload.plan.approval_notes}
             onChange={(e) =>
@@ -711,7 +706,7 @@ export function GiftPlanEditorView({
         />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-gray-900">Tiers & Gift Items</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t.tiersAndGifts}</h2>
           <div className="flex flex-wrap gap-2">
             {activeEditorTier !== "overview" && selectedItemIds.length >= 2 ? (
               <Button
@@ -720,7 +715,7 @@ export function GiftPlanEditorView({
                 onClick={() => void handleGroupSelected()}
               >
                 <Link2 className="h-4 w-4" />
-                Group for Purchasing
+                {t.groupForPurchasing}
               </Button>
             ) : null}
             {activeEditorTier !== "overview" && selectedItemIds.length > 0 ? (
@@ -730,12 +725,12 @@ export function GiftPlanEditorView({
                 onClick={() => void handleUngroupSelected()}
               >
                 <Unlink className="h-4 w-4" />
-                Ungroup
+                {t.ungroup}
               </Button>
             ) : null}
             <Button variant="secondary" size="sm" onClick={addTier}>
               <Plus className="h-4 w-4" />
-              Add Tier
+              {t.addTier}
             </Button>
           </div>
         </div>
@@ -764,7 +759,7 @@ export function GiftPlanEditorView({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="grid flex-1 gap-3 md:grid-cols-2">
                     <Input
-                      label="Tier Name"
+                      label={t.tierName}
                       value={tier.name}
                       onChange={(e) =>
                         updatePayload((current) => ({
@@ -779,7 +774,7 @@ export function GiftPlanEditorView({
                       className={cn(nameConflict && "border-fti-red")}
                     />
                     <Input
-                      label="Customer Count"
+                      label={t.customerCount}
                       type="number"
                       value={String(tier.customer_count)}
                       onChange={(e) =>
@@ -797,7 +792,7 @@ export function GiftPlanEditorView({
                       }
                     />
                     <Input
-                      label="Sales Threshold"
+                      label={t.salesThreshold}
                       type="number"
                       value={tier.sales_threshold != null ? String(tier.sales_threshold) : ""}
                       onChange={(e) =>
@@ -817,7 +812,7 @@ export function GiftPlanEditorView({
                       }
                     />
                     <Input
-                      label="Threshold Label"
+                      label={t.thresholdLabel}
                       value={tier.sales_threshold_label}
                       onChange={(e) =>
                         updatePayload((current) => ({
@@ -831,7 +826,7 @@ export function GiftPlanEditorView({
                       }
                     />
                     <Textarea
-                      label="Gift Policy"
+                      label={t.giftPolicyLabel}
                       rows={2}
                       value={tier.gift_policy}
                       onChange={(e) =>
@@ -846,7 +841,7 @@ export function GiftPlanEditorView({
                       }
                     />
                     <Textarea
-                      label="Notes"
+                      label={t.notes}
                       rows={2}
                       value={tier.notes}
                       onChange={(e) =>
@@ -913,7 +908,7 @@ export function GiftPlanEditorView({
 
       {payload.purchase_groups.length > 0 ? (
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900">Purchase Groups</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t.purchasingGroup}</h3>
           <ul className="mt-3 space-y-2 text-sm">
             {payload.purchase_groups.map((group) => (
               <li
@@ -921,12 +916,11 @@ export function GiftPlanEditorView({
                 className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2"
               >
                 <span>
-                  {group.label || "Untitled group"} ·{" "}
-                  {
+                  {group.label || t.untitledGroup} ·{" "}
+                  {t.itemsLabel(
                     allItems.filter((item) => item.purchase_group_id === group.id)
-                      .length
-                  }{" "}
-                  items
+                      .length,
+                  )}
                 </span>
                 <Button
                   variant="ghost"
@@ -953,7 +947,7 @@ export function GiftPlanEditorView({
                     }));
                   }}
                 >
-                  Delete Group
+                  {t.deleteGroup}
                 </Button>
               </li>
             ))}

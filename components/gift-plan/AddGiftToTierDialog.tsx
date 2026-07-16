@@ -4,6 +4,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
 import { Textarea } from "@/components/forms/Textarea";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftCatalogRow } from "@/types/gift-catalog";
 
 interface AddGiftToTierDialogProps {
@@ -42,19 +43,21 @@ export function AddGiftToTierDialog({
     <Modal
       open={open}
       onClose={onCancel}
-      title={`เพิ่มเข้า ${tierName}`}
+      title={t.addGiftToTierTitle}
       className="max-w-lg"
     >
-      <p className="mb-4 text-sm text-gray-600">{catalog.gift_name}</p>
+      <p className="mb-4 text-sm text-gray-600">
+        {catalog.gift_name} · {t.addToTier(tierName)}
+      </p>
       <div className="space-y-3">
         <Input
-          label="Quantity per Customer"
+          label={t.quantityPerCustomer}
           type="number"
           value={String(qty)}
           onChange={(e) => onChange({ qty: Number(e.target.value) || 0 })}
         />
         <Input
-          label="Unit Actual Cost"
+          label={t.unitActualCost}
           type="number"
           value={String(unitActualCost)}
           onChange={(e) =>
@@ -62,7 +65,7 @@ export function AddGiftToTierDialog({
           }
         />
         <Input
-          label="Estimated Gift Value per Unit"
+          label={t.estGiftValue}
           type="number"
           value={String(estimatedValue)}
           onChange={(e) =>
@@ -70,7 +73,7 @@ export function AddGiftToTierDialog({
           }
         />
         <Textarea
-          label="Notes"
+          label={t.notes}
           rows={2}
           value={notes}
           onChange={(e) => onChange({ notes: e.target.value })}
@@ -78,9 +81,9 @@ export function AddGiftToTierDialog({
       </div>
       <div className="mt-5 flex justify-end gap-2">
         <Button variant="secondary" onClick={onCancel}>
-          Cancel
+          {t.cancel}
         </Button>
-        <Button onClick={onConfirm}>เพิ่มเข้า Tier</Button>
+        <Button onClick={onConfirm}>{t.addToTierButton}</Button>
       </div>
     </Modal>
   );

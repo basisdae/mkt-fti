@@ -64,7 +64,15 @@ Password changes for `app_users` are managed separately; always keep **Authentic
 - Do **not** use `SUPABASE_JWT_SECRET` or custom JWT minting
 - Do **not** commit passwords or service role keys to git
 
-## Verification
+## Gift Catalog cover images
+
+Run `20260716160000_gift_catalog_image_path.sql` in SQL Editor to add `image_path`.
+
+Uploads use existing bucket **`product-images`** (same as Product/Supplier) with path prefix:
+
+`gift-catalog/{catalogId}/cover-{uuid}.{ext}`
+
+Existing bucket policies apply (path isolation — does not affect product or supplier assets).
 
 1. Sign in as Admin in an **Incognito** window
 2. Confirm **Gift Plans** appears in the sidebar

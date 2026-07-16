@@ -2,6 +2,7 @@
 
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 
 interface DuplicateGiftInTierDialogProps {
   open: boolean;
@@ -24,19 +25,19 @@ export function DuplicateGiftInTierDialog({
     <Modal
       open={open}
       onClose={onCancel}
-      title="รายการนี้อยู่ใน Tier แล้ว"
+      title={t.duplicateGiftTitle}
       className="max-w-md"
     >
       <p className="text-sm text-gray-600">
-        &quot;{giftName}&quot; มีอยู่ใน Tier {tierName} แล้ว ต้องการทำอย่างไร?
+        {t.duplicateGiftBodyNamed(giftName, tierName)}
       </p>
       <div className="mt-5 flex flex-col gap-2">
-        <Button onClick={onIncreaseExisting}>เพิ่มจำนวนในรายการเดิม</Button>
+        <Button onClick={onIncreaseExisting}>{t.increaseExistingQty}</Button>
         <Button variant="secondary" onClick={onAddSeparate}>
-          เพิ่มเป็นรายการแยก
+          {t.addAsSeparate}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
-          ยกเลิก
+          {t.cancel}
         </Button>
       </div>
     </Modal>

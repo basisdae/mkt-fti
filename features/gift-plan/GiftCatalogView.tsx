@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { GiftCatalogCard } from "@/components/gift-plan/GiftCatalogCard";
-import { GiftCatalogItemDialog } from "@/components/gift-plan/GiftCatalogItemDialog";
+import {
+  GiftCatalogItemDialog,
+  type GiftCatalogSavePayload,
+} from "@/components/gift-plan/GiftCatalogItemDialog";
 import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/forms/Select";
@@ -17,7 +20,13 @@ import {
   listGiftCatalogAction,
   saveGiftCatalogAction,
   setGiftCatalogStatusAction,
+  updateGiftCatalogImageAction,
 } from "@/lib/actions/gift-catalog";
+import {
+  removeGiftCatalogCover,
+  uploadGiftCatalogCover,
+} from "@/lib/gift-catalog-storage";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import {
   GIFT_ITEM_CATEGORIES,
   GIFT_ITEM_SOURCES,
@@ -28,7 +37,7 @@ import {
 } from "@/lib/gift-plan-format";
 import { GIFT_CATALOG_STATUSES } from "@/types/gift-catalog";
 import { GIFT_CATALOG_STATUS_LABELS } from "@/lib/gift-catalog-format";
-import type { GiftCatalogInput, GiftCatalogRow, GiftCatalogSortKey } from "@/types/gift-catalog";
+import type { GiftCatalogRow, GiftCatalogSortKey } from "@/types/gift-catalog";
 
 export function GiftCatalogView() {
   const { user } = useAuth();
@@ -46,6 +55,7 @@ export function GiftCatalogView() {
   const [editing, setEditing] = useState<GiftCatalogRow | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   async function refresh() {
     setLoading(true);
@@ -90,23 +100,65 @@ export function GiftCatalogView() {
           Number(a.default_estimated_gift_value)
         );
       }
-      return a.gift_name.localeCompare(b.gift_name);
+      return a.gift_name.localeCompare(b.gift_name, "th");
     });
     return rows;
   }, [items, query, category, source, status, sort, showArchived]);
 
-  async function handleSave(values: GiftCatalogInput) {
+  async function handleSave({ values, image }: GiftCatalogSavePayload) {
     setSaving(true);
     setSaveError(null);
+    const prevPath = editing?.image_path ?? null;
+
     const result = await saveGiftCatalogAction({
       id: editing?.id,
       values,
     });
-    setSaving(false);
     if (!result.ok) {
+      setSaving(false);
       setSaveError(result.error);
       return;
     }
+
+    const catalogId = editing?.id ?? result.data.id;
+
+    if (image.file) {
+      setUploadingImage(true);
+      try {
+        const uploaded = await uploadGiftCatalogCover(catalogId, image.file);
+        const imgResult = await updateGiftCatalogImageAction({
+          id: catalogId,
+          imagePath: uploaded.imagePath,
+          imageUrl: uploaded.imageUrl,
+        });
+        if (!imgResult.ok) throw new Error(imgResult.error);
+        if (prevPath && prevPath !== uploaded.imagePath) {
+          await removeGiftCatalogCover(prevPath).catch(() => {});
+        }
+      } catch {
+        setSaving(false);
+        setUploadingImage(false);
+        setSaveError(
+          editing?.id
+            ? t.catalogImageUploadFailedEdit
+            : t.catalogImageUploadFailedNew(catalogId),
+        );
+        void refresh();
+        return;
+      }
+      setUploadingImage(false);
+    } else if (image.removeRequested && prevPath) {
+      const imgResult = await updateGiftCatalogImageAction({
+        id: catalogId,
+        imagePath: null,
+        imageUrl: null,
+      });
+      if (imgResult.ok) {
+        await removeGiftCatalogCover(prevPath).catch(() => {});
+      }
+    }
+
+    setSaving(false);
     setDialogOpen(false);
     setEditing(null);
     void refresh();
@@ -118,16 +170,14 @@ export function GiftCatalogView() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Gift Plans
+            {t.catalogEyebrow}
           </p>
           <h1 className="mt-1 text-2xl font-semibold text-gray-900">
-            คลังของพรีเมียมและของแจก
+            {t.catalogTitle}
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            จัดการรายการของขวัญสำหรับเลือกเข้า Gift Plan — แยกจาก Product และ Supplier
-          </p>
+          <p className="mt-1 text-sm text-gray-500">{t.catalogSubtitle}</p>
           <Link href="/gift-plans" className="mt-2 inline-block text-sm text-primary">
-            ← กลับ Gift Plans
+            {t.backToGiftPlans}
           </Link>
         </div>
         {canEdit ? (
@@ -138,7 +188,7 @@ export function GiftCatalogView() {
             }}
           >
             <Plus className="h-4 w-4" />
-            Add Gift
+            {t.addGift}
           </Button>
         ) : null}
       </header>
@@ -149,7 +199,7 @@ export function GiftCatalogView() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name or code…"
+            placeholder={t.searchNameOrCode}
             className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
           />
         </div>
@@ -158,7 +208,7 @@ export function GiftCatalogView() {
           onChange={(e) => setCategory(e.target.value)}
           className="w-40"
           options={[
-            { value: "all", label: "All Categories" },
+            { value: "all", label: t.allCategories },
             ...GIFT_ITEM_CATEGORIES.map((value) => ({
               value,
               label: GIFT_ITEM_CATEGORY_LABELS[value],
@@ -170,7 +220,7 @@ export function GiftCatalogView() {
           onChange={(e) => setSource(e.target.value)}
           className="w-36"
           options={[
-            { value: "all", label: "All Sources" },
+            { value: "all", label: t.allSources },
             ...GIFT_ITEM_SOURCES.map((value) => ({
               value,
               label: GIFT_ITEM_SOURCE_LABELS[value],
@@ -182,7 +232,7 @@ export function GiftCatalogView() {
           onChange={(e) => setStatus(e.target.value)}
           className="w-32"
           options={[
-            { value: "all", label: "All Status" },
+            { value: "all", label: t.allStatus },
             ...GIFT_CATALOG_STATUSES.map((value) => ({
               value,
               label: GIFT_CATALOG_STATUS_LABELS[value],
@@ -194,10 +244,10 @@ export function GiftCatalogView() {
           onChange={(e) => setSort(e.target.value as GiftCatalogSortKey)}
           className="w-40"
           options={[
-            { value: "name", label: "Sort: Name" },
-            { value: "updated", label: "Latest Updated" },
-            { value: "actual_cost", label: "Actual Cost" },
-            { value: "estimated_value", label: "Est. Value" },
+            { value: "name", label: t.sortByName },
+            { value: "updated", label: t.sortLatestUpdated },
+            { value: "actual_cost", label: t.sortActualCost },
+            { value: "estimated_value", label: t.sortEstValue },
           ]}
         />
         <label className="flex items-center gap-2 text-xs text-gray-600">
@@ -206,7 +256,7 @@ export function GiftCatalogView() {
             checked={showArchived}
             onChange={(e) => setShowArchived(e.target.checked)}
           />
-          Show archived
+          {t.showArchived}
         </label>
       </div>
 
@@ -217,7 +267,7 @@ export function GiftCatalogView() {
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading catalog…</p>
+        <p className="text-sm text-gray-500">{t.loadingCatalog}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((item) => (
@@ -250,7 +300,7 @@ export function GiftCatalogView() {
                       else void refresh();
                     }}
                   >
-                    Duplicate
+                    {t.duplicate}
                   </Button>
                   {item.status !== "archived" ? (
                     <Button
@@ -265,7 +315,7 @@ export function GiftCatalogView() {
                         else void refresh();
                       }}
                     >
-                      Archive
+                      {t.archive}
                     </Button>
                   ) : (
                     <Button
@@ -280,7 +330,7 @@ export function GiftCatalogView() {
                         else void refresh();
                       }}
                     >
-                      Restore
+                      {t.restore}
                     </Button>
                   )}
                   <Button
@@ -293,18 +343,24 @@ export function GiftCatalogView() {
                         return;
                       }
                       if (usage.data) {
-                        setError(
-                          "This item is used in a gift plan. Archive instead of deleting.",
-                        );
+                        setError(t.catalogInUseArchive);
                         return;
                       }
-                      if (!window.confirm(`Delete "${item.gift_name}"?`)) return;
+                      if (!window.confirm(t.deleteCatalogConfirm(item.gift_name)))
+                        return;
                       const result = await deleteGiftCatalogAction(item.id);
                       if (!result.ok) setError(result.error);
-                      else void refresh();
+                      else {
+                        if (result.data.imagePath) {
+                          await removeGiftCatalogCover(result.data.imagePath).catch(
+                            () => {},
+                          );
+                        }
+                        void refresh();
+                      }
                     }}
                   >
-                    Delete
+                    {t.delete}
                   </Button>
                 </div>
               ) : null}
@@ -317,6 +373,7 @@ export function GiftCatalogView() {
         open={dialogOpen}
         initial={editing}
         saving={saving}
+        uploadingImage={uploadingImage}
         error={saveError}
         onCancel={() => {
           setDialogOpen(false);

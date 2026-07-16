@@ -29,11 +29,18 @@ import {
   canExportGiftPlans,
 } from "@/lib/auth/permissions";
 import { downloadGiftPlanExport, exportGiftPlanWorkbook } from "@/lib/gift-plan-export";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanListSummary } from "@/types/gift-plan";
 import { cn } from "@/lib/utils";
 
 type TabKey = "active" | "draft" | "archived";
 type SortKey = "updated" | "name" | "year";
+
+const TAB_LABELS: Record<TabKey, string> = {
+  active: t.tabActive,
+  draft: t.tabDraft,
+  archived: t.tabArchived,
+};
 
 export function GiftPlansHomeView() {
   const router = useRouter();
@@ -138,14 +145,10 @@ export function GiftPlansHomeView() {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Customer Gift Plans
+            {t.homeEyebrow}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold text-gray-900">Gift Plans</h1>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            MKT HQ prepares customer gift plans here. Export the Communication
-            Report to share with sales teams and graphic production — sales do
-            not log in to this module.
-          </p>
+          <h1 className="mt-1 text-2xl font-semibold text-gray-900">{t.homeTitle}</h1>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">{t.homeSubtitle}</p>
         </div>
         {canEdit ? (
           <div className="flex flex-wrap gap-2">
@@ -153,11 +156,11 @@ export function GiftPlansHomeView() {
               variant="secondary"
               onClick={() => router.push("/gift-plans/catalog")}
             >
-              Gift Catalog
+              {t.giftCatalog}
             </Button>
             <Button onClick={() => setNewOpen(true)}>
               <Plus className="h-4 w-4" />
-              New Plan
+              {t.newPlan}
             </Button>
           </div>
         ) : null}
@@ -177,7 +180,7 @@ export function GiftPlansHomeView() {
                   : "text-gray-600 hover:bg-gray-50",
               )}
             >
-              {key}
+              {TAB_LABELS[key]}
             </button>
           ))}
         </div>
@@ -186,7 +189,7 @@ export function GiftPlansHomeView() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search plans…"
+            placeholder={t.searchPlans}
             className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
           />
         </div>
@@ -195,9 +198,9 @@ export function GiftPlansHomeView() {
           onChange={(e) => setSort(e.target.value as SortKey)}
           className="w-40"
           options={[
-            { value: "updated", label: "Last Updated" },
-            { value: "name", label: "Name" },
-            { value: "year", label: "Campaign Year" },
+            { value: "updated", label: t.sortLastUpdated },
+            { value: "name", label: t.sortName },
+            { value: "year", label: t.sortCampaignYear },
           ]}
         />
       </div>
@@ -209,16 +212,11 @@ export function GiftPlansHomeView() {
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-gray-500">Loading gift plans…</p>
+        <p className="text-sm text-gray-500">{t.loadingPlans}</p>
       ) : visible.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-16 text-center">
           <Gift className="mx-auto h-10 w-10 text-gray-300" />
-          <p className="mt-3 text-sm font-medium text-gray-700">No plans in this tab</p>
-          <p className="mt-1 text-sm text-gray-500">
-            {canEdit
-              ? "Create a new gift plan to get started."
-              : "No published gift plans are available yet."}
-          </p>
+          <p className="mt-3 text-sm font-medium text-gray-700">{t.emptyPlans}</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

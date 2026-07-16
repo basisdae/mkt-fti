@@ -8,7 +8,7 @@ const ibmPlexSansThai = IBM_Plex_Sans_Thai({
 });
 
 export const metadata = {
-  title: "Gift Catalog",
+  title: "คลังของพรีเมียมและของแจก",
 };
 
 export default function GiftCatalogPage() {

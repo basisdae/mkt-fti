@@ -6,6 +6,7 @@ import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupab
 import { getGiftPlanEditorBundleAction } from "@/lib/actions/gift-plans";
 import { useAuth } from "@/hooks/AuthStore";
 import { canExportGiftPlans } from "@/lib/auth/permissions";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanEditorBundle } from "@/types/gift-plan";
 
 interface GiftPlanDetailViewProps {
@@ -42,7 +43,7 @@ export function GiftPlanDetailView({ planId }: GiftPlanDetailViewProps) {
 
   if (loading) {
     return (
-      <div className="p-6 text-sm text-gray-500">Loading gift plan…</div>
+      <div className="p-6 text-sm text-gray-500">{t.loadingPlan}</div>
     );
   }
 

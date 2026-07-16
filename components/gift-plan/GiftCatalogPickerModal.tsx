@@ -30,6 +30,7 @@ import {
 } from "@/lib/gift-plan-format";
 import { GIFT_CATALOG_STATUSES } from "@/types/gift-catalog";
 import { GIFT_CATALOG_STATUS_LABELS } from "@/lib/gift-catalog-format";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftCatalogRow, GiftCatalogSortKey } from "@/types/gift-catalog";
 import type { GiftPlanEditorPayload, GiftPlanItemInput } from "@/types/gift-plan";
 
@@ -221,9 +222,9 @@ export function GiftCatalogPickerModal({
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-gray-900">
-              คลังของพรีเมียมและของแจก
+              {t.pickerTitle}
             </h2>
-            <p className="text-xs text-gray-500">เลือกของเข้า Tier โดยไม่ปิด Draft</p>
+            <p className="text-xs text-gray-500">{t.pickerSubtitle}</p>
           </div>
           <button
             type="button"
@@ -268,7 +269,7 @@ export function GiftCatalogPickerModal({
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search name or code…"
+                    placeholder={t.searchNameOrCode}
                     className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -277,7 +278,7 @@ export function GiftCatalogPickerModal({
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-40"
                   options={[
-                    { value: "all", label: "All Categories" },
+                    { value: "all", label: t.allCategories },
                     ...GIFT_ITEM_CATEGORIES.map((value) => ({
                       value,
                       label: GIFT_ITEM_CATEGORY_LABELS[value],
@@ -289,7 +290,7 @@ export function GiftCatalogPickerModal({
                   onChange={(e) => setSource(e.target.value)}
                   className="w-36"
                   options={[
-                    { value: "all", label: "All Sources" },
+                    { value: "all", label: t.allSources },
                     ...GIFT_ITEM_SOURCES.map((value) => ({
                       value,
                       label: GIFT_ITEM_SOURCE_LABELS[value],
@@ -301,8 +302,8 @@ export function GiftCatalogPickerModal({
                   onChange={(e) => setStatus(e.target.value)}
                   className="w-32"
                   options={[
-                    { value: "active", label: "Active" },
-                    { value: "all", label: "All Status" },
+                    { value: "active", label: t.statusActive },
+                    { value: "all", label: t.allStatus },
                     ...GIFT_CATALOG_STATUSES.map((value) => ({
                       value,
                       label: GIFT_CATALOG_STATUS_LABELS[value],
@@ -314,10 +315,10 @@ export function GiftCatalogPickerModal({
                   onChange={(e) => setSort(e.target.value as GiftCatalogSortKey)}
                   className="w-40"
                   options={[
-                    { value: "name", label: "Sort: Name" },
-                    { value: "updated", label: "Latest Updated" },
-                    { value: "actual_cost", label: "Actual Cost" },
-                    { value: "estimated_value", label: "Est. Value" },
+                    { value: "name", label: t.sortByName },
+                    { value: "updated", label: t.sortLatestUpdated },
+                    { value: "actual_cost", label: t.sortActualCost },
+                    { value: "estimated_value", label: t.sortEstValue },
                   ]}
                 />
                 <label className="flex items-center gap-2 text-xs text-gray-600">
@@ -326,7 +327,7 @@ export function GiftCatalogPickerModal({
                     checked={showArchived}
                     onChange={(e) => setShowArchived(e.target.checked)}
                   />
-                  Show archived
+                  {t.showArchived}
                 </label>
               </div>
 
@@ -334,7 +335,7 @@ export function GiftCatalogPickerModal({
                 <p className="mt-4 text-sm text-fti-red">{error}</p>
               ) : null}
               {loading ? (
-                <p className="mt-6 text-sm text-gray-500">Loading catalog…</p>
+                <p className="mt-6 text-sm text-gray-500">{t.loadingCatalog}</p>
               ) : (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {visibleCatalog.map((item) => {

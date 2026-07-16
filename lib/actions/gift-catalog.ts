@@ -5,6 +5,7 @@ import {
   canExportGiftPlans,
   canViewGiftPlans,
 } from "@/lib/auth/permissions";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { getAuthenticatedSupabaseForActions } from "@/lib/supabase/authenticated-server";
 import type { GiftCatalogInput, GiftCatalogRow } from "@/types/gift-catalog";
 import type { AppUser } from "@/types/auth";
@@ -29,7 +30,7 @@ async function requireView(): Promise<
     !canEditGiftPlans(user) &&
     !canExportGiftPlans(user)
   ) {
-    return fail("You do not have permission to access gift catalog.");
+    return fail(t.noPermissionGiftCatalog);
   }
   return { ok: true, data: { user, supabase } };
 }
@@ -40,7 +41,7 @@ async function requireEdit(): Promise<
   const view = await requireView();
   if (!view.ok) return view;
   if (!canEditGiftPlans(view.data.user)) {
-    return fail("You do not have permission to edit gift catalog.");
+    return fail(t.noPermissionEditGiftCatalog);
   }
   return view;
 }
@@ -56,7 +57,6 @@ function normalizeInput(input: GiftCatalogInput) {
     category: input.category,
     source: input.source,
     description: input.description.trim(),
-    image_url: input.image_url?.trim() || null,
     unit: input.unit.trim() || "piece",
     default_actual_cost: input.default_actual_cost,
     default_estimated_gift_value: input.default_estimated_gift_value,
@@ -95,7 +95,7 @@ export async function saveGiftCatalogAction(input: {
   if (!auth.ok) return auth;
 
   const values = normalizeInput(input.values);
-  if (!values.gift_name) return fail("Gift name is required.");
+  if (!values.gift_name) return fail(t.giftNameRequired);
 
   const { user, supabase } = auth.data;
   const now = new Date().toISOString();
@@ -117,14 +117,57 @@ export async function saveGiftCatalogAction(input: {
     .from("gift_catalog")
     .insert({
       ...values,
+      image_url: null,
+      image_path: null,
       created_by_email: user.email,
       updated_by_email: user.email,
     })
     .select("id")
     .single();
 
-  if (error || !data) return fail(error?.message ?? "Could not create catalog item.");
+  if (error || !data) return fail(error?.message ?? t.catalogCreateFailed);
   return { ok: true, data: { id: data.id as string } };
+}
+
+export async function updateGiftCatalogImageAction(input: {
+  id: string;
+  imagePath: string | null;
+  imageUrl: string | null;
+}): Promise<ActionResult<null>> {
+  const auth = await requireEdit();
+  if (!auth.ok) return auth;
+
+  const { error } = await auth.data.supabase
+    .from("gift_catalog")
+    .update({
+      image_path: input.imagePath,
+      image_url: input.imageUrl,
+      updated_by_email: auth.data.user.email,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", input.id);
+
+  if (error) return fail(error.message);
+  return { ok: true, data: null };
+}
+
+export async function getGiftCatalogImagePathAction(
+  id: string,
+): Promise<ActionResult<{ imagePath: string | null }>> {
+  const auth = await requireView();
+  if (!auth.ok) return auth;
+
+  const { data, error } = await auth.data.supabase
+    .from("gift_catalog")
+    .select("image_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return fail(t.catalogNotFound);
+  return {
+    ok: true,
+    data: { imagePath: (data.image_path as string | null) ?? null },
+  };
 }
 
 export async function duplicateGiftCatalogAction(
@@ -139,17 +182,18 @@ export async function duplicateGiftCatalogAction(
     .eq("id", id)
     .maybeSingle();
 
-  if (loadError || !row) return fail("Catalog item not found.");
+  if (loadError || !row) return fail(t.catalogNotFound);
 
   const source = mapRow(row);
   return saveGiftCatalogAction({
     values: {
-      gift_name: `${source.gift_name} Copy`,
+      gift_name: `${source.gift_name} (สำเนา)`,
       internal_code: null,
       category: source.category,
       source: source.source,
       description: source.description,
-      image_url: source.image_url,
+      image_url: null,
+      image_path: null,
       unit: source.unit,
       default_actual_cost: Number(source.default_actual_cost),
       default_estimated_gift_value: Number(source.default_estimated_gift_value),
@@ -183,9 +227,17 @@ export async function setGiftCatalogStatusAction(
 
 export async function deleteGiftCatalogAction(
   id: string,
-): Promise<ActionResult<null>> {
+): Promise<ActionResult<{ imagePath: string | null }>> {
   const auth = await requireEdit();
   if (!auth.ok) return auth;
+
+  const { data: row } = await auth.data.supabase
+    .from("gift_catalog")
+    .select("image_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  const imagePath = (row?.image_path as string | null) ?? null;
 
   const { error } = await auth.data.supabase
     .from("gift_catalog")
@@ -194,13 +246,11 @@ export async function deleteGiftCatalogAction(
 
   if (error) {
     if (error.code === "23503") {
-      return fail(
-        "This catalog item is used in a gift plan. Archive it instead of deleting.",
-      );
+      return fail(t.catalogInUseArchive);
     }
     return fail(error.message);
   }
-  return { ok: true, data: null };
+  return { ok: true, data: { imagePath } };
 }
 
 export async function isGiftCatalogInUseAction(

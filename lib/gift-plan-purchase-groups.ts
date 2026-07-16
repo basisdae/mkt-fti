@@ -1,3 +1,4 @@
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type {
   GiftPlanItemInput,
   PurchaseGroupCompatibilityIssue,
@@ -26,7 +27,7 @@ export function checkPurchaseGroupCompatibility(
   if (suppliers.size > 1) {
     issues.push({
       field: "supplier",
-      message: "Selected items have different suppliers.",
+      message: t.pgDifferentSuppliers,
     });
   }
 
@@ -34,7 +35,7 @@ export function checkPurchaseGroupCompatibility(
   if (sources.size > 1) {
     issues.push({
       field: "source",
-      message: "Selected items have different sources.",
+      message: t.pgDifferentSources,
     });
   }
 
@@ -42,7 +43,7 @@ export function checkPurchaseGroupCompatibility(
   if (costs.size > 1) {
     issues.push({
       field: "unit_actual_cost",
-      message: "Selected items have different unit actual costs.",
+      message: t.pgDifferentCosts,
     });
   }
 
@@ -58,7 +59,7 @@ export function checkPurchaseGroupCompatibility(
   if (specs.size > 1) {
     issues.push({
       field: "specification",
-      message: "Selected items have different specifications/notes.",
+      message: t.pgDifferentSpecs,
     });
   }
 

@@ -8,7 +8,7 @@ const ibmPlexSansThai = IBM_Plex_Sans_Thai({
 });
 
 export const metadata = {
-  title: "Gift Plan",
+  title: "แผนของขวัญ",
 };
 
 export default async function GiftPlanDetailPage({

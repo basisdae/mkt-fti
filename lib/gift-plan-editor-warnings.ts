@@ -2,6 +2,7 @@ import {
   calcGiftCampaign,
   toCampaignCalcInputFromEditor,
 } from "@/lib/gift-plan-calculations";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanEditorPayload } from "@/types/gift-plan";
 
 export interface GiftPlanEditorWarning {
@@ -20,7 +21,7 @@ export function deriveGiftPlanEditorWarnings(
   if (dirty) {
     warnings.push({
       id: "unsaved",
-      message: "You have unsaved changes.",
+      message: t.warningUnsaved,
       severity: "warning",
     });
   }
@@ -28,7 +29,7 @@ export function deriveGiftPlanEditorWarnings(
   if (payload.tiers.length === 0) {
     warnings.push({
       id: "no-tiers",
-      message: "Add at least one tier to this plan.",
+      message: t.warningNoTiers,
       severity: "warning",
     });
   }
@@ -37,14 +38,14 @@ export function deriveGiftPlanEditorWarnings(
     if (tier.customer_count <= 0) {
       warnings.push({
         id: `tier-customers-${tier.id}`,
-        message: `Tier "${tier.name}" has no customer count.`,
+        message: t.warningTierNoCustomers(tier.name),
         severity: "warning",
       });
     }
     if (tier.items.length === 0) {
       warnings.push({
         id: `tier-items-${tier.id}`,
-        message: `Tier "${tier.name}" has no gift items selected.`,
+        message: t.warningTierNoItems(tier.name),
         severity: "warning",
       });
     }
@@ -52,14 +53,14 @@ export function deriveGiftPlanEditorWarnings(
       if (Number(item.unit_actual_cost) <= 0) {
         warnings.push({
           id: `item-cost-${item.id}`,
-          message: `"${item.gift_name}" in ${tier.name} has no unit actual cost.`,
+          message: t.warningItemNoCost(item.gift_name, tier.name),
           severity: "warning",
         });
       }
       if (Number(item.estimated_gift_value_per_unit) <= 0) {
         warnings.push({
           id: `item-value-${item.id}`,
-          message: `"${item.gift_name}" in ${tier.name} has no estimated gift value.`,
+          message: t.warningItemNoValue(item.gift_name, tier.name),
           severity: "warning",
         });
       }
@@ -73,7 +74,7 @@ export function deriveGiftPlanEditorWarnings(
   ) {
     warnings.push({
       id: "over-budget",
-      message: "Total actual cost exceeds the maximum budget.",
+      message: t.warningOverBudget,
       severity: "error",
     });
   }
@@ -91,7 +92,7 @@ export function deriveGiftPlanEditorWarnings(
     if (tiers.length > 1) {
       warnings.push({
         id: `dup-catalog-${catalogId}`,
-        message: `Same catalog item appears in multiple tiers (${tiers.join(", ")}). Review purchasing groups before export.`,
+        message: t.warningDupCatalog(tiers.join(", ")),
         severity: "info",
       });
     }

@@ -5,10 +5,29 @@ import {
 import type { GiftCatalogStatus } from "@/types/gift-catalog";
 
 export const GIFT_CATALOG_STATUS_LABELS: Record<GiftCatalogStatus, string> = {
-  active: "Active",
-  inactive: "Inactive",
-  archived: "Archived",
+  active: "ใช้งาน",
+  inactive: "ปิดใช้งาน",
+  archived: "เก็บถาวร",
 };
+
+/** Preset units — stored value stays English key; label is Thai. */
+export const GIFT_CATALOG_UNIT_PRESETS = [
+  { value: "piece", label: "ชิ้น" },
+  { value: "set", label: "ชุด" },
+  { value: "box", label: "กล่อง" },
+  { value: "bag", label: "ใบ" },
+  { value: "book", label: "เล่ม" },
+  { value: "card", label: "ใบ" },
+  { value: "voucher", label: "ใบ" },
+  { value: "other", label: "อื่นๆ" },
+] as const;
+
+export const GIFT_CATALOG_UNIT_OTHER = "other";
+
+export function giftCatalogUnitLabel(unit: string): string {
+  const preset = GIFT_CATALOG_UNIT_PRESETS.find((u) => u.value === unit);
+  return preset?.label ?? unit;
+}
 
 export function formatGiftCatalogCategory(
   category: keyof typeof GIFT_ITEM_CATEGORY_LABELS,

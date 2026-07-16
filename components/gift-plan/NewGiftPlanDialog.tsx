@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 
 interface NewGiftPlanDialogProps {
   open: boolean;
@@ -47,21 +48,19 @@ export function NewGiftPlanDialog({
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
       >
-        <h2 className="text-lg font-semibold text-gray-900">New Gift Plan</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Campaign plans are saved to Supabase after you create and save.
-        </p>
+        <h2 className="text-lg font-semibold text-gray-900">{t.newGiftPlanTitle}</h2>
+        <p className="mt-1 text-sm text-gray-500">{t.newPlanSubtitle}</p>
         <div className="mt-4 space-y-3">
           <Input
-            label="Plan Name *"
+            label={t.planNameLabel}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Dealer Gift Campaign 2027"
+            placeholder={t.planNamePlaceholder}
             autoFocus
             required
           />
           <Input
-            label="Campaign Year *"
+            label={t.campaignYearLabel}
             type="number"
             min={2000}
             max={2100}
@@ -73,10 +72,10 @@ export function NewGiftPlanDialog({
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancel
+            {t.cancel}
           </Button>
           <Button type="submit" disabled={creating || !name.trim()}>
-            {creating ? "Creating…" : "Create Plan"}
+            {creating ? t.creating : t.createPlan}
           </Button>
         </div>
       </form>

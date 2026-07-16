@@ -1,6 +1,7 @@
 "use client";
 
 import { Gift } from "lucide-react";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { cn } from "@/lib/utils";
 
 interface GiftCatalogPlaceholderImageProps {
@@ -10,7 +11,7 @@ interface GiftCatalogPlaceholderImageProps {
 
 export function GiftCatalogPlaceholderImage({
   className,
-  label = "No image",
+  label = t.noImage,
 }: GiftCatalogPlaceholderImageProps) {
   return (
     <div

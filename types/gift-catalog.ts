@@ -11,6 +11,7 @@ export interface GiftCatalogRow {
   source: GiftItemSource;
   description: string;
   image_url: string | null;
+  image_path: string | null;
   unit: string;
   default_actual_cost: number;
   default_estimated_gift_value: number;
@@ -31,6 +32,7 @@ export interface GiftCatalogInput {
   source: GiftItemSource;
   description: string;
   image_url: string | null;
+  image_path: string | null;
   unit: string;
   default_actual_cost: number;
   default_estimated_gift_value: number;

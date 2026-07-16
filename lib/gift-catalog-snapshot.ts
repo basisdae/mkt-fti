@@ -34,5 +34,7 @@ export function applyCatalogToPlanItem(
     specification: catalog.specification,
     notes: overrides?.notes ?? (catalog.notes || null),
     purchase_group_id: null,
+    image_path: catalog.image_path,
+    image_url: catalog.image_url,
   };
 }

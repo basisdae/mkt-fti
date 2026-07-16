@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 
 interface RenameGiftPlanDialogProps {
   open: boolean;
@@ -42,10 +43,10 @@ export function RenameGiftPlanDialog({
           onSave(name);
         }}
       >
-        <h2 className="text-lg font-semibold text-gray-900">Rename Gift Plan</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t.renameGiftPlanTitle}</h2>
         <div className="mt-4">
           <Input
-            label="Plan Name"
+            label={t.planNameLabel.replace(" *", "")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus
@@ -55,10 +56,10 @@ export function RenameGiftPlanDialog({
         </div>
         <div className="mt-5 flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancel
+            {t.cancel}
           </Button>
           <Button type="submit" disabled={saving || !name.trim()}>
-            {saving ? "Saving…" : "Save"}
+            {saving ? t.saving : t.save}
           </Button>
         </div>
       </form>

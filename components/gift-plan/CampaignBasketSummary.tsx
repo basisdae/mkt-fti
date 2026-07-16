@@ -5,6 +5,7 @@ import {
   toCampaignCalcInputFromEditor,
 } from "@/lib/gift-plan-calculations";
 import { formatGiftMoney, formatGiftPercent } from "@/lib/gift-plan-format";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { tierCalcSummary } from "@/lib/gift-plan-tier-navigation";
 import type { TierTabSelection } from "@/lib/gift-plan-tier-navigation";
 import type { GiftPlanEditorPayload } from "@/types/gift-plan";
@@ -34,23 +35,23 @@ export function CampaignBasketSummary({
       {tierSummary ? (
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-900">
-            สรุป Tier ที่กำลังเลือก
+            {t.activeTierSummary}
           </h3>
           <p className="text-xs text-gray-500">{tierSummary.tierName}</p>
           <dl className="mt-3 space-y-2 text-xs">
-            <Row label="ลูกค้า" value={tierSummary.customerCount.toLocaleString()} />
-            <Row label="Gift Items" value={String(tierSummary.itemCount)} />
-            <Row label="Gift Units" value={tierSummary.giftUnits.toLocaleString()} />
+            <Row label={t.customers} value={tierSummary.customerCount.toLocaleString()} />
+            <Row label={t.giftItems} value={String(tierSummary.itemCount)} />
+            <Row label={t.giftUnits} value={tierSummary.giftUnits.toLocaleString()} />
             <Row
-              label="ต้นทุน/คน"
+              label={t.costPerCustomer}
               value={formatGiftMoney(tierSummary.actualPerCustomer)}
             />
             <Row
-              label="มูลค่า/คน"
+              label={t.valuePerCustomer}
               value={formatGiftMoney(tierSummary.estimatedPerCustomer)}
             />
             <Row
-              label="ต้นทุนรวม Tier"
+              label={t.tierTotalCost}
               value={formatGiftMoney(tierSummary.totalActual)}
             />
           </dl>
@@ -58,34 +59,32 @@ export function CampaignBasketSummary({
       ) : null}
 
       <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900">
-          ชุดของขวัญในแผนนี้
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-900">{t.planBasket}</h3>
         <dl className="mt-3 space-y-2 text-xs">
-          <Row label="จำนวน Tier" value={String(payload.tiers.length)} />
+          <Row label={t.tierCount} value={String(payload.tiers.length)} />
           <Row
-            label="ลูกค้ารวม"
+            label={t.totalCustomers}
             value={campaign.total_customers.toLocaleString()}
           />
-          <Row label="Gift Items" value={String(totalItems)} />
+          <Row label={t.giftItems} value={String(totalItems)} />
           <Row
-            label="Gift Units รวม"
+            label={t.giftUnitsTotal}
             value={campaign.total_gift_units.toLocaleString()}
           />
           <Row
-            label="Actual Cost รวม"
+            label={t.totalActualCost}
             value={formatGiftMoney(campaign.total_campaign_actual_cost)}
           />
           <Row
-            label="Estimated Value รวม"
+            label={t.totalEstimatedValue}
             value={formatGiftMoney(campaign.total_campaign_estimated_value)}
           />
           <Row
-            label="Budget Used"
+            label={t.budgetUsed}
             value={formatGiftPercent(campaign.actual_gift_budget_percent)}
           />
           <Row
-            label="Remaining Budget"
+            label={t.remainingBudget}
             value={formatGiftMoney(campaign.remaining_actual_cost_budget)}
           />
         </dl>

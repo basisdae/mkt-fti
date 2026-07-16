@@ -8,6 +8,7 @@ import {
   formatGiftMoney,
   formatGiftPercent,
 } from "@/lib/gift-plan-format";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanEditorPayload } from "@/types/gift-plan";
 
 interface GiftPlanSummaryDashboardProps {
@@ -21,32 +22,32 @@ export function GiftPlanSummaryDashboard({
 
   return (
     <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-gray-900">Campaign Summary</h3>
+      <h3 className="text-sm font-semibold text-gray-900">{t.campaignSummary}</h3>
       <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Total Customers" value={campaign.total_customers.toLocaleString()} />
-        <Metric label="Total Gift Units" value={campaign.total_gift_units.toLocaleString()} />
+        <Metric label={t.totalCustomers} value={campaign.total_customers.toLocaleString()} />
+        <Metric label={t.giftUnitsTotal} value={campaign.total_gift_units.toLocaleString()} />
         <Metric
-          label="Total Actual Cost"
+          label={t.totalActualCost}
           value={formatGiftMoney(campaign.total_campaign_actual_cost)}
         />
         <Metric
-          label="Total Estimated Value"
+          label={t.totalEstimatedValue}
           value={formatGiftMoney(campaign.total_campaign_estimated_value)}
         />
         <Metric
-          label="Actual Budget %"
+          label={t.actualBudgetPercent}
           value={formatGiftPercent(campaign.actual_gift_budget_percent)}
         />
         <Metric
-          label="Remaining Budget"
+          label={t.remainingBudget}
           value={formatGiftMoney(campaign.remaining_actual_cost_budget)}
         />
         <Metric
-          label="Voucher Cost"
+          label={t.voucherCost}
           value={formatGiftMoney(campaign.total_voucher_actual_cost)}
         />
         <Metric
-          label="Premium Cost"
+          label={t.premiumCost}
           value={formatGiftMoney(campaign.total_premium_actual_cost)}
         />
       </dl>
@@ -55,12 +56,12 @@ export function GiftPlanSummaryDashboard({
         <table className="min-w-full text-left text-xs">
           <thead>
             <tr className="border-b border-gray-100 text-gray-500">
-              <th className="px-2 py-2">Tier</th>
-              <th className="px-2 py-2">Customers</th>
-              <th className="px-2 py-2">Actual / Customer</th>
-              <th className="px-2 py-2">Est. / Customer</th>
-              <th className="px-2 py-2">Total Actual</th>
-              <th className="px-2 py-2">Total Estimated</th>
+              <th className="px-2 py-2">{t.tierCol}</th>
+              <th className="px-2 py-2">{t.customers}</th>
+              <th className="px-2 py-2">{t.actualPerCustomerCol}</th>
+              <th className="px-2 py-2">{t.estPerCustomerCol}</th>
+              <th className="px-2 py-2">{t.totalActualCol}</th>
+              <th className="px-2 py-2">{t.totalEstimatedCol}</th>
             </tr>
           </thead>
           <tbody>
@@ -90,7 +91,7 @@ export function GiftPlanSummaryDashboard({
       </div>
 
       <div className="mt-4 rounded-xl bg-gray-50 p-3 text-xs text-gray-500">
-        Customer List — Coming soon
+        {t.customerListSoon}
       </div>
     </section>
   );
