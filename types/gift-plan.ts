@@ -57,6 +57,7 @@ export interface GiftPlanPurchaseGroupRow {
   plan_id: string;
   label: string;
   notes: string;
+  buffer_percentage: number;
   created_at: string;
   updated_at: string;
 }
@@ -142,6 +143,7 @@ export interface GiftPlanPurchaseGroupInput {
   plan_id: string;
   label: string;
   notes: string;
+  buffer_percentage: number;
 }
 
 export interface GiftPlanEditorPayload {

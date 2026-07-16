@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Plus, RefreshCw, Search } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { BookOpen, Pencil, Plus, RefreshCw, Search } from "lucide-react";
 import { SeminarAgendaSessionCard } from "@/components/seminar-planner/SeminarAgendaSessionCard";
 import { SeminarAgendaSummary } from "@/components/seminar-planner/SeminarAgendaSummary";
+import { SeminarEventStatusBadge } from "@/components/seminar-planner/SeminarEventStatusBadge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
 import { Select } from "@/components/forms/Select";
@@ -16,6 +18,7 @@ import {
   saveSeminarEventAction,
 } from "@/lib/actions/seminar-planner";
 import {
+  listCategoriesAction,
   listFormatsAction,
   listPurposesAction,
   listSessionLibraryAction,
@@ -26,6 +29,8 @@ import { canEditSeminarPlanner } from "@/lib/auth/permissions";
 import { duplicateBullets, normalizeBullets } from "@/lib/seminar-planner-bullets";
 import { validateAgendaItems } from "@/lib/seminar-planner-agenda-warnings";
 import {
+  formatSeminarDateRange,
+  formatSeminarMinutes,
   SEMINAR_EVENT_FORMAT_LABELS,
   SEMINAR_EVENT_STATUS_LABELS,
 } from "@/lib/seminar-planner-format";
@@ -33,6 +38,7 @@ import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import {
   SEMINAR_EVENT_FORMATS,
   SEMINAR_EVENT_STATUSES,
+  SEMINAR_PLANNER_ERRORS,
   type SeminarAgendaItemInput,
   type SeminarAgendaItemRow,
   type SeminarEventBundle,
@@ -113,6 +119,7 @@ function newCustomAgendaItem(sortOrder: number): SeminarAgendaItemInput {
 }
 
 export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps) {
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const canEdit = canEditSeminarPlanner(user);
   const savingRef = useRef(false);
@@ -135,6 +142,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     [],
   );
   const [libraryQuery, setLibraryQuery] = useState("");
+  const [libraryCategory, setLibraryCategory] = useState("all");
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [dragAgendaIndex, setDragAgendaIndex] = useState<number | null>(null);
@@ -144,11 +152,13 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     statuses: { value: string; label: string }[];
     targetGroups: { id: string; name: string }[];
     purposes: { id: string; name: string }[];
+    categories: { value: string; label: string }[];
   }>({
     formats: [],
     statuses: [],
     targetGroups: [],
     purposes: [],
+    categories: [],
   });
 
   const applyBundle = useCallback((data: SeminarEventBundle) => {
@@ -192,17 +202,20 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   }
 
   async function loadMasterData() {
-    const [formats, statuses, targetGroups, purposes] = await Promise.all([
+    const [formats, statuses, targetGroups, purposes, categories] =
+      await Promise.all([
       listFormatsAction(),
       listSessionStatusesAction(),
       listTargetGroupsAction(),
       listPurposesAction(),
+      listCategoriesAction(),
     ]);
     if (
       !formats.ok ||
       !statuses.ok ||
       !targetGroups.ok ||
-      !purposes.ok
+      !purposes.ok ||
+      !categories.ok
     ) {
       return;
     }
@@ -219,18 +232,29 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
       purposes: purposes.data
         .filter((p) => p.is_active && !p.is_archived)
         .map((p) => ({ id: p.id, name: p.name })),
+      categories: categories.data
+        .filter((c) => c.is_active && !c.is_archived)
+        .map((c) => ({ value: c.name, label: c.name })),
     });
   }
+
+  useEffect(() => {
+    const requestedTab = searchParams.get("tab");
+    if (requestedTab === "overview" || requestedTab === "agenda") {
+      setTab(requestedTab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     void loadBundle();
     void loadMasterData();
   }, [eventId]);
 
-  async function searchLibrary(q: string) {
+  async function searchLibrary(q: string, category: string) {
     setLibraryLoading(true);
     const result = await listSessionLibraryAction({
       search: q,
+      categoryName: category === "all" ? undefined : category,
       activeOnly: true,
     });
     setLibraryLoading(false);
@@ -240,13 +264,29 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
 
   useEffect(() => {
     if (!showLibrary) return;
-    void searchLibrary(libraryQuery);
-  }, [showLibrary, libraryQuery]);
+    void searchLibrary(libraryQuery, libraryCategory);
+  }, [showLibrary, libraryQuery, libraryCategory]);
 
   const agendaWarnings = useMemo(
     () => validateAgendaItems(agendaItems, { dirty }),
     [agendaItems, dirty],
   );
+
+  const agendaTotals = useMemo(() => {
+    const totalMinutes = agendaItems.reduce((sum, item) => {
+      const minutes = item.duration_minutes;
+      return sum + (typeof minutes === "number" ? minutes : 0);
+    }, 0);
+    return {
+      sessionCount: agendaItems.length,
+      totalMinutes,
+    };
+  }, [agendaItems]);
+
+  const isNotFound = error === SEMINAR_PLANNER_ERRORS.eventNotFound;
+  const isPermissionDenied =
+    error === SEMINAR_PLANNER_ERRORS.noPermissionView ||
+    error === SEMINAR_PLANNER_ERRORS.noPermissionEdit;
 
   function patchEvent(partial: Partial<SeminarEventInput>) {
     setEventForm((prev) => ({ ...prev, ...partial }));
@@ -372,10 +412,28 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl p-6">
-        <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-fti-red">
-          {error}
+      <div className="mx-auto max-w-3xl space-y-4 p-6">
+        <div
+          className={cn(
+            "rounded-xl border px-4 py-4",
+            isPermissionDenied
+              ? "border-amber-100 bg-amber-50 text-amber-900"
+              : "border-red-100 bg-red-50 text-fti-red",
+          )}
+        >
+          <h1 className="text-lg font-semibold">
+            {isNotFound ? t.eventNotFoundTitle : t.eventDetailHeader}
+          </h1>
+          <p className="mt-2 text-sm">
+            {isNotFound ? t.eventNotFoundBody : error}
+          </p>
         </div>
+        <Link
+          href="/seminars"
+          className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          {t.backToEventList}
+        </Link>
       </div>
     );
   }
@@ -384,32 +442,116 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <Link
-            href="/seminars"
-            className="text-sm text-primary hover:underline"
-          >
-            {t.backToEvents}
-          </Link>
-          <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-primary">
-            {t.editorEyebrow}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-gray-900">
-            {eventForm.title || t.editorTitle}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">{t.editorSubtitle}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" onClick={() => void loadBundle()}>
-            <RefreshCw className="h-4 w-4" />
-            {t.refresh}
-          </Button>
-          {canEdit ? (
-            <Button onClick={() => void handleSave()} disabled={saving || !dirty}>
-              {saving ? t.saving : t.saveEvent}
+      <header className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <Link
+              href="/seminars"
+              className="text-sm text-primary hover:underline"
+            >
+              {t.backToEvents}
+            </Link>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-primary">
+              {t.editorEyebrow}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold text-gray-900">
+                {eventForm.title || t.editorTitle}
+              </h1>
+              {eventForm.status ? (
+                <SeminarEventStatusBadge
+                  status={eventForm.status}
+                  archived={bundle.event.is_archived}
+                />
+              ) : null}
+            </div>
+            <p className="mt-1 text-sm text-gray-500">{t.editorSubtitle}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="secondary" onClick={() => void loadBundle()}>
+              <RefreshCw className="h-4 w-4" />
+              {t.refresh}
             </Button>
-          ) : null}
+            {canEdit ? (
+              <>
+                <Button variant="secondary" onClick={() => setTab("overview")}>
+                  <Pencil className="h-4 w-4" />
+                  {t.editEventData}
+                </Button>
+                <Button
+                  onClick={() => void handleSave()}
+                  disabled={saving || !dirty}
+                >
+                  {saving ? t.saving : t.saveEvent}
+                </Button>
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-900">
+            {t.eventDetailHeader}
+          </h2>
+          <dl className="mt-3 grid grid-cols-2 gap-3 text-xs md:grid-cols-4 lg:grid-cols-8">
+            <div>
+              <dt className="text-gray-400">{t.status}</dt>
+              <dd className="font-medium text-gray-800">
+                {eventForm.status
+                  ? SEMINAR_EVENT_STATUS_LABELS[eventForm.status]
+                  : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.dateRange}</dt>
+              <dd className="font-medium text-gray-800">
+                {formatSeminarDateRange(
+                  eventForm.start_date ?? null,
+                  eventForm.end_date ?? null,
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.dailyHours}</dt>
+              <dd className="font-medium text-gray-800">
+                {eventForm.daily_start_time || eventForm.daily_end_time
+                  ? `${eventForm.daily_start_time?.slice(0, 5) ?? "—"} – ${eventForm.daily_end_time?.slice(0, 5) ?? "—"}`
+                  : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.venue}</dt>
+              <dd className="font-medium text-gray-800">
+                {eventForm.venue || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.eventFormat}</dt>
+              <dd className="font-medium text-gray-800">
+                {eventForm.event_format
+                  ? SEMINAR_EVENT_FORMAT_LABELS[eventForm.event_format]
+                  : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.sessions}</dt>
+              <dd className="font-medium text-gray-800">
+                {agendaTotals.sessionCount.toLocaleString("th-TH")}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.totalMinutes}</dt>
+              <dd className="font-medium text-gray-800">
+                {formatSeminarMinutes(agendaTotals.totalMinutes)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">{t.owner}</dt>
+              <dd className="font-medium text-gray-800">
+                {eventForm.owner || "—"}
+              </dd>
+            </div>
+          </dl>
         </div>
       </header>
 
@@ -696,13 +838,24 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
 
           {showLibrary ? (
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={libraryQuery}
-                  onChange={(e) => setLibraryQuery(e.target.value)}
-                  placeholder={t.librarySearch}
-                  className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
+              <div className="flex flex-wrap gap-3">
+                <div className="relative min-w-[12rem] flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={libraryQuery}
+                    onChange={(e) => setLibraryQuery(e.target.value)}
+                    placeholder={t.librarySearch}
+                    className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                <Select
+                  value={libraryCategory}
+                  onChange={(e) => setLibraryCategory(e.target.value)}
+                  className="w-44"
+                  options={[
+                    { value: "all", label: t.filterAllCategories },
+                    ...masterOptions.categories,
+                  ]}
                 />
               </div>
               {libraryLoading ? (

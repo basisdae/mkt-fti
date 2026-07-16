@@ -509,6 +509,48 @@ export async function setSeminarEventArchivedAction(
   return { ok: true, data: null };
 }
 
+export async function deleteSeminarEventAction(
+  eventId: string,
+): Promise<ActionResult<null>> {
+  const auth = await requireEdit();
+  if (!auth.ok) return auth;
+
+  const { supabase } = auth.data;
+
+  const { data: event } = await supabase
+    .from("seminar_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!event) return fail(t.eventNotFound);
+
+  const { error: agendaError } = await supabase
+    .from("seminar_agenda_items")
+    .delete()
+    .eq("event_id", eventId);
+  if (agendaError) return fail(agendaError.message);
+
+  const { error: targetError } = await supabase
+    .from("seminar_event_target_groups")
+    .delete()
+    .eq("event_id", eventId);
+  if (targetError) return fail(targetError.message);
+
+  const { error: purposeError } = await supabase
+    .from("seminar_event_purposes")
+    .delete()
+    .eq("event_id", eventId);
+  if (purposeError) return fail(purposeError.message);
+
+  const { error: eventError } = await supabase
+    .from("seminar_events")
+    .delete()
+    .eq("id", eventId);
+  if (eventError) return fail(eventError.message);
+
+  return { ok: true, data: null };
+}
+
 export async function saveSeminarAgendaItemsAction(input: {
   event_id: string;
   items: SeminarAgendaItemInput[];

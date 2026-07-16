@@ -10,6 +10,7 @@ import { Select } from "@/components/forms/Select";
 import { useAuth } from "@/hooks/AuthStore";
 import {
   createSeminarEventAction,
+  deleteSeminarEventAction,
   duplicateSeminarEventAction,
   listSeminarEventsAction,
   setSeminarEventArchivedAction,
@@ -139,6 +140,25 @@ export function SeminarPlannerHomeView() {
     router.push(`/seminars/${result.data.id}`);
   }
 
+  async function handleDelete(event: SeminarEventSummary) {
+    setMenuId(null);
+    if (!window.confirm(t.deleteEventConfirm(event.title))) return;
+    const result = await deleteSeminarEventAction(event.id);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    void refresh();
+  }
+
+  function openEvent(eventId: string) {
+    router.push(`/seminars/${eventId}`);
+  }
+
+  function editEvent(eventId: string) {
+    router.push(`/seminars/${eventId}?tab=overview`);
+  }
+
   async function handleArchive(event: SeminarEventSummary, archived: boolean) {
     setMenuId(null);
     const result = await setSeminarEventArchivedAction(event.id, archived);
@@ -256,10 +276,12 @@ export function SeminarPlannerHomeView() {
               onToggleMenu={() =>
                 setMenuId((prev) => (prev === event.id ? null : event.id))
               }
-              onOpen={() => router.push(`/seminars/${event.id}`)}
+              onOpen={() => openEvent(event.id)}
+              onEdit={() => editEvent(event.id)}
               onDuplicate={() => void handleDuplicate(event)}
               onArchive={() => void handleArchive(event, true)}
               onUnarchive={() => void handleArchive(event, false)}
+              onDelete={() => void handleDelete(event)}
             />
           ))}
         </div>

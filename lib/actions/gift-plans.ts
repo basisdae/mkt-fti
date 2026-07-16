@@ -97,7 +97,14 @@ function mapItemRow(row: Record<string, unknown>): GiftPlanItemRow {
 }
 
 function mapGroupRow(row: Record<string, unknown>): GiftPlanPurchaseGroupRow {
-  return row as unknown as GiftPlanPurchaseGroupRow;
+  const mapped = row as unknown as GiftPlanPurchaseGroupRow;
+  return {
+    ...mapped,
+    buffer_percentage:
+      mapped.buffer_percentage != null
+        ? Number(mapped.buffer_percentage)
+        : 0,
+  };
 }
 
 function validateTierNames(
@@ -419,6 +426,7 @@ export async function saveGiftPlanAction(
       plan_id: planId,
       label: group.label,
       notes: group.notes,
+      buffer_percentage: group.buffer_percentage,
       updated_at: now,
     });
     if (error) return fail(error.message);
@@ -499,6 +507,7 @@ export async function duplicateGiftPlanAction(
         plan_id: newPlanId,
         label: group.label,
         notes: group.notes,
+        buffer_percentage: group.buffer_percentage,
       })
       .select("id")
       .single();
@@ -761,7 +770,13 @@ export async function getGiftPlanExportBundleAction(
     ok: true,
     data: {
       bundle,
-      purchasing: buildPurchasingSummary(tiersForPurchasing),
+      purchasing: buildPurchasingSummary(
+        tiersForPurchasing,
+        bundle.purchase_groups.map((group) => ({
+          id: group.id,
+          buffer_percentage: group.buffer_percentage,
+        })),
+      ),
     },
   };
 }

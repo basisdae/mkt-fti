@@ -60,6 +60,26 @@ export function validateAgendaItems(
       });
     }
 
+    if (!item.primary_speaker?.trim()) {
+      warnings.push({
+        id: `missing-speaker-${itemId}`,
+        message: t.warningMissingSpeaker(
+          item.title?.trim() || `เซสชัน ${i + 1}`,
+        ),
+        severity: "warning",
+        itemId,
+      });
+    }
+
+    if (!item.owner_name?.trim()) {
+      warnings.push({
+        id: `missing-owner-${itemId}`,
+        message: t.warningMissingOwner(item.title?.trim() || `เซสชัน ${i + 1}`),
+        severity: "warning",
+        itemId,
+      });
+    }
+
     if (hasStart && hasEnd) {
       const duration = calcDurationMinutes(
         item.start_time,
@@ -120,6 +140,29 @@ export function validateAgendaItems(
   }
 
   return warnings;
+}
+
+export function countIncompleteAgendaItems(
+  items: SeminarAgendaItemInput[],
+): number {
+  return items.filter((item) => {
+    const hasStart = Boolean(item.start_time?.trim());
+    const hasEnd = Boolean(item.end_time?.trim());
+    const hasTime = hasStart && hasEnd;
+    const hasSpeaker = Boolean(item.primary_speaker?.trim());
+    const hasOwner = Boolean(item.owner_name?.trim());
+    const hasTitle = Boolean(item.title?.trim());
+    return !hasTitle || !hasTime || !hasSpeaker || !hasOwner;
+  }).length;
+}
+
+export function countAgendaOverlaps(items: SeminarAgendaItemInput[]): number {
+  const timeItems: AgendaTimeItem[] = items.map((item, index) => ({
+    ...item,
+    id: item.id ?? `new-${index}`,
+    title: item.title,
+  }));
+  return detectAgendaOverlaps(timeItems).length;
 }
 
 export function warningsForAgendaItem(

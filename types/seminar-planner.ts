@@ -243,6 +243,7 @@ export const SEMINAR_PLANNER_ERRORS = {
   createFailed: "ไม่สามารถสร้างรายการได้",
   eventCreateFailed: "ไม่สามารถสร้างงานสัมมนาได้",
   duplicateFailed: "ไม่สามารถทำสำเนาได้",
+  eventDeleteFailed: "ไม่สามารถลบงานสัมมนาได้",
   inUseArchive:
     "รายการนี้ถูกใช้งานอยู่ ไม่สามารถลบได้ กรุณาเก็บถาวรแทน",
   copySuffix: " (สำเนา)",

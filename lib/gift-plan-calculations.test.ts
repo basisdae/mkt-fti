@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   buildPurchasingSummary,
+  calcBufferQuantity,
   calcGiftCampaign,
   calcGiftItem,
   calcGiftTier,
@@ -95,45 +96,58 @@ function testCampaignBudgetPercent() {
 }
 
 function testPurchasingSummaryGrouping() {
-  const rows = buildPurchasingSummary([
-    {
-      name: "Tier A",
-      customer_count: 10,
-      items: [
-        {
-          id: "i1",
-          gift_name: "Bag",
-          category: "premium_gift",
-          source: "marketing",
-          qty_per_customer: 1,
-          unit_actual_cost: 80,
-          supplier: "Vendor A",
-          notes: "Spec A",
-          purchase_group_id: "g1",
-        },
-      ],
-    },
-    {
-      name: "Tier B",
-      customer_count: 5,
-      items: [
-        {
-          id: "i2",
-          gift_name: "Bag",
-          category: "premium_gift",
-          source: "marketing",
-          qty_per_customer: 1,
-          unit_actual_cost: 80,
-          supplier: "Vendor A",
-          notes: "Spec A",
-          purchase_group_id: "g1",
-        },
-      ],
-    },
-  ]);
+  const rows = buildPurchasingSummary(
+    [
+      {
+        name: "Tier A",
+        customer_count: 10,
+        items: [
+          {
+            id: "i1",
+            gift_name: "Bag",
+            category: "premium_gift",
+            source: "marketing",
+            qty_per_customer: 1,
+            unit_actual_cost: 80,
+            supplier: "Vendor A",
+            notes: "Spec A",
+            purchase_group_id: "g1",
+          },
+        ],
+      },
+      {
+        name: "Tier B",
+        customer_count: 5,
+        items: [
+          {
+            id: "i2",
+            gift_name: "Bag",
+            category: "premium_gift",
+            source: "marketing",
+            qty_per_customer: 1,
+            unit_actual_cost: 80,
+            supplier: "Vendor A",
+            notes: "Spec A",
+            purchase_group_id: "g1",
+          },
+        ],
+      },
+    ],
+    [{ id: "g1", buffer_percentage: 10 }],
+  );
   assert.equal(rows.length, 1);
-  assert.equal(rows[0]?.total_required_qty, 15);
-  assert.equal(rows[0]?.total_actual_cost, 1200);
+  assert.equal(rows[0]?.base_required_qty, 15);
+  assert.equal(rows[0]?.buffer_qty, 2);
+  assert.equal(rows[0]?.final_required_qty, 17);
+  assert.equal(rows[0]?.base_actual_cost, 1200);
+  assert.equal(rows[0]?.buffer_actual_cost, 160);
+  assert.equal(rows[0]?.final_purchase_cost, 1360);
+}
+
+function testBufferQuantityCeiling() {
+  assert.equal(calcBufferQuantity(15, 10), 2);
+  assert.equal(calcBufferQuantity(0, 10), 0);
+  assert.equal(calcBufferQuantity(10, 0), 0);
 }
 
 function testTierBudgetAcceptance() {
@@ -201,6 +215,7 @@ export function runGiftPlanCalculationTests() {
   testGiftTierCalc();
   testCampaignBudgetPercent();
   testPurchasingSummaryGrouping();
+  testBufferQuantityCeiling();
   testTierBudgetAcceptance();
   testTierBudgetAvgPerCustomer();
   testTierBudgetNoNaN();

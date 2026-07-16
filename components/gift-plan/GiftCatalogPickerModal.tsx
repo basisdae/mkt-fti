@@ -156,45 +156,60 @@ export function GiftCatalogPickerModal({
   function commitAdd(separateRow: boolean) {
     if (!pendingCatalog || activeTierId === "overview" || !activeTier) return;
 
-    onApplyItems((current) => ({
-      ...current,
-      tiers: current.tiers.map((tier) => {
-        if (tier.id !== activeTierId) return tier;
-        const existing = itemsInTierForCatalog(current, activeTierId, pendingCatalog.id);
+    onApplyItems((current) => {
+      const tier = current.tiers.find((row) => row.id === activeTierId);
+      if (!tier) return current;
 
-        if (!separateRow && existing.length > 0) {
-          const target = existing[0]!;
-          return {
-            ...tier,
-            items: tier.items.map((item) =>
-              item.id === target.id
-                ? {
-                    ...item,
-                    qty_per_customer: draftQty,
-                    unit_actual_cost: draftCost,
-                    estimated_gift_value_per_unit: draftValue,
-                    notes: draftNotes || null,
-                  }
-                : item,
-            ),
-          };
-        }
+      const existing = itemsInTierForCatalog(current, activeTierId, pendingCatalog.id);
 
-        const newItem = applyCatalogToPlanItem(
-          pendingCatalog,
-          activeTierId,
-          tier.items.length,
-          {
-            qty_per_customer: draftQty,
-            unit_actual_cost: draftCost,
-            estimated_gift_value_per_unit: draftValue,
-            notes: draftNotes || null,
-          },
-        );
+      if (!separateRow && existing.length > 0) {
+        const target = existing[0]!;
+        return {
+          ...current,
+          tiers: current.tiers.map((row) =>
+            row.id !== activeTierId
+              ? row
+              : {
+                  ...row,
+                  items: row.items.map((item) =>
+                    item.id === target.id
+                      ? {
+                          ...item,
+                          qty_per_customer: draftQty,
+                          unit_actual_cost: draftCost,
+                          estimated_gift_value_per_unit: draftValue,
+                          notes: draftNotes || null,
+                        }
+                      : item,
+                  ),
+                },
+          ),
+        };
+      }
 
-        return { ...tier, items: [...tier.items, newItem] };
-      }),
-    }));
+      const { item: newItem, group: newGroup } = applyCatalogToPlanItem(
+        pendingCatalog,
+        current.plan.id,
+        activeTierId,
+        tier.items.length,
+        {
+          qty_per_customer: draftQty,
+          unit_actual_cost: draftCost,
+          estimated_gift_value_per_unit: draftValue,
+          notes: draftNotes || null,
+        },
+      );
+
+      return {
+        ...current,
+        purchase_groups: [...current.purchase_groups, newGroup],
+        tiers: current.tiers.map((row) =>
+          row.id === activeTierId
+            ? { ...row, items: [...row.items, newItem] }
+            : row,
+        ),
+      };
+    });
 
     setAddDialogOpen(false);
     setDuplicateDialogOpen(false);

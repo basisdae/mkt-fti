@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
@@ -73,6 +73,37 @@ function isPresetUnit(unit: string): boolean {
   );
 }
 
+type DialogSnapshot = {
+  values: GiftCatalogInput;
+  unitPreset: string;
+  customUnit: string;
+  imagePreview: string | null;
+  imageHasFile: boolean;
+  imageRemoveRequested: boolean;
+  imageHasPersisted: boolean;
+};
+
+function buildSnapshot(input: DialogSnapshot): string {
+  return JSON.stringify(input);
+}
+
+function snapshotFromState(
+  values: GiftCatalogInput,
+  unitPreset: string,
+  customUnit: string,
+  image: GiftCatalogImageValue,
+): DialogSnapshot {
+  return {
+    values,
+    unitPreset,
+    customUnit,
+    imagePreview: image.previewUrl,
+    imageHasFile: Boolean(image.file),
+    imageRemoveRequested: image.removeRequested,
+    imageHasPersisted: Boolean(image.hasPersistedImage),
+  };
+}
+
 export function GiftCatalogItemDialog({
   open,
   initial,
@@ -89,13 +120,14 @@ export function GiftCatalogItemDialog({
   const [unitPreset, setUnitPreset] = useState("piece");
   const [customUnit, setCustomUnit] = useState("");
   const [urlError, setUrlError] = useState<string | null>(null);
+  const initialSnapshotRef = useRef("");
 
   useEffect(() => {
     if (!open) return;
     if (initial) {
       const unit = initial.unit || "piece";
       const preset = isPresetUnit(unit) ? unit : GIFT_CATALOG_UNIT_OTHER;
-      setValues({
+      const nextValues = {
         gift_name: initial.gift_name,
         internal_code: initial.internal_code,
         category: initial.category,
@@ -112,18 +144,28 @@ export function GiftCatalogItemDialog({
         status: initial.status,
         reference_url: initial.reference_url,
         operational_status: initial.operational_status ?? "interested",
-      });
+      };
+      const nextImage = createGiftCatalogImageValueFromRow(
+        resolveGiftCatalogImageUrl(initial),
+      );
+      setValues(nextValues);
       setUnitPreset(preset);
       setCustomUnit(preset === GIFT_CATALOG_UNIT_OTHER ? unit : "");
-      setImage(
-        createGiftCatalogImageValueFromRow(resolveGiftCatalogImageUrl(initial)),
+      setImage(nextImage);
+      initialSnapshotRef.current = buildSnapshot(
+        snapshotFromState(nextValues, preset, preset === GIFT_CATALOG_UNIT_OTHER ? unit : "", nextImage),
       );
     } else {
+      const nextImage = createEmptyGiftCatalogImageValue();
       setValues(emptyValues);
       setUnitPreset("piece");
       setCustomUnit("");
-      setImage(createEmptyGiftCatalogImageValue());
+      setImage(nextImage);
+      initialSnapshotRef.current = buildSnapshot(
+        snapshotFromState(emptyValues, "piece", "", nextImage),
+      );
     }
+    setUrlError(null);
   }, [open, initial]);
 
   function resolvedUnit(): string {
@@ -147,12 +189,36 @@ export function GiftCatalogItemDialog({
 
   const busy = saving || uploadingImage;
 
+  function isDirty(): boolean {
+    return (
+      buildSnapshot(snapshotFromState(values, unitPreset, customUnit, image)) !==
+      initialSnapshotRef.current
+    );
+  }
+
+  function handleRequestClose() {
+    if (busy) return;
+    if (isDirty() && !window.confirm(t.discardUnsavedClose)) return;
+    onCancel();
+  }
+
   return (
     <Modal
       open={open}
-      onClose={onCancel}
+      onClose={handleRequestClose}
       title={initial ? t.editCatalogItem : t.addCatalogItem}
       className="max-w-2xl"
+      disableClose={busy}
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="secondary" onClick={handleRequestClose} disabled={busy}>
+            {t.cancel}
+          </Button>
+          <Button disabled={busy} onClick={handleSaveClick}>
+            {busy ? t.saving : t.save}
+          </Button>
+        </div>
+      }
     >
       <div className="space-y-5">
         <GiftCatalogImageUpload
@@ -161,14 +227,14 @@ export function GiftCatalogItemDialog({
           uploading={uploadingImage}
         />
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           <Input
             label={t.giftName}
             value={values.gift_name}
             onChange={(e) =>
               setValues((v) => ({ ...v, gift_name: e.target.value }))
             }
-            className="sm:col-span-2"
+            className="md:col-span-2"
           />
           <Input
             label={t.internalCode}
@@ -214,7 +280,7 @@ export function GiftCatalogItemDialog({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
             {t.sectionPricing}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <Select
               label={t.unit}
               value={unitPreset}
@@ -231,7 +297,7 @@ export function GiftCatalogItemDialog({
                 onChange={(e) => setCustomUnit(e.target.value)}
               />
             ) : (
-              <div className="hidden sm:block" />
+              <div className="hidden md:block" />
             )}
             <div>
               <Input
@@ -274,7 +340,7 @@ export function GiftCatalogItemDialog({
                   supplier_name: e.target.value || null,
                 }))
               }
-              className="sm:col-span-2"
+              className="md:col-span-2"
             />
           </div>
         </div>
@@ -283,7 +349,7 @@ export function GiftCatalogItemDialog({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
             {t.sectionDetails}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <Input
               label={t.referenceUrl}
               value={values.reference_url ?? ""}
@@ -295,16 +361,16 @@ export function GiftCatalogItemDialog({
                   reference_url: e.target.value || null,
                 }));
               }}
-              className="sm:col-span-2"
+              className="md:col-span-2"
             />
-            <p className="sm:col-span-2 -mt-1 text-[11px] text-gray-500">
+            <p className="md:col-span-2 -mt-1 text-[11px] text-gray-500">
               {t.referenceUrlHint}
             </p>
             {urlError ? (
-              <p className="sm:col-span-2 text-xs text-fti-red">{urlError}</p>
+              <p className="md:col-span-2 text-xs text-fti-red">{urlError}</p>
             ) : null}
             {values.reference_url?.trim() ? (
-              <div className="sm:col-span-2">
+              <div className="md:col-span-2">
                 <GiftCatalogReferenceLink url={values.reference_url} />
               </div>
             ) : null}
@@ -315,7 +381,7 @@ export function GiftCatalogItemDialog({
               onChange={(e) =>
                 setValues((v) => ({ ...v, specification: e.target.value }))
               }
-              className="sm:col-span-2"
+              className="md:col-span-2"
             />
             <Textarea
               label={t.description}
@@ -324,7 +390,7 @@ export function GiftCatalogItemDialog({
               onChange={(e) =>
                 setValues((v) => ({ ...v, description: e.target.value }))
               }
-              className="sm:col-span-2"
+              className="md:col-span-2"
             />
             <Textarea
               label={t.notes}
@@ -333,7 +399,7 @@ export function GiftCatalogItemDialog({
               onChange={(e) =>
                 setValues((v) => ({ ...v, notes: e.target.value }))
               }
-              className="sm:col-span-2"
+              className="md:col-span-2"
             />
             <Select
               label={t.recordStatus}
@@ -368,16 +434,7 @@ export function GiftCatalogItemDialog({
         </div>
       </div>
 
-      {error ? <p className="mt-3 text-sm text-fti-red">{error}</p> : null}
-
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="secondary" onClick={onCancel} disabled={busy}>
-          {t.cancel}
-        </Button>
-        <Button disabled={busy} onClick={handleSaveClick}>
-          {busy ? t.saving : t.save}
-        </Button>
-      </div>
+      {error ? <p className="text-sm text-fti-red">{error}</p> : null}
     </Modal>
   );
 }

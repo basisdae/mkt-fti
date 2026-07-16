@@ -16,8 +16,8 @@ import {
   Unlink,
 } from "lucide-react";
 import { GiftPlanCommunicationPreview } from "@/components/gift-plan/GiftPlanCommunicationPreview";
-import { GiftPlanSummaryDashboard } from "@/components/gift-plan/GiftPlanSummaryDashboard";
-import { GiftPlanPurchasingSummary } from "@/components/gift-plan/GiftPlanPurchasingSummary";
+import { GiftPlanEditorSummaryPanel } from "@/components/gift-plan/GiftPlanEditorSummaryPanel";
+import { GiftPlanItemRequirementsTable } from "@/components/gift-plan/GiftPlanItemRequirementsTable";
 import { GiftCatalogPickerModal } from "@/components/gift-plan/GiftCatalogPickerModal";
 import { GiftPlanTierTabs } from "@/components/gift-plan/GiftPlanTierTabs";
 import { GiftPlanTierOverviewPanel } from "@/components/gift-plan/GiftPlanTierOverviewPanel";
@@ -31,12 +31,10 @@ import { Select } from "@/components/forms/Select";
 import { Textarea } from "@/components/forms/Textarea";
 import {
   createPurchaseGroupAction,
-  deletePurchaseGroupAction,
   getGiftPlanEditorBundleAction,
   getGiftPlanCommunicationReportAction,
   getGiftPlanExportBundleAction,
   saveGiftPlanAction,
-  ungroupGiftItemsAction,
 } from "@/lib/actions/gift-plans";
 import {
   downloadCommunicationExport,
@@ -68,6 +66,9 @@ import {
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { generateId } from "@/lib/generate-id";
 import { tierNamesConflict } from "@/lib/gift-plan-calculations";
+import {
+  splitItemsIntoIndividualGroups,
+} from "@/lib/gift-plan-purchase-group-factory";
 import { deriveGiftPlanEditorWarnings } from "@/lib/gift-plan-editor-warnings";
 import {
   deriveTierTabMeta,
@@ -75,6 +76,7 @@ import {
   type TierTabSelection,
 } from "@/lib/gift-plan-tier-navigation";
 import { cn } from "@/lib/utils";
+import { Modal } from "@/components/ui/Modal";
 
 function bundleToPayload(bundle: GiftPlanEditorBundle): GiftPlanEditorPayload {
   const itemsByTier = new Map<string, GiftPlanItemInput[]>();
@@ -157,6 +159,7 @@ function bundleToPayload(bundle: GiftPlanEditorBundle): GiftPlanEditorPayload {
       plan_id: group.plan_id,
       label: group.label,
       notes: group.notes,
+      buffer_percentage: Number(group.buffer_percentage ?? 0),
     })),
     expected_updated_at: bundle.plan.updated_at,
   };
@@ -189,6 +192,7 @@ export function GiftPlanEditorView({
     useState<TierTabSelection>("overview");
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [catalogTierId, setCatalogTierId] = useState<string | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const tierTabs = useMemo(() => deriveTierTabMeta(payload), [payload]);
   const editorWarnings = useMemo(
@@ -361,18 +365,64 @@ export function GiftPlanEditorView({
   }
 
   function removeTierItem(tierId: string, itemId: string) {
-    updatePayload((current) => ({
-      ...current,
-      tiers: current.tiers.map((tier) =>
+    updatePayload((current) => {
+      const removed = current.tiers
+        .flatMap((tier) => tier.items)
+        .find((item) => item.id === itemId);
+      const groupId = removed?.purchase_group_id ?? null;
+
+      const tiers = current.tiers.map((tier) =>
         tier.id !== tierId
           ? tier
           : {
               ...tier,
               items: tier.items.filter((item) => item.id !== itemId),
             },
+      );
+
+      if (!groupId) {
+        return { ...current, tiers };
+      }
+
+      const stillUsed = tiers
+        .flatMap((tier) => tier.items)
+        .some((item) => item.purchase_group_id === groupId);
+
+      return {
+        ...current,
+        tiers,
+        purchase_groups: stillUsed
+          ? current.purchase_groups
+          : current.purchase_groups.filter((group) => group.id !== groupId),
+      };
+    });
+    setSelectedItemIds((current) => current.filter((id) => id !== itemId));
+  }
+
+  function reorderTierItems(tierId: string, orderedIds: string[]) {
+    updatePayload((current) => ({
+      ...current,
+      tiers: current.tiers.map((tier) => {
+        if (tier.id !== tierId) return tier;
+        const byId = new Map(tier.items.map((item) => [item.id, item]));
+        const reordered = orderedIds
+          .map((id) => byId.get(id))
+          .filter((item): item is GiftPlanItemInput => Boolean(item))
+          .map((item, sort) => ({ ...item, sort_order: sort }));
+        return { ...tier, items: reordered };
+      }),
+    }));
+  }
+
+  function updatePurchaseGroupBuffer(groupId: string, bufferPercent: number) {
+    updatePayload((current) => ({
+      ...current,
+      purchase_groups: current.purchase_groups.map((group) =>
+        group.id === groupId
+          ? { ...group, buffer_percentage: bufferPercent }
+          : group,
       ),
     }));
-    setSelectedItemIds((current) => current.filter((id) => id !== itemId));
   }
 
   function moveTierItem(tierId: string, itemId: string, direction: -1 | 1) {
@@ -457,6 +507,7 @@ export function GiftPlanEditorView({
           plan_id: current.plan.id,
           label: selected[0]?.gift_name ?? "",
           notes: "",
+          buffer_percentage: 0,
         },
       ],
       tiers: current.tiers.map((tier) => ({
@@ -472,23 +523,37 @@ export function GiftPlanEditorView({
     setDirty(true);
   }
 
-  async function handleUngroupSelected() {
-    const result = await ungroupGiftItemsAction(selectedItemIds);
-    if (!result.ok) {
-      setGroupError(result.error);
-      return;
-    }
-    updatePayload((current) => ({
-      ...current,
-      tiers: current.tiers.map((tier) => ({
+  function handleUngroupSelected() {
+    const selected = allItems.filter((item) => selectedItemIds.includes(item.id));
+    if (selected.length === 0) return;
+
+    updatePayload((current) => {
+      const { groups, items: splitItems } = splitItemsIntoIndividualGroups(
+        current.plan.id,
+        selected,
+      );
+      const splitById = new Map(splitItems.map((item) => [item.id, item]));
+
+      const tiers = current.tiers.map((tier) => ({
         ...tier,
         items: tier.items.map((item) =>
-          selectedItemIds.includes(item.id)
-            ? { ...item, purchase_group_id: null }
-            : item,
+          splitById.has(item.id) ? splitById.get(item.id)! : item,
         ),
-      })),
-    }));
+      }));
+
+      const stillUsed = new Set(
+        tiers.flatMap((tier) => tier.items.map((item) => item.purchase_group_id)),
+      );
+
+      return {
+        ...current,
+        tiers,
+        purchase_groups: [
+          ...current.purchase_groups.filter((group) => stillUsed.has(group.id)),
+          ...groups,
+        ],
+      };
+    });
     setSelectedItemIds([]);
     setDirty(true);
   }
@@ -725,7 +790,9 @@ export function GiftPlanEditorView({
         />
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-gray-900">{t.tiersAndGifts}</h2>
+          <h2 className="hidden text-sm font-semibold text-gray-900 lg:block">
+            {t.tiersAndGifts}
+          </h2>
           <div className="flex flex-wrap gap-2">
             {activeEditorTier !== "overview" && selectedItemIds.length >= 2 ? (
               <Button
@@ -751,10 +818,18 @@ export function GiftPlanEditorView({
               <Plus className="h-4 w-4" />
               {t.addTier}
             </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => setSummaryOpen(true)}
+            >
+              {t.viewSummary}
+            </Button>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,62fr)_minmax(0,38fr)]">
           <div className="min-w-0 space-y-4">
             {activeEditorTier === "overview" ? (
               <GiftPlanTierOverviewPanel
@@ -930,72 +1005,48 @@ export function GiftPlanEditorView({
                   onMoveItem={(itemId, direction) =>
                     moveTierItem(tier.id, itemId, direction)
                   }
+                  onReorderItems={(orderedIds) =>
+                    reorderTierItems(tier.id, orderedIds)
+                  }
                   onOpenCatalog={() => openCatalogForTier(tier.id)}
                 />
               </article>
             );
           })
             )}
-
-            <GiftPlanSummaryDashboard payload={payload} />
-            <GiftPlanPurchasingSummary payload={payload} />
-
-      {payload.purchase_groups.length > 0 ? (
-        <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900">{t.purchasingGroup}</h3>
-          <ul className="mt-3 space-y-2 text-sm">
-            {payload.purchase_groups.map((group) => (
-              <li
-                key={group.id}
-                className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2"
-              >
-                <span>
-                  {group.label || t.untitledGroup} ·{" "}
-                  {t.itemsLabel(
-                    allItems.filter((item) => item.purchase_group_id === group.id)
-                      .length,
-                  )}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={async () => {
-                    const result = await deletePurchaseGroupAction(group.id);
-                    if (!result.ok) {
-                      setGroupError(result.error);
-                      return;
-                    }
-                    updatePayload((current) => ({
-                      ...current,
-                      purchase_groups: current.purchase_groups.filter(
-                        (row) => row.id !== group.id,
-                      ),
-                      tiers: current.tiers.map((tier) => ({
-                        ...tier,
-                        items: tier.items.map((item) =>
-                          item.purchase_group_id === group.id
-                            ? { ...item, purchase_group_id: null }
-                            : item,
-                        ),
-                      })),
-                    }));
-                  }}
-                >
-                  {t.deleteGroup}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
           </div>
 
-          <CampaignBasketSummary
-            payload={payload}
-            activeTierId={activeEditorTier}
-          />
+          <div className="hidden lg:block">
+            <GiftPlanEditorSummaryPanel
+              payload={payload}
+              activeTierId={activeEditorTier}
+              onSelectTier={setActiveEditorTier}
+            />
+          </div>
         </div>
+
+        <GiftPlanItemRequirementsTable
+          payload={payload}
+          onUpdateBuffer={updatePurchaseGroupBuffer}
+        />
       </section>
+
+      <Modal
+        open={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        title={t.viewSummary}
+        className="max-w-lg lg:hidden"
+      >
+        <GiftPlanEditorSummaryPanel
+          payload={payload}
+          activeTierId={activeEditorTier}
+          onSelectTier={(tierId) => {
+            setActiveEditorTier(tierId);
+            setSummaryOpen(false);
+          }}
+          className="lg:static lg:max-h-none"
+        />
+      </Modal>
 
       <GiftCatalogPickerModal
         open={catalogOpen}

@@ -18,11 +18,14 @@
     "test:gift-plan-editor-warnings": "npx tsx lib/gift-plan-editor-warnings.test.ts",
     "test:gift-plan-auth": "npx tsx lib/gift-plan-auth.test.ts",
     "test:gift-plans": "npm run test:gift-plan && npm run test:gift-plan-communication && npm run test:gift-plan-permissions && npm run test:gift-plan-communication-views && npm run test:gift-catalog-snapshot && npm run test:gift-catalog-db-errors && npm run test:gift-plan-tier-navigation && npm run test:gift-plan-editor-warnings && npm run test:gift-plan-auth",
-    "test:seminar-planner": "npx tsx lib/seminar-planner-permissions.test.ts",
+    "test:seminar-planner": "npx tsx lib/seminar-planner-permissions.test.ts && npx tsx lib/seminar-planner-agenda-warnings.test.ts",
     "setup:gallery-db": "node scripts/apply-product-gallery-schema.mjs",
     "setup:supplier-logos": "node scripts/setup-supplier-logos.mjs"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
     "clsx": "^2.1.1",

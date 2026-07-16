@@ -19,6 +19,7 @@ import {
   formatGiftPercent,
   formatGiftQty,
 } from "@/lib/gift-plan-format";
+import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { formatOperationalStatus } from "@/lib/gift-catalog-format";
 import { buildCommunicationReport } from "@/lib/gift-plan-communication";
 import type { GiftPlanEditorBundle } from "@/types/gift-plan";
@@ -203,31 +204,56 @@ export async function exportGiftPlanWorkbook(input: {
 
   const purchasingSheet = workbook.addWorksheet("Purchasing Summary");
   purchasingSheet.addRow([
-    "Gift Item",
-    "Source",
-    "Reference URL",
-    "Operational Status",
-    "Required Quantity",
-    "Unit Actual Cost",
-    "Total Actual Cost",
-    "Supplier",
-    "Notes",
+    t.purchasingGiftItem,
+    t.specification,
+    t.purchasingSupplier,
+    t.source,
+    t.usedInTiers,
+    t.baseRequiredQty,
+    t.bufferPercentCol,
+    t.bufferQtyCol,
+    t.finalRequiredQty,
+    t.purchasingUnitCost,
+    t.baseActualCostCol,
+    t.bufferCostCol,
+    t.finalPurchaseCostCol,
+    t.purchasingOperationalStatus,
+    t.purchasingReferenceUrl,
+    t.purchasingNotes,
   ]);
   styleHeaderRow(purchasingSheet.getRow(1));
   for (const row of purchasing) {
+    const provisional =
+      row.is_provisional_qty && row.base_required_qty_status !== "ready";
+    const baseQty =
+      row.base_required_qty_status === "pending"
+        ? t.pendingCustomerCount
+        : formatGiftQty(row.base_required_qty);
+    const finalQty = provisional
+      ? `${formatGiftQty(row.final_required_qty)} (${t.provisionalQtyLabel})`
+      : formatGiftQty(row.final_required_qty);
+
     const dataRow = purchasingSheet.addRow([
       row.gift_name,
-      GIFT_ITEM_SOURCE_LABELS[row.source as keyof typeof GIFT_ITEM_SOURCE_LABELS] ?? row.source,
-      row.reference_url ?? "",
-      formatOperationalStatus(row.operational_status),
-      row.total_required_qty,
-      row.unit_actual_cost === "mixed" ? "Mixed" : row.unit_actual_cost,
-      row.total_actual_cost,
+      row.specification ?? "",
       row.supplier ?? "",
+      GIFT_ITEM_SOURCE_LABELS[row.source as keyof typeof GIFT_ITEM_SOURCE_LABELS] ??
+        row.source,
+      row.tier_names.join(", "),
+      baseQty,
+      formatGiftPercent(row.buffer_percentage),
+      formatGiftQty(row.buffer_qty),
+      finalQty,
+      row.unit_actual_cost === "mixed" ? t.purchasingMixed : row.unit_actual_cost,
+      row.base_actual_cost,
+      row.buffer_actual_cost,
+      row.final_purchase_cost,
+      formatOperationalStatus(row.operational_status),
+      row.reference_url ?? "",
       row.notes ?? "",
     ]);
     if (row.reference_url?.trim()) {
-      const urlCell = dataRow.getCell(3);
+      const urlCell = dataRow.getCell(15);
       urlCell.value = {
         text: row.reference_url,
         hyperlink: row.reference_url,

@@ -16,14 +16,16 @@ const catalog: GiftCatalogRow = {
   specification: "Ceramic 350ml",
   notes: "Logo print included",
   image_url: null,
-  status: "active",
+  image_path: null,
+  reference_url: null,
+  operational_status: "interested",
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
   created_by_email: null,
   updated_by_email: null,
 };
 
-const item = applyCatalogToPlanItem(catalog, "tier-1", 0, {
+const { item, group } = applyCatalogToPlanItem(catalog, "plan-1", "tier-1", 0, {
   qty_per_customer: 2,
 });
 
@@ -36,5 +38,8 @@ assert.equal(item.estimated_gift_value_per_unit, 250);
 assert.equal(item.supplier, "Acme Gifts");
 assert.equal(item.specification, "Ceramic 350ml");
 assert.equal(item.notes, "Logo print included");
+assert.ok(item.purchase_group_id);
+assert.equal(item.purchase_group_id, group.id);
+assert.equal(group.buffer_percentage, 0);
 
 console.log("gift-catalog-snapshot.test.ts: all assertions passed");

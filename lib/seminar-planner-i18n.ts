@@ -24,6 +24,11 @@ export const SEMINAR_PLANNER_COPY = {
   // Event card
   statusArchived: "เก็บถาวร",
   open: "เปิด",
+  openEvent: "เปิดงาน",
+  editEvent: "แก้ไขข้อมูล",
+  deleteEvent: "ลบ",
+  deleteEventConfirm: (title: string) =>
+    `ลบงาน "${title}" และ Agenda ทั้งหมดหรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
   duplicate: "ทำสำเนา",
   archive: "เก็บถาวร",
   restore: "กู้คืน",
@@ -114,6 +119,18 @@ export const SEMINAR_PLANNER_COPY = {
   agendaEarliestStart: "เริ่มเร็วสุด",
   agendaLatestEnd: "จบช้าสุด",
   agendaSessionCount: "จำนวนเซสชัน",
+  agendaIncompleteCount: "ข้อมูลยังไม่ครบ",
+  agendaOverlapCount: "เวลาซ้อนกัน",
+
+  // Event detail header
+  eventDetailHeader: "รายละเอียดงาน",
+  editEventData: "แก้ไขข้อมูล",
+  eventNotFoundTitle: "ไม่พบงานสัมมนา",
+  eventNotFoundBody:
+    "ไม่พบงานตามรหัสที่ระบุ อาจถูกลบหรือคุณไม่มีสิทธิ์เข้าถึง",
+  backToEventList: "กลับหน้ารวมงาน",
+  filterByCategory: "กรองตามหมวด",
+  filterAllCategories: "ทุกหมวด",
 
   // Bullets editor
   detailBullets: "รายละเอียด",
@@ -131,6 +148,10 @@ export const SEMINAR_PLANNER_COPY = {
     `เซสชันที่ ${index + 1}: ยังไม่ระบุชื่อ`,
   warningMissingTime: (title: string) =>
     `เซสชัน "${title}": ยังไม่ระบุเวลาเริ่มหรือสิ้นสุด`,
+  warningMissingSpeaker: (title: string) =>
+    `เซสชัน "${title}": ยังไม่ระบุวิทยากร`,
+  warningMissingOwner: (title: string) =>
+    `เซสชัน "${title}": ยังไม่ระบุผู้รับผิดชอบ`,
   warningInvalidDuration: (title: string) =>
     `เซสชัน "${title}": ระยะเวลาไม่ถูกต้อง`,
   warningTimeOverlap: (titleA: string, titleB: string) =>

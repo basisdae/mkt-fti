@@ -41,7 +41,9 @@ assert(!canViewSeminarPlanner(mktHqGeneric), "generic mkt_hq cannot view");
 assert(!canEditSeminarPlanner(mktHqGeneric), "generic mkt_hq cannot edit");
 assert(!canViewSeminarPlanner(rnd), "rnd cannot view");
 assert(canAccessPath(admin, "/seminars"), "admin path ok");
+assert(canAccessPath(admin, "/seminars/00000000-0000-0000-0000-000000000001"), "admin detail path ok");
 assert(canAccessPath(mktSupport, "/seminars/library"), "support library path ok");
 assert(!canAccessPath(rnd, "/seminars"), "rnd blocked from /seminars");
+assert(!canAccessPath(rnd, "/seminars/00000000-0000-0000-0000-000000000001"), "rnd blocked from detail");
 
 console.log("seminar-planner-permissions: all assertions passed");
