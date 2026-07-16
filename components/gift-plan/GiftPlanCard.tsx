@@ -4,7 +4,6 @@ import {
   Archive,
   ArchiveRestore,
   Copy,
-  FolderOpen,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -28,6 +27,7 @@ interface GiftPlanCardProps {
   menuOpen: boolean;
   onToggleMenu: () => void;
   onOpen: () => void;
+  onEditBasics: () => void;
   onDuplicate: () => void;
   onRename: () => void;
   onArchive: () => void;
@@ -44,6 +44,7 @@ export function GiftPlanCard({
   menuOpen,
   onToggleMenu,
   onOpen,
+  onEditBasics,
   onDuplicate,
   onRename,
   onArchive,
@@ -60,19 +61,18 @@ export function GiftPlanCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm shadow-gray-200/40 transition-all",
-        "hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md",
+        "group relative flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-sm shadow-gray-200/40",
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-gray-900">
+            <h3 className="line-clamp-2 text-sm font-semibold text-gray-900">
               {plan.name}
             </h3>
             <span
               className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
                 archived
                   ? "bg-gray-100 text-gray-500"
                   : draft
@@ -87,19 +87,16 @@ export function GiftPlanCard({
             {plan.campaign_year}
             {plan.owner ? ` · ${plan.owner}` : ""}
           </p>
-        </button>
+        </div>
 
         {(canEdit || canExport) && (
-          <div className="relative">
+          <div className="relative shrink-0">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={(event) => {
-                event.stopPropagation();
-                onToggleMenu();
-              }}
+              onClick={onToggleMenu}
               aria-label={t.planActions}
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -109,13 +106,6 @@ export function GiftPlanCard({
                 className="absolute right-0 top-9 z-20 min-w-[10rem] rounded-xl border border-gray-100 bg-white py-1 shadow-lg"
                 onClick={(event) => event.stopPropagation()}
               >
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                  onClick={onOpen}
-                >
-                  <FolderOpen className="h-4 w-4" /> {t.open}
-                </button>
                 {canExport ? (
                   <button
                     type="button"
@@ -137,7 +127,7 @@ export function GiftPlanCard({
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-                      onClick={onRename}
+                    onClick={onRename}
                     >
                       <Pencil className="h-4 w-4" /> {t.rename}
                     </button>
@@ -220,6 +210,22 @@ export function GiftPlanCard({
       <p className="mt-3 text-[11px] text-gray-400">
         {t.updated} {formatDate(plan.updated_at)}
       </p>
+
+      <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4 sm:flex-row">
+        <Button type="button" className="w-full min-w-0 sm:flex-1" onClick={onOpen}>
+          {t.openPlan}
+        </Button>
+        {canEdit ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full min-w-0 sm:flex-1"
+            onClick={onEditBasics}
+          >
+            {t.editPlanBasics}
+          </Button>
+        ) : null}
+      </div>
     </article>
   );
 }

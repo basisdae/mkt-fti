@@ -57,7 +57,16 @@ export const SIMULATOR_COPY = {
   scenarioTitle: "แผนจำลองหลายสินค้า",
   scenarioEmptyTitle: "ยังไม่มีสินค้าในแผนจำลอง",
   scenarioEmptyDescription:
-    'กรอกข้อมูลด้านบน แล้วกด "เพิ่มลงในแผนจำลอง" เพื่อสร้างแผนยอดขายหลายรายการ',
+    'กรอกข้อมูลด้านซ้าย แล้วกด "เพิ่มลงในแผนจำลอง"',
+
+  saveProject: "Save Project",
+  loadPlan: "Load Plan",
+  resetPlan: "Reset",
+  exportSalesPlan: "Export Sales Plan",
+  planNameLabel: "ชื่อแผน / แคมเปญ",
+  planNamePlaceholder: "เช่น Q3 Dealer Push",
+  resetPlanConfirm: "ล้างรายการในแผนจำลองทั้งหมด?",
+  exportSalesPlanFailed: "ไม่สามารถส่งออกแผนได้ กรุณาลองอีกครั้ง",
 
   tableProduct: "สินค้า",
   tableMoq: "ขั้นต่ำการสั่งซื้อ (MOQ)",

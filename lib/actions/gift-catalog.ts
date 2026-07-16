@@ -10,6 +10,7 @@ import {
   isValidReferenceUrl,
   normalizeReferenceUrl,
 } from "@/lib/gift-catalog-url";
+import { mapGiftCatalogDbError } from "@/lib/gift-catalog-db-errors";
 import { getAuthenticatedSupabaseForActions } from "@/lib/supabase/authenticated-server";
 import type { GiftCatalogInput, GiftCatalogRow } from "@/types/gift-catalog";
 import type { AppUser } from "@/types/auth";
@@ -21,6 +22,10 @@ type ActionResult<T> =
 
 function fail<T>(error: string): ActionResult<T> {
   return { ok: false, error };
+}
+
+function failDb<T>(context: string, detail: string): ActionResult<T> {
+  return fail(mapGiftCatalogDbError(context, detail));
 }
 
 async function requireView(): Promise<
@@ -98,7 +103,7 @@ export async function listGiftCatalogAction(options?: {
   }
 
   const { data, error } = await query;
-  if (error) return fail(error.message);
+  if (error) return failDb("listGiftCatalog", error.message);
   return { ok: true, data: (data ?? []).map(mapRow) };
 }
 
@@ -129,7 +134,7 @@ export async function saveGiftCatalogAction(input: {
         updated_at: now,
       })
       .eq("id", input.id);
-    if (error) return fail(error.message);
+    if (error) return failDb("saveGiftCatalog.update", error.message);
     return { ok: true, data: { id: input.id } };
   }
 
@@ -145,7 +150,10 @@ export async function saveGiftCatalogAction(input: {
     .select("id")
     .single();
 
-  if (error || !data) return fail(error?.message ?? t.catalogCreateFailed);
+  if (error) {
+    return failDb("saveGiftCatalog.insert", error.message);
+  }
+  if (!data) return fail(t.catalogCreateFailed);
   return { ok: true, data: { id: data.id as string } };
 }
 
@@ -167,7 +175,7 @@ export async function updateGiftCatalogImageAction(input: {
     })
     .eq("id", input.id);
 
-  if (error) return fail(error.message);
+  if (error) return failDb("updateGiftCatalogImage", error.message);
   return { ok: true, data: null };
 }
 
@@ -183,7 +191,8 @@ export async function getGiftCatalogImagePathAction(
     .eq("id", id)
     .maybeSingle();
 
-  if (error || !data) return fail(t.catalogNotFound);
+  if (error) return failDb("getGiftCatalogImagePath", error.message);
+  if (!data) return fail(t.catalogNotFound);
   return {
     ok: true,
     data: { imagePath: (data.image_path as string | null) ?? null },
@@ -202,7 +211,8 @@ export async function duplicateGiftCatalogAction(
     .eq("id", id)
     .maybeSingle();
 
-  if (loadError || !row) return fail(t.catalogNotFound);
+  if (loadError) return failDb("duplicateGiftCatalog.load", loadError.message);
+  if (!row) return fail(t.catalogNotFound);
 
   const source = mapRow(row);
   return saveGiftCatalogAction({
@@ -243,7 +253,7 @@ export async function setGiftCatalogStatusAction(
     })
     .eq("id", id);
 
-  if (error) return fail(error.message);
+  if (error) return failDb("setGiftCatalogStatus", error.message);
   return { ok: true, data: null };
 }
 
@@ -270,7 +280,7 @@ export async function deleteGiftCatalogAction(
     if (error.code === "23503") {
       return fail(t.catalogInUseArchive);
     }
-    return fail(error.message);
+    return failDb("deleteGiftCatalog", error.message);
   }
   return { ok: true, data: { imagePath } };
 }
@@ -286,6 +296,6 @@ export async function isGiftCatalogInUseAction(
     .select("id", { count: "exact", head: true })
     .eq("gift_catalog_id", id);
 
-  if (error) return fail(error.message);
+  if (error) return failDb("isGiftCatalogInUse", error.message);
   return { ok: true, data: (count ?? 0) > 0 };
 }

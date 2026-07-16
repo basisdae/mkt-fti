@@ -1,7 +1,9 @@
 import {
   calcGiftCampaign,
   calcGiftItem,
+  calcTierBudget,
   toCampaignCalcInputFromEditor,
+  toTierBudgetCalcInput,
 } from "@/lib/gift-plan-calculations";
 import type { GiftPlanEditorPayload } from "@/types/gift-plan";
 
@@ -37,7 +39,6 @@ export function deriveTierTabMeta(
     const warnings: TierWarningKind[] = [];
     const calcTier = campaign.tiers.find((row) => row.id === tier.id);
 
-    if (tier.customer_count <= 0) warnings.push("missing_customers");
     if (tier.items.length === 0) warnings.push("no_gifts");
 
     for (const item of tier.items) {
@@ -47,13 +48,8 @@ export function deriveTierTabMeta(
       }
     }
 
-    if (
-      payload.plan.max_actual_cost_budget != null &&
-      calcTier &&
-      calcTier.total_actual_cost > Number(payload.plan.max_actual_cost_budget)
-    ) {
-      warnings.push("over_budget");
-    }
+    const tierBudget = calcTierBudget(toTierBudgetCalcInput(tier));
+    if (tierBudget.is_over_budget) warnings.push("over_budget");
 
     if (warnings.length === 0) warnings.push("complete");
 

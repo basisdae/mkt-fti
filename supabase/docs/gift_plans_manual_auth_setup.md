@@ -66,7 +66,7 @@ Password changes for `app_users` are managed separately; always keep **Authentic
 
 ## Gift Catalog cover images
 
-Run `20260716160000_gift_catalog_image_path.sql` in SQL Editor to add `image_path`.
+Run `20260717170000_gift_catalog_image_path_fix.sql` in SQL Editor to add `image_path` and refresh the API schema cache.
 
 Uploads use existing bucket **`product-images`** (same as Product/Supplier) with path prefix:
 

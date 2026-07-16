@@ -8,6 +8,7 @@ import {
   Search,
 } from "lucide-react";
 import { DeleteGiftPlanDialog } from "@/components/gift-plan/DeleteGiftPlanDialog";
+import { EditGiftPlanBasicsDialog } from "@/components/gift-plan/EditGiftPlanBasicsDialog";
 import { GiftPlanCard } from "@/components/gift-plan/GiftPlanCard";
 import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { NewGiftPlanDialog } from "@/components/gift-plan/NewGiftPlanDialog";
@@ -19,10 +20,12 @@ import {
   createGiftPlanAction,
   deleteGiftPlanAction,
   duplicateGiftPlanAction,
+  getGiftPlanBasicsAction,
   getGiftPlanExportBundleAction,
   listGiftPlanSummariesAction,
   renameGiftPlanAction,
   setGiftPlanArchivedAction,
+  updateGiftPlanBasicsAction,
 } from "@/lib/actions/gift-plans";
 import {
   canEditGiftPlans,
@@ -30,7 +33,7 @@ import {
 } from "@/lib/auth/permissions";
 import { downloadGiftPlanExport, exportGiftPlanWorkbook } from "@/lib/gift-plan-export";
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
-import type { GiftPlanListSummary } from "@/types/gift-plan";
+import type { GiftPlanBasicsForm, GiftPlanListSummary } from "@/types/gift-plan";
 import { cn } from "@/lib/utils";
 
 type TabKey = "active" | "draft" | "archived";
@@ -61,6 +64,12 @@ export function GiftPlansHomeView() {
   const [creating, setCreating] = useState(false);
   const [renameTarget, setRenameTarget] = useState<GiftPlanListSummary | null>(null);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [editBasicsPlanId, setEditBasicsPlanId] = useState<string | null>(null);
+  const [editBasicsValues, setEditBasicsValues] =
+    useState<GiftPlanBasicsForm | null>(null);
+  const [loadingBasics, setLoadingBasics] = useState(false);
+  const [editBasicsError, setEditBasicsError] = useState<string | null>(null);
+  const [savingBasics, setSavingBasics] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<GiftPlanListSummary | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -127,6 +136,21 @@ export function GiftPlansHomeView() {
     }
     setNewOpen(false);
     router.push(`/gift-plans/${result.data.id}`);
+  }
+
+  async function openEditBasics(plan: GiftPlanListSummary) {
+    setEditBasicsPlanId(plan.id);
+    setEditBasicsValues(null);
+    setEditBasicsError(null);
+    setLoadingBasics(true);
+    const result = await getGiftPlanBasicsAction(plan.id);
+    setLoadingBasics(false);
+    if (!result.ok) {
+      setEditBasicsError(result.error);
+      setEditBasicsPlanId(null);
+      return;
+    }
+    setEditBasicsValues(result.data);
   }
 
   async function handleExport(plan: GiftPlanListSummary) {
@@ -232,6 +256,7 @@ export function GiftPlansHomeView() {
                 setMenuId((current) => (current === plan.id ? null : plan.id))
               }
               onOpen={() => router.push(`/gift-plans/${plan.id}`)}
+              onEditBasics={() => void openEditBasics(plan)}
               onDuplicate={async () => {
                 const result = await duplicateGiftPlanAction(plan.id);
                 if (!result.ok) {
@@ -282,6 +307,33 @@ export function GiftPlansHomeView() {
             return;
           }
           setRenameTarget(null);
+          void refresh();
+        }}
+      />
+
+      <EditGiftPlanBasicsDialog
+        open={Boolean(editBasicsPlanId)}
+        planId={editBasicsPlanId}
+        initialValues={editBasicsValues}
+        loading={loadingBasics}
+        saving={savingBasics}
+        error={editBasicsError}
+        onCancel={() => {
+          setEditBasicsPlanId(null);
+          setEditBasicsValues(null);
+          setEditBasicsError(null);
+        }}
+        onSave={async (values) => {
+          setSavingBasics(true);
+          setEditBasicsError(null);
+          const result = await updateGiftPlanBasicsAction(values);
+          setSavingBasics(false);
+          if (!result.ok) {
+            setEditBasicsError(result.error);
+            return;
+          }
+          setEditBasicsPlanId(null);
+          setEditBasicsValues(null);
           void refresh();
         }}
       />

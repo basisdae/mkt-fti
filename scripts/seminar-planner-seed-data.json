@@ -1,0 +1,1699 @@
+{
+  "source": "Seminar Planner-1.xlsx",
+  "event": {
+    "title": "FTI CONNECT 2026",
+    "event_date": "2026-09-07",
+    "primary_target_group": "Dealer ทั่วไป",
+    "primary_purpose": "อัปเดตทิศทาง FTI",
+    "notes": ""
+  },
+  "master": {
+    "target_groups": [
+      {
+        "name": "29 สาขา FTI",
+        "description": "ทีมหน้าร้าน/สาขาภายในทั้งหมด ใช้เพื่อสื่อสารทิศทางเดียวกัน"
+      },
+      {
+        "name": "VIP Dealer",
+        "description": "ตัวแทนจำหน่ายยอดสูง/มีอิทธิพล ควรเน้นความสัมพันธ์และสิทธิพิเศษ"
+      },
+      {
+        "name": "ลูกค้ารายใหญ่ที่ยังไม่เป็นตัวแทน",
+        "description": "ลูกค้าซื้อเยอะ แต่ยังไม่อยู่ในระบบ Dealer ใช้เพื่อปูทาง Partnership"
+      },
+      {
+        "name": "Dealer ทั่วไป",
+        "description": "กลุ่มตัวแทนกว้าง เน้นความเข้าใจระบบและโอกาสขาย"
+      },
+      {
+        "name": "ทีมขายภายใน",
+        "description": "Sale/Branch/Key Account ที่ต้องนำสารไปเล่าต่อ"
+      },
+      {
+        "name": "ผู้บริหารและหัวหน้าสาขา",
+        "description": "กลุ่มตัดสินใจ/วางแผน ให้เน้น Strategy และ Commitment"
+      },
+      {
+        "name": "Supplier Strategic",
+        "description": "Supplier ที่อยากให้ร่วมพัฒนา Product/Support"
+      },
+      {
+        "name": "Mixed Audience",
+        "description": "ใช้เมื่องานมีหลายกลุ่มรวมกัน ต้องบาลานซ์ความลึกของเนื้อหา"
+      }
+    ],
+    "purposes": [
+      {
+        "name": "อัปเดตทิศทาง FTI",
+        "description": "สร้างความมั่นใจและภาพเดียวกันก่อนเริ่มปีใหม่"
+      },
+      {
+        "name": "เตรียมความพร้อมระบบ Membership",
+        "description": "ให้ผู้ร่วมงานเข้าใจแต้ม Tier และเริ่มวางแผนการซื้อ"
+      },
+      {
+        "name": "ประชาสัมพันธ์ Function Flow",
+        "description": "สื่อสารระบบ Tracking/Feature ที่จะทยอยเปิดใช้ก่อนเต็มรูปแบบ"
+      },
+      {
+        "name": "เปิดตัว/ทดลองสินค้าใหม่",
+        "description": "ให้จับจริง เห็นจริง วางแผนขายได้ก่อนเปิดขาย"
+      },
+      {
+        "name": "ดันสินค้า Hidden Gems",
+        "description": "หยิบสินค้าดีที่ถูกมองข้ามกลับมาสร้างยอด"
+      },
+      {
+        "name": "รับฟังเสียงสาขาและ VIP",
+        "description": "เก็บ Insight ปัญหา ความต้องการ และข้อเสนอแนะ"
+      },
+      {
+        "name": "สร้าง Relationship",
+        "description": "ทำให้สาขา/VIP รู้สึกเป็นคนวงในและใกล้ผู้บริหาร"
+      },
+      {
+        "name": "ยกระดับช่องทางการตลาด",
+        "description": "สื่อสาร Asset Drive Center, Content, Campaign Support"
+      },
+      {
+        "name": "สร้าง Action Plan หลังงาน",
+        "description": "ให้ทุกฝ่ายมีสิ่งที่ต้องกลับไปทำต่ออย่างชัดเจน"
+      }
+    ],
+    "speakers": [
+      {
+        "name": "CEO",
+        "role": "Vision, Direction, Deep Talk, Relationship"
+      },
+      {
+        "name": "ผู้บริหารฝ่ายการตลาด",
+        "role": "Brand, Campaign, Membership, Asset Drive, Agenda หลัก"
+      },
+      {
+        "name": "จัดซื้อ",
+        "role": "Product Roadmap, Supplier, Pricing Logic, New Product Plan"
+      },
+      {
+        "name": "R&D",
+        "role": "Demo, Test, Technical Explanation, Product Validation"
+      },
+      {
+        "name": "Product Manager",
+        "role": "Hidden Gems, Product Battle, Deep Dive"
+      },
+      {
+        "name": "Sale Manager",
+        "role": "How to Sell, Dealer/Branch Strategy"
+      },
+      {
+        "name": "Branch Manager",
+        "role": "Best Practice Sharing, Branch Reality"
+      },
+      {
+        "name": "IT / Digital Team",
+        "role": "Function Flow, Tracking, Dashboard, Asset Center"
+      },
+      {
+        "name": "Service Team",
+        "role": "After-sales, Installation, Common Problems"
+      },
+      {
+        "name": "VIP Dealer Guest",
+        "role": "Success Story, Dealer Voice"
+      },
+      {
+        "name": "Supplier Guest",
+        "role": "ใช้เฉพาะ Demo/Tech ไม่ให้พูดยาวขายตัวเอง"
+      },
+      {
+        "name": "Moderator",
+        "role": "คุมเวที Panel, Q&A, Deep Talk"
+      },
+      {
+        "name": "ทีม Marketing Content",
+        "role": "Asset Drive, Content Template, Social Media"
+      },
+      {
+        "name": "HR / Training",
+        "role": "Ice Breaking, Group Activity, Workshop Support"
+      }
+    ],
+    "session_formats": [
+      {
+        "name": "Keynote",
+        "description": ""
+      },
+      {
+        "name": "Panel",
+        "description": ""
+      },
+      {
+        "name": "Workshop",
+        "description": ""
+      },
+      {
+        "name": "Demo / Playground",
+        "description": ""
+      },
+      {
+        "name": "Round Table",
+        "description": ""
+      },
+      {
+        "name": "Clinic",
+        "description": ""
+      },
+      {
+        "name": "Exhibition Zone",
+        "description": ""
+      },
+      {
+        "name": "Award",
+        "description": ""
+      },
+      {
+        "name": "Networking",
+        "description": ""
+      },
+      {
+        "name": "Break",
+        "description": ""
+      },
+      {
+        "name": "Lunch / Dinner",
+        "description": ""
+      },
+      {
+        "name": "Q&A",
+        "description": ""
+      },
+      {
+        "name": "Activity / Game",
+        "description": ""
+      }
+    ],
+    "session_statuses": [
+      {
+        "name": "Idea",
+        "description": ""
+      },
+      {
+        "name": "Draft",
+        "description": ""
+      },
+      {
+        "name": "Need Detail",
+        "description": ""
+      },
+      {
+        "name": "Confirmed",
+        "description": ""
+      },
+      {
+        "name": "Assigned",
+        "description": ""
+      },
+      {
+        "name": "Ready",
+        "description": ""
+      },
+      {
+        "name": "Cancel / Hold",
+        "description": ""
+      }
+    ],
+    "session_categories": [
+      {
+        "name": "Corporate Update",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 1
+      },
+      {
+        "name": "Product",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 2
+      },
+      {
+        "name": "Membership & Digital",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 3
+      },
+      {
+        "name": "Sales & Marketing",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 4
+      },
+      {
+        "name": "Branch Sharing",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 5
+      },
+      {
+        "name": "Voice of Customer",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 6
+      },
+      {
+        "name": "Interactive",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 7
+      },
+      {
+        "name": "Recognition",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 8
+      },
+      {
+        "name": "Entertainment",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 9
+      },
+      {
+        "name": "Logistics",
+        "description": "",
+        "color_hint": "",
+        "sort_order": 10
+      }
+    ],
+    "session_library": [
+      {
+        "category": "Corporate Update",
+        "title": "Opening & Welcome",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 10,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "เปิดงาน สร้างบรรยากาศ และบอกเป้าหมายของวัน"
+        ],
+        "objectives_bullets": [
+          "ให้ทุกคนเข้าใจว่างานนี้ไม่ใช่แค่ฟังอบรม แต่เป็นการร่วมวางทิศทาง"
+        ],
+        "outcomes_bullets": [
+          "ผู้ร่วมงานพร้อมเข้าสู่เนื้อหาและเข้าใจภาพรวม"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 1
+      },
+      {
+        "category": "Corporate Update",
+        "title": "CEO Vision Update",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "CEO",
+        "detail_bullets": [
+          "ผู้บริหารเล่าทิศทาง FTI ช่วงครบรอบ 30 ปี และการเปลี่ยนแปลงปีหน้า"
+        ],
+        "objectives_bullets": [
+          "สร้างความเชื่อมั่นว่า FTI ไม่ได้หยุดนิ่งและพร้อมสนับสนุนทุกช่องทาง"
+        ],
+        "outcomes_bullets": [
+          "ความเชื่อมั่น/คำถามเชิงกลยุทธ์จากสาขาและ VIP"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 2
+      },
+      {
+        "category": "Corporate Update",
+        "title": "FTI 30 Years Journey",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "เล่าเส้นทาง 30 ปีแบบกระชับ เชื่อมอดีตกับอนาคต"
+        ],
+        "objectives_bullets": [
+          "ทำให้คนในและ VIP รู้สึกเป็นส่วนหนึ่งของการเดินทาง"
+        ],
+        "outcomes_bullets": [
+          "ความภูมิใจร่วมและภาพจำแบรนด์ที่แข็งแรง"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 3
+      },
+      {
+        "category": "Corporate Update",
+        "title": "Business Direction 2027",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "CEO",
+        "detail_bullets": [
+          "สรุปทิศทางธุรกิจ สินค้า ช่องทาง และระบบสนับสนุนปีหน้า"
+        ],
+        "objectives_bullets": [
+          "ให้สาขาและ VIP เตรียมตัวล่วงหน้า"
+        ],
+        "outcomes_bullets": [
+          "Commitment ต่อแผนปีหน้าและคำถามสำคัญ"
+        ],
+        "target_groups": [
+          "ผู้บริหารและหัวหน้าสาขา"
+        ],
+        "active": true,
+        "sort_order": 4
+      },
+      {
+        "category": "Corporate Update",
+        "title": "Market Outlook & Water Trends",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "Sale Manager",
+        "detail_bullets": [
+          "ภาพรวมตลาดเครื่องกรองน้ำ พฤติกรรมลูกค้า และโอกาสใหม่"
+        ],
+        "objectives_bullets": [
+          "ชี้ให้เห็นว่าตลาดเปลี่ยน และ FTI เตรียมเครื่องมือรองรับ"
+        ],
+        "outcomes_bullets": [
+          "ประเด็นตลาดที่สาขาเห็นตรง/เห็นต่าง"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 5
+      },
+      {
+        "category": "Corporate Update",
+        "title": "China Watertech Recap",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "จัดซื้อ",
+        "detail_bullets": [
+          "สรุปสิ่งที่ได้จากงานจีน เทรนด์สินค้าใหม่ และแนวทางคัดเลือก"
+        ],
+        "objectives_bullets": [
+          "ให้เห็นว่า FTI คัดสินค้าแบบมีระบบ ไม่ได้เลือกตามกระแส"
+        ],
+        "outcomes_bullets": [
+          "ความสนใจต่อกลุ่มสินค้าใหม่"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 6
+      },
+      {
+        "category": "Product",
+        "title": "Hidden Gems Collection",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 30,
+        "recommended_speaker": "Product Manager",
+        "detail_bullets": [
+          "แนะนำสินค้าเก่าที่ดีแต่ไม่ค่อยถูกขาย พร้อมเหตุผลว่าทำไมควรหยิบมาขาย"
+        ],
+        "objectives_bullets": [
+          "ปลุกสินค้า GP ดี/ปัญหาน้อย/ขายซ้ำได้ ให้กลับมาอยู่ในสายตา"
+        ],
+        "outcomes_bullets": [
+          "รายชื่อสินค้าที่สาขาอยากทดลองขาย"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 7
+      },
+      {
+        "category": "Product",
+        "title": "New Product Showcase",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 45,
+        "recommended_speaker": "Product Manager",
+        "detail_bullets": [
+          "เปิดตัวสินค้าใหม่แบบจับจริง เห็นจริง ไม่ใช่ดูสไลด์อย่างเดียว"
+        ],
+        "objectives_bullets": [
+          "ทำให้ผู้ร่วมงานจำจุดขายและข้อจำกัดได้จริง"
+        ],
+        "outcomes_bullets": [
+          "Feedback ต่อสินค้าใหม่และการตั้งราคา/แพ็กเกจ"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 8
+      },
+      {
+        "category": "Product",
+        "title": "Product Demo Live",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 20,
+        "recommended_speaker": "R&D",
+        "detail_bullets": [
+          "ทดลองติดตั้ง เปิดเครื่อง แกะชิ้นส่วน หรือทดสอบการใช้งานจริง"
+        ],
+        "objectives_bullets": [
+          "เปลี่ยนความเข้าใจจากฟังเป็นประสบการณ์"
+        ],
+        "outcomes_bullets": [
+          "คำถามเทคนิค ปัญหาหน้างาน และจุดที่ต้องทำคู่มือเพิ่ม"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 9
+      },
+      {
+        "category": "Product",
+        "title": "Product Battle",
+        "recommended_format": "Panel",
+        "recommended_minutes": 20,
+        "recommended_speaker": "Product Manager",
+        "detail_bullets": [
+          "เทียบสินค้า 2-3 รุ่นแบบพูดข้อดีข้อเสียจริง"
+        ],
+        "objectives_bullets": [
+          "ช่วยให้สาขาเลือกสินค้าให้เหมาะกับลูกค้า ไม่ขายผิดตัว"
+        ],
+        "outcomes_bullets": [
+          "Use case สำหรับแต่ละรุ่นและคำถามคาใจ"
+        ],
+        "target_groups": [
+          "ทีมขายภายใน"
+        ],
+        "active": true,
+        "sort_order": 10
+      },
+      {
+        "category": "Product",
+        "title": "Product Deep Dive",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 30,
+        "recommended_speaker": "R&D",
+        "detail_bullets": [
+          "เจาะสินค้าเด่นแบบลึกขึ้น เช่น โครงสร้าง ไส้กรอง จุดต่าง และข้อควรระวัง"
+        ],
+        "objectives_bullets": [
+          "สร้างความเข้าใจที่ใช้ตอบลูกค้าหน้างานได้"
+        ],
+        "outcomes_bullets": [
+          "ประเด็นที่ต้องทำเป็น FAQ หรือ Asset เพิ่ม"
+        ],
+        "target_groups": [
+          "ทีมขายภายใน"
+        ],
+        "active": true,
+        "sort_order": 11
+      },
+      {
+        "category": "Product",
+        "title": "Future Product Preview",
+        "recommended_format": "Exhibition Zone",
+        "recommended_minutes": 30,
+        "recommended_speaker": "จัดซื้อ",
+        "detail_bullets": [
+          "โชว์ Prototype / Demo / Concept ที่ยังไม่ขายจริง"
+        ],
+        "objectives_bullets": [
+          "ทำให้ VIP และสาขารู้สึกเป็นวงใน และเก็บเสียงก่อนสั่งจริง"
+        ],
+        "outcomes_bullets": [
+          "Feedback ก่อนเปิดขายจริง ลดความเสี่ยงการสั่งผิด"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 12
+      },
+      {
+        "category": "Product",
+        "title": "Product Roadmap 2027",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "จัดซื้อ",
+        "detail_bullets": [
+          "เล่ากลุ่มสินค้าที่จะเน้นปีหน้า และสินค้าที่ควรวางแผนล่วงหน้า"
+        ],
+        "objectives_bullets": [
+          "ให้สาขา/Dealer เตรียมพื้นที่ขายและงบซื้อ"
+        ],
+        "outcomes_bullets": [
+          "ความต้องการ pre-order หรือ demo เพิ่ม"
+        ],
+        "target_groups": [
+          "ผู้บริหารและหัวหน้าสาขา"
+        ],
+        "active": true,
+        "sort_order": 13
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Function Flow Introduction",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "แนะนำระบบ Function Flow ว่าจะเป็นศูนย์กลางแต้ม สถานะ และสิทธิประโยชน์"
+        ],
+        "objectives_bullets": [
+          "ให้ทุกคนเข้าใจว่า FTI กำลังเปลี่ยนจากโปรรายเดือนสู่ระบบระยะยาว"
+        ],
+        "outcomes_bullets": [
+          "ความเข้าใจเบื้องต้นและคำถามเรื่องการใช้งาน"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 14
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Membership Roadmap",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "เล่า Roadmap ว่าระบบจะเต็ม 100% ปีหน้า แต่ทยอยเปิด Feature ก่อน"
+        ],
+        "objectives_bullets": [
+          "ให้ Dealer/VIP เตรียมวางแผนการซื้อ ไม่ต้องรอถึงปีหน้า"
+        ],
+        "outcomes_bullets": [
+          "ความพร้อมเข้าร่วม Pilot และคำถามเงื่อนไข"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 15
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Point System Preview",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "อธิบายแต้ม Tier Reward และหลักคิดการสะสมแบบเข้าใจง่าย"
+        ],
+        "objectives_bullets": [
+          "ลดความสับสนและทำให้เห็นประโยชน์จากการซื้อสม่ำเสมอ"
+        ],
+        "outcomes_bullets": [
+          "คำถามเรื่องแต้ม/เงื่อนไข/ของรางวัล"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 16
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Early Access Features",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 15,
+        "recommended_speaker": "IT / Digital Team",
+        "detail_bullets": [
+          "โชว์ฟีเจอร์ที่จะทยอยเปิด เช่น Tracking, Status, Dashboard, Claim Reward"
+        ],
+        "objectives_bullets": [
+          "ทำให้คนเห็นว่าระบบกำลังเกิดจริง ไม่ใช่แค่แนวคิด"
+        ],
+        "outcomes_bullets": [
+          "รายชื่อกลุ่มที่อยากทดลองใช้ก่อน"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 17
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Dealer Dashboard Preview",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 20,
+        "recommended_speaker": "IT / Digital Team",
+        "detail_bullets": [
+          "พรีวิวหน้าจอ Dashboard สำหรับดูยอด แต้ม สิทธิ์ และสถานะ"
+        ],
+        "objectives_bullets": [
+          "ให้ผู้ใช้เห็นประโยชน์เชิงปฏิบัติ"
+        ],
+        "outcomes_bullets": [
+          "Feedback UX และข้อมูลที่อยากเห็นเพิ่ม"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 18
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Asset Drive Center Update",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 20,
+        "recommended_speaker": "ทีม Marketing Content",
+        "detail_bullets": [
+          "อัปเดตศูนย์รวมรูปสินค้า Artwork Template คลิป และเอกสารขาย"
+        ],
+        "objectives_bullets": [
+          "ให้สาขา/Dealer รู้ว่าหา Asset ได้จากที่ไหน ลดงานขอซ้ำ"
+        ],
+        "outcomes_bullets": [
+          "รายการ Asset ที่ต้องเพิ่มและผู้รับผิดชอบ"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 19
+      },
+      {
+        "category": "Membership & Digital",
+        "title": "Digital Transformation Journey",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "IT / Digital Team",
+        "detail_bullets": [
+          "เล่าภาพรวมการเปลี่ยนระบบสนับสนุนจาก Manual เป็น Digital"
+        ],
+        "objectives_bullets": [
+          "สร้างความมั่นใจว่า FTI กำลังลดความยุ่งยากให้ช่องทางขาย"
+        ],
+        "outcomes_bullets": [
+          "Pain point ที่ควรแก้ด้วยระบบในเฟสถัดไป"
+        ],
+        "target_groups": [
+          "ผู้บริหารและหัวหน้าสาขา"
+        ],
+        "active": true,
+        "sort_order": 20
+      },
+      {
+        "category": "Sales & Marketing",
+        "title": "Water Store Growth Strategy",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "Sale Manager",
+        "detail_bullets": [
+          "แนวทางใช้ Water Store เป็นจุดสร้างการมองเห็นและลูกค้าใหม่"
+        ],
+        "objectives_bullets": [
+          "ให้สาขาเห็นบทบาทของหน้าร้านในฐานะสื่อและช่องทางขาย"
+        ],
+        "outcomes_bullets": [
+          "ไอเดียกิจกรรมหน้าร้าน/พื้นที่ทดลอง"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 21
+      },
+      {
+        "category": "Sales & Marketing",
+        "title": "Marketing Support Program",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 20,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "อธิบายสิ่งที่ FTI จะช่วยช่องทางขาย เช่น Content, Artwork, Campaign, Booth"
+        ],
+        "objectives_bullets": [
+          "ให้ Dealer รู้ว่าไม่ได้ขายลำพัง และรู้วิธีขอ Support"
+        ],
+        "outcomes_bullets": [
+          "ความต้องการสนับสนุนรายสาขา/รายพื้นที่"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 22
+      },
+      {
+        "category": "Sales & Marketing",
+        "title": "Content & Asset Support",
+        "recommended_format": "Workshop",
+        "recommended_minutes": 30,
+        "recommended_speaker": "ทีม Marketing Content",
+        "detail_bullets": [
+          "สอนใช้ภาพ คลิป Caption และ Template ให้ถูกต้องกับแบรนด์"
+        ],
+        "objectives_bullets": [
+          "ลดภาพลักษณ์แตกต่างกัน และทำให้สื่อสารง่ายขึ้น"
+        ],
+        "outcomes_bullets": [
+          "รายการ Template ที่ทีมต้องทำต่อ"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 23
+      },
+      {
+        "category": "Sales & Marketing",
+        "title": "Social Media Best Practice",
+        "recommended_format": "Workshop",
+        "recommended_minutes": 30,
+        "recommended_speaker": "ทีม Marketing Content",
+        "detail_bullets": [
+          "แชร์วิธีโพสต์สินค้า/บริการให้ดูน่าเชื่อถือ ไม่ Hard Sell เกินไป"
+        ],
+        "objectives_bullets": [
+          "ยกระดับการตลาดของสาขาและ Dealer"
+        ],
+        "outcomes_bullets": [
+          "ตัวอย่างโพสต์/คอนเทนต์ที่นำไปใช้ได้ทันที"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 24
+      },
+      {
+        "category": "Sales & Marketing",
+        "title": "Campaign Preview",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "พรีวิวแคมเปญที่ FTI จะสื่อสารต่อสาธารณะ"
+        ],
+        "objectives_bullets": [
+          "ให้สาขาเตรียมรับลูกค้าที่เห็นสื่อและถามกลับมา"
+        ],
+        "outcomes_bullets": [
+          "คำถามเรื่องช่วงเวลาและการร่วมโปรโมต"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 25
+      },
+      {
+        "category": "Sales & Marketing",
+        "title": "How To Sell More",
+        "recommended_format": "Workshop",
+        "recommended_minutes": 45,
+        "recommended_speaker": "Sale Manager",
+        "detail_bullets": [
+          "เวิร์กช็อปวิธีเลือกสินค้า พูดจุดขาย ปิดการขาย และ Upsell"
+        ],
+        "objectives_bullets": [
+          "เพิ่มทักษะที่เอาไปใช้ขายจริงได้"
+        ],
+        "outcomes_bullets": [
+          "Action plan ของแต่ละสาขาหลังงาน"
+        ],
+        "target_groups": [
+          "ทีมขายภายใน"
+        ],
+        "active": true,
+        "sort_order": 26
+      },
+      {
+        "category": "Branch Sharing",
+        "title": "Branch Best Practice Sharing",
+        "recommended_format": "Panel",
+        "recommended_minutes": 30,
+        "recommended_speaker": "Branch Manager",
+        "detail_bullets": [
+          "ให้สาขาที่ทำได้ดีแชร์วิธีทำงานจริง"
+        ],
+        "objectives_bullets": [
+          "แลกเปลี่ยนสิ่งที่พิสูจน์แล้วในสนามจริง"
+        ],
+        "outcomes_bullets": [
+          "Checklist วิธีทำที่สาขาอื่นนำไปลอง"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 27
+      },
+      {
+        "category": "Branch Sharing",
+        "title": "Fastest Growing Branch",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "Branch Manager",
+        "detail_bullets": [
+          "เล่าเคสสาขาที่เติบโตเร็วว่าทำอะไรต่าง"
+        ],
+        "objectives_bullets": [
+          "สร้างแรงบันดาลใจและมาตรฐานใหม่"
+        ],
+        "outcomes_bullets": [
+          "ปัจจัยสำเร็จที่ทำซ้ำได้"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 28
+      },
+      {
+        "category": "Branch Sharing",
+        "title": "Problem Solving Session",
+        "recommended_format": "Clinic",
+        "recommended_minutes": 45,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "หยิบปัญหาจริงจากสาขามาช่วยกันแก้สด"
+        ],
+        "objectives_bullets": [
+          "ทำให้การประชุมมีประโยชน์จริง ไม่ใช่แค่รับฟังจากส่วนกลาง"
+        ],
+        "outcomes_bullets": [
+          "รายการปัญหาและ Owner ที่ต้องกลับไปแก้"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 29
+      },
+      {
+        "category": "Branch Sharing",
+        "title": "Lessons Learned",
+        "recommended_format": "Panel",
+        "recommended_minutes": 20,
+        "recommended_speaker": "Branch Manager",
+        "detail_bullets": [
+          "แชร์สิ่งที่เคยพลาด เพื่อไม่ให้สาขาอื่นพลาดซ้ำ"
+        ],
+        "objectives_bullets": [
+          "สร้างวัฒนธรรมเรียนรู้แบบไม่โทษกัน"
+        ],
+        "outcomes_bullets": [
+          "ข้อควรระวังและแนวทางป้องกัน"
+        ],
+        "target_groups": [
+          "ทีมขายภายใน"
+        ],
+        "active": true,
+        "sort_order": 30
+      },
+      {
+        "category": "Voice of Customer",
+        "title": "VIP Customer Talk",
+        "recommended_format": "Panel",
+        "recommended_minutes": 30,
+        "recommended_speaker": "VIP Dealer Guest",
+        "detail_bullets": [
+          "เชิญ VIP/ลูกค้ารายใหญ่พูดมุมมองต่อ FTI และสิ่งที่ต้องการ"
+        ],
+        "objectives_bullets": [
+          "ให้ทีมในฟังเสียงลูกค้าตรงๆ และทำให้ VIP รู้สึกมีคุณค่า"
+        ],
+        "outcomes_bullets": [
+          "Insight จากลูกค้ารายใหญ่"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 31
+      },
+      {
+        "category": "Voice of Customer",
+        "title": "Dealer Panel",
+        "recommended_format": "Panel",
+        "recommended_minutes": 45,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "Panel ตัวแทน/VIP พูดเรื่องโอกาส ปัญหา และสิ่งที่อยากให้ FTI ช่วย"
+        ],
+        "objectives_bullets": [
+          "ใช้เวทีเป็นการรับฟังอย่างเป็นระบบ"
+        ],
+        "outcomes_bullets": [
+          "Pain point และ Demand ที่ใช้ทำแผนต่อ"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 32
+      },
+      {
+        "category": "Voice of Customer",
+        "title": "Open Feedback Session",
+        "recommended_format": "Q&A",
+        "recommended_minutes": 30,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "เปิดให้ถาม/เสนอแบบควบคุมเวลา อาจใช้ QR รับคำถาม"
+        ],
+        "objectives_bullets": [
+          "เก็บเสียงจริงโดยไม่ให้เวทีหลุดประเด็น"
+        ],
+        "outcomes_bullets": [
+          "คำถาม FAQ และประเด็นเร่งด่วน"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 33
+      },
+      {
+        "category": "Voice of Customer",
+        "title": "What We Need From FTI",
+        "recommended_format": "Round Table",
+        "recommended_minutes": 45,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "แบ่งโต๊ะพูดคุยว่าช่องทางขายต้องการอะไรจาก FTI"
+        ],
+        "objectives_bullets": [
+          "ให้ได้ข้อมูลเชิงลึกมากกว่า Q&A หน้าเวที"
+        ],
+        "outcomes_bullets": [
+          "รายการความต้องการเรียง Priority"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 34
+      },
+      {
+        "category": "Interactive",
+        "title": "CEO Deep Talk",
+        "recommended_format": "Round Table",
+        "recommended_minutes": 60,
+        "recommended_speaker": "CEO",
+        "detail_bullets": [
+          "โต๊ะกลม 4 ที่นั่ง รอบละ 15 นาที ให้คุยกับ CEO/จัดซื้อ/R&D/Marketing"
+        ],
+        "objectives_bullets": [
+          "สร้างความสัมพันธ์ระดับสูงและความรู้สึกเป็นคนวงใน"
+        ],
+        "outcomes_bullets": [
+          "คำถาม/ข้อเสนอที่ต้อง Follow up เฉพาะราย"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 35
+      },
+      {
+        "category": "Interactive",
+        "title": "Product Playground",
+        "recommended_format": "Demo / Playground",
+        "recommended_minutes": 60,
+        "recommended_speaker": "R&D",
+        "detail_bullets": [
+          "พื้นที่ทดลองสินค้าแบบหมุนฐาน ให้ผู้ร่วมงานจับ ลอง ถาม และเทียบได้"
+        ],
+        "objectives_bullets": [
+          "ทำให้สินค้าใหม่ถูกเข้าใจผ่านประสบการณ์"
+        ],
+        "outcomes_bullets": [
+          "Feedback หน้างานและคำถามที่ต้องทำสื่อเพิ่ม"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 36
+      },
+      {
+        "category": "Interactive",
+        "title": "Dealer Clinic",
+        "recommended_format": "Clinic",
+        "recommended_minutes": 45,
+        "recommended_speaker": "Sale Manager",
+        "detail_bullets": [
+          "คลินิกแก้ปัญหาการขาย การตลาด หน้าร้าน หรือบริการแบบเคสต่อเคส"
+        ],
+        "objectives_bullets": [
+          "ให้ผู้ร่วมงานรู้สึกได้ประโยชน์ตรงกับปัญหาตัวเอง"
+        ],
+        "outcomes_bullets": [
+          "รายการเคสและคำแนะนำเฉพาะราย"
+        ],
+        "target_groups": [
+          "Dealer ทั่วไป"
+        ],
+        "active": true,
+        "sort_order": 37
+      },
+      {
+        "category": "Interactive",
+        "title": "Ask Me Anything",
+        "recommended_format": "Q&A",
+        "recommended_minutes": 30,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "ถามตอบสดกับผู้บริหาร/ทีมหลักแบบควบคุมประเด็น"
+        ],
+        "objectives_bullets": [
+          "เคลียร์ข้อสงสัยสำคัญก่อนปิดงาน"
+        ],
+        "outcomes_bullets": [
+          "FAQ และประเด็นที่ต้องสื่อสารต่อ"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 38
+      },
+      {
+        "category": "Recognition",
+        "title": "Top Dealer Award",
+        "recommended_format": "Award",
+        "recommended_minutes": 20,
+        "recommended_speaker": "CEO",
+        "detail_bullets": [
+          "มอบรางวัล Dealer/ลูกค้าที่มียอดหรือความร่วมมือโดดเด่น"
+        ],
+        "objectives_bullets": [
+          "สร้างแรงจูงใจและภาพจำบวก"
+        ],
+        "outcomes_bullets": [
+          "ภาพ PR และความสัมพันธ์ที่แน่นขึ้น"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 39
+      },
+      {
+        "category": "Recognition",
+        "title": "Branch Achievement Award",
+        "recommended_format": "Award",
+        "recommended_minutes": 20,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "ยกย่องสาขาที่ทำผลงานดีหรือมีพัฒนาการชัด"
+        ],
+        "objectives_bullets": [
+          "กระตุ้นทีมภายในและสร้างมาตรฐานใหม่"
+        ],
+        "outcomes_bullets": [
+          "แรงจูงใจและเคสตัวอย่าง"
+        ],
+        "target_groups": [
+          "29 สาขา FTI"
+        ],
+        "active": true,
+        "sort_order": 40
+      },
+      {
+        "category": "Recognition",
+        "title": "Long Partnership Award",
+        "recommended_format": "Award",
+        "recommended_minutes": 15,
+        "recommended_speaker": "CEO",
+        "detail_bullets": [
+          "ขอบคุณผู้ร่วมงานที่อยู่กับ FTI มานาน"
+        ],
+        "objectives_bullets": [
+          "รักษาความสัมพันธ์และความภักดี"
+        ],
+        "outcomes_bullets": [
+          "ภาพความผูกพันระยะยาว"
+        ],
+        "target_groups": [
+          "VIP Dealer"
+        ],
+        "active": true,
+        "sort_order": 41
+      },
+      {
+        "category": "Entertainment",
+        "title": "Quiz Game",
+        "recommended_format": "Activity / Game",
+        "recommended_minutes": 15,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "เกมทบทวนความเข้าใจแบบสนุก เช่น สินค้า/ระบบ/แต้ม"
+        ],
+        "objectives_bullets": [
+          "ทำให้ความรู้ไม่หนักเกินไป และเช็คความเข้าใจ"
+        ],
+        "outcomes_bullets": [
+          "คะแนน/ประเด็นที่คนยังเข้าใจผิด"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 42
+      },
+      {
+        "category": "Entertainment",
+        "title": "Lucky Draw",
+        "recommended_format": "Activity / Game",
+        "recommended_minutes": 15,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "จับรางวัลเพื่อสร้างบรรยากาศและตรึงคนไว้จนจบ"
+        ],
+        "objectives_bullets": [
+          "เพิ่มความสนุกและภาพจำของงาน"
+        ],
+        "outcomes_bullets": [
+          "Engagement และภาพกิจกรรม"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 43
+      },
+      {
+        "category": "Entertainment",
+        "title": "Networking Dinner",
+        "recommended_format": "Lunch / Dinner",
+        "recommended_minutes": 90,
+        "recommended_speaker": "Moderator",
+        "detail_bullets": [
+          "มื้ออาหารสำหรับคุยต่อแบบไม่เป็นทางการ"
+        ],
+        "objectives_bullets": [
+          "สร้างความสัมพันธ์ที่เวทีใหญ่ทำไม่ได้"
+        ],
+        "outcomes_bullets": [
+          "บทสนทนา/ดีล/ประเด็นติดตามหลังงาน"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 44
+      },
+      {
+        "category": "Logistics",
+        "title": "Registration",
+        "recommended_format": "Break",
+        "recommended_minutes": 30,
+        "recommended_speaker": "HR / Training",
+        "detail_bullets": [
+          "ลงทะเบียน รับป้ายชื่อ เอกสาร และจัดกลุ่มผู้ร่วมงาน"
+        ],
+        "objectives_bullets": [
+          "เริ่มงานเป็นระบบและเก็บข้อมูลผู้เข้าร่วม"
+        ],
+        "outcomes_bullets": [
+          "รายชื่อผู้เข้าร่วมจริงและกลุ่มเป้าหมาย"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 45
+      },
+      {
+        "category": "Logistics",
+        "title": "Coffee Break",
+        "recommended_format": "Break",
+        "recommended_minutes": 15,
+        "recommended_speaker": "HR / Training",
+        "detail_bullets": [
+          "พักเบรกและให้เดินชมโซนสินค้า/Asset/Membership"
+        ],
+        "objectives_bullets": [
+          "ให้คนย่อยข้อมูลและสร้างบทสนทนาระหว่างกัน"
+        ],
+        "outcomes_bullets": [
+          "Feedback ระหว่างพักและการเยี่ยมโซน"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 46
+      },
+      {
+        "category": "Logistics",
+        "title": "Lunch Break",
+        "recommended_format": "Lunch / Dinner",
+        "recommended_minutes": 60,
+        "recommended_speaker": "HR / Training",
+        "detail_bullets": [
+          "พักกลางวัน พร้อมเปิดพื้นที่ Exhibition Zone"
+        ],
+        "objectives_bullets": [
+          "ไม่ให้พลังงานตกและเพิ่มเวลาชมบูธ"
+        ],
+        "outcomes_bullets": [
+          "จำนวนคนเข้าโซนต่างๆ"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 47
+      },
+      {
+        "category": "Logistics",
+        "title": "Closing & Next Step",
+        "recommended_format": "Keynote",
+        "recommended_minutes": 15,
+        "recommended_speaker": "ผู้บริหารฝ่ายการตลาด",
+        "detail_bullets": [
+          "สรุปสิ่งที่เกิดขึ้น สิ่งที่จะทยอยเปิด และช่องทางติดตามหลังงาน"
+        ],
+        "objectives_bullets": [
+          "ปิดงานด้วย Action ไม่ใช่จบแล้วหาย"
+        ],
+        "outcomes_bullets": [
+          "รายการ Follow-up, Owner, Timeline"
+        ],
+        "target_groups": [
+          "Mixed Audience"
+        ],
+        "active": true,
+        "sort_order": 48
+      }
+    ]
+  },
+  "agenda": [
+    {
+      "sort_order": 1,
+      "session_date": "2026-09-07",
+      "title": "Registration",
+      "category": "Logistics",
+      "format": "Break",
+      "start_time": "15:42",
+      "end_time": "16:12",
+      "minutes": 30,
+      "speaker": "ทีม Marketing Content",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "ลงทะเบียน รับป้ายชื่อ เอกสาร และจัดกลุ่มผู้ร่วมงาน"
+      ],
+      "objectives_bullets": [
+        "เริ่มงานเป็นระบบและเก็บข้อมูลผู้เข้าร่วม"
+      ],
+      "outcomes_bullets": [
+        "รายชื่อผู้เข้าร่วมจริงและกลุ่มเป้าหมาย"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "ลงทะเบียน + แจก QR/เอกสาร/แผนผังโซน",
+      "owner": ""
+    },
+    {
+      "sort_order": 2,
+      "session_date": "2026-09-07",
+      "title": "Opening & Welcome",
+      "category": "Corporate Update",
+      "format": "Keynote",
+      "start_time": "16:12",
+      "end_time": "16:22",
+      "minutes": 10,
+      "speaker": "Moderator",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "เปิดงาน สร้างบรรยากาศ และบอกเป้าหมายของวัน"
+      ],
+      "objectives_bullets": [
+        "ให้ทุกคนเข้าใจว่างานนี้ไม่ใช่แค่ฟังอบรม แต่เป็นการร่วมวางทิศทาง"
+      ],
+      "outcomes_bullets": [
+        "ผู้ร่วมงานพร้อมเข้าสู่เนื้อหาและเข้าใจภาพรวม"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "เปิดกรอบงานว่าเป็น Experience ไม่ใช่สัมมนานั่งฟัง",
+      "owner": ""
+    },
+    {
+      "sort_order": 3,
+      "session_date": "2026-09-07",
+      "title": "CEO Vision Update",
+      "category": "Corporate Update",
+      "format": "Keynote",
+      "start_time": "16:22",
+      "end_time": "16:42",
+      "minutes": 20,
+      "speaker": "CEO",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "ผู้บริหารเล่าทิศทาง FTI ช่วงครบรอบ 30 ปี และการเปลี่ยนแปลงปีหน้า"
+      ],
+      "objectives_bullets": [
+        "สร้างความเชื่อมั่นว่า FTI ไม่ได้หยุดนิ่งและพร้อมสนับสนุนทุกช่องทาง"
+      ],
+      "outcomes_bullets": [
+        "ความเชื่อมั่น/คำถามเชิงกลยุทธ์จากสาขาและ VIP"
+      ],
+      "target_groups": [
+        "29 สาขา FTI"
+      ],
+      "team_notes": "ช่วงสร้างความมั่นใจ ควรเก็บภาพ PR",
+      "owner": ""
+    },
+    {
+      "sort_order": 4,
+      "session_date": "2026-09-07",
+      "title": "Membership Roadmap",
+      "category": "Membership & Digital",
+      "format": "Keynote",
+      "start_time": "16:42",
+      "end_time": "17:02",
+      "minutes": 20,
+      "speaker": "ผู้บริหารฝ่ายการตลาด",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "เล่า Roadmap ว่าระบบจะเต็ม 100% ปีหน้า แต่ทยอยเปิด Feature ก่อน"
+      ],
+      "objectives_bullets": [
+        "ให้ Dealer/VIP เตรียมวางแผนการซื้อ ไม่ต้องรอถึงปีหน้า"
+      ],
+      "outcomes_bullets": [
+        "ความพร้อมเข้าร่วม Pilot และคำถามเงื่อนไข"
+      ],
+      "target_groups": [
+        "VIP Dealer"
+      ],
+      "team_notes": "เน้นว่า 100% ปีหน้า แต่ทยอยเปิดฟีเจอร์ให้ลองก่อน",
+      "owner": ""
+    },
+    {
+      "sort_order": 5,
+      "session_date": "2026-09-07",
+      "title": "Asset Drive Center Update",
+      "category": "Membership & Digital",
+      "format": "Demo / Playground",
+      "start_time": "17:02",
+      "end_time": "17:22",
+      "minutes": 20,
+      "speaker": "ทีม Marketing Content",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "อัปเดตศูนย์รวมรูปสินค้า Artwork Template คลิป และเอกสารขาย"
+      ],
+      "objectives_bullets": [
+        "ให้สาขา/Dealer รู้ว่าหา Asset ได้จากที่ไหน ลดงานขอซ้ำ"
+      ],
+      "outcomes_bullets": [
+        "รายการ Asset ที่ต้องเพิ่มและผู้รับผิดชอบ"
+      ],
+      "target_groups": [
+        "29 สาขา FTI"
+      ],
+      "team_notes": "สาธิตวิธีช่วยสาขา/Dealer ใช้รูปและสื่อขาย",
+      "owner": ""
+    },
+    {
+      "sort_order": 6,
+      "session_date": "2026-09-07",
+      "title": "Coffee Break",
+      "category": "Logistics",
+      "format": "Break",
+      "start_time": "17:22",
+      "end_time": "17:37",
+      "minutes": 15,
+      "speaker": "ทีม Marketing Content",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "พักเบรกและให้เดินชมโซนสินค้า/Asset/Membership"
+      ],
+      "objectives_bullets": [
+        "ให้คนย่อยข้อมูลและสร้างบทสนทนาระหว่างกัน"
+      ],
+      "outcomes_bullets": [
+        "Feedback ระหว่างพักและการเยี่ยมโซน"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "ให้เดินดู Membership Zone / Product Zone",
+      "owner": ""
+    },
+    {
+      "sort_order": 7,
+      "session_date": "2026-09-07",
+      "title": "Hidden Gems Collection",
+      "category": "Product",
+      "format": "Demo / Playground",
+      "start_time": "17:37",
+      "end_time": "18:07",
+      "minutes": 30,
+      "speaker": "Product Manager",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "แนะนำสินค้าเก่าที่ดีแต่ไม่ค่อยถูกขาย พร้อมเหตุผลว่าทำไมควรหยิบมาขาย"
+      ],
+      "objectives_bullets": [
+        "ปลุกสินค้า GP ดี/ปัญหาน้อย/ขายซ้ำได้ ให้กลับมาอยู่ในสายตา"
+      ],
+      "outcomes_bullets": [
+        "รายชื่อสินค้าที่สาขาอยากทดลองขาย"
+      ],
+      "target_groups": [
+        "Dealer ทั่วไป"
+      ],
+      "team_notes": "เลือกสินค้า 5-8 ตัวพอ อย่าเยอะเกิน",
+      "owner": ""
+    },
+    {
+      "sort_order": 8,
+      "session_date": "2026-09-07",
+      "title": "Hidden Gems Collection",
+      "category": "Product",
+      "format": "Demo / Playground",
+      "start_time": "18:07",
+      "end_time": "18:52",
+      "minutes": 45,
+      "speaker": "Product Manager",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "แนะนำสินค้าเก่าที่ดีแต่ไม่ค่อยถูกขาย พร้อมเหตุผลว่าทำไมควรหยิบมาขาย"
+      ],
+      "objectives_bullets": [
+        "ปลุกสินค้า GP ดี/ปัญหาน้อย/ขายซ้ำได้ ให้กลับมาอยู่ในสายตา"
+      ],
+      "outcomes_bullets": [
+        "รายชื่อสินค้าที่สาขาอยากทดลองขาย"
+      ],
+      "target_groups": [
+        "Dealer ทั่วไป"
+      ],
+      "team_notes": "สินค้าใหม่ต้องจับได้/เห็นจริง",
+      "owner": ""
+    },
+    {
+      "sort_order": 9,
+      "session_date": "2026-09-07",
+      "title": "Lunch Break",
+      "category": "Logistics",
+      "format": "Lunch / Dinner",
+      "start_time": "18:52",
+      "end_time": "19:52",
+      "minutes": 60,
+      "speaker": "ทีม Marketing Content",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "พักกลางวัน พร้อมเปิดพื้นที่ Exhibition Zone"
+      ],
+      "objectives_bullets": [
+        "ไม่ให้พลังงานตกและเพิ่มเวลาชมบูธ"
+      ],
+      "outcomes_bullets": [
+        "จำนวนคนเข้าโซนต่างๆ"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "เปิด Exhibition Zone ระหว่างพัก",
+      "owner": ""
+    },
+    {
+      "sort_order": 10,
+      "session_date": "2026-09-07",
+      "title": "Product Playground",
+      "category": "Interactive",
+      "format": "Demo / Playground",
+      "start_time": "19:52",
+      "end_time": "20:52",
+      "minutes": 60,
+      "speaker": "R&D",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "พื้นที่ทดลองสินค้าแบบหมุนฐาน ให้ผู้ร่วมงานจับ ลอง ถาม และเทียบได้"
+      ],
+      "objectives_bullets": [
+        "ทำให้สินค้าใหม่ถูกเข้าใจผ่านประสบการณ์"
+      ],
+      "outcomes_bullets": [
+        "Feedback หน้างานและคำถามที่ต้องทำสื่อเพิ่ม"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "หมุนฐานทดลองสินค้า",
+      "owner": ""
+    },
+    {
+      "sort_order": 11,
+      "session_date": "2026-09-07",
+      "title": "Problem Solving Session",
+      "category": "Branch Sharing",
+      "format": "Clinic",
+      "start_time": "20:52",
+      "end_time": "21:22",
+      "minutes": 30,
+      "speaker": "Moderator",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "หยิบปัญหาจริงจากสาขามาช่วยกันแก้สด"
+      ],
+      "objectives_bullets": [
+        "ทำให้การประชุมมีประโยชน์จริง ไม่ใช่แค่รับฟังจากส่วนกลาง"
+      ],
+      "outcomes_bullets": [
+        "รายการปัญหาและ Owner ที่ต้องกลับไปแก้"
+      ],
+      "target_groups": [
+        "29 สาขา FTI"
+      ],
+      "team_notes": "เลือก VIP ที่พูดเป็นประโยชน์และสร้างแรงบันดาลใจ",
+      "owner": ""
+    },
+    {
+      "sort_order": 12,
+      "session_date": "2026-09-07",
+      "title": "Coffee Break",
+      "category": "Logistics",
+      "format": "Break",
+      "start_time": "21:22",
+      "end_time": "21:37",
+      "minutes": 15,
+      "speaker": "ทีม Marketing Content",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "พักเบรกและให้เดินชมโซนสินค้า/Asset/Membership"
+      ],
+      "objectives_bullets": [
+        "ให้คนย่อยข้อมูลและสร้างบทสนทนาระหว่างกัน"
+      ],
+      "outcomes_bullets": [
+        "Feedback ระหว่างพักและการเยี่ยมโซน"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "ใช้เคสจริงจากสาขา",
+      "owner": ""
+    },
+    {
+      "sort_order": 13,
+      "session_date": "2026-09-07",
+      "title": "New Product Showcase",
+      "category": "Product",
+      "format": "Demo / Playground",
+      "start_time": "21:27",
+      "end_time": "22:27",
+      "minutes": 60,
+      "speaker": "Product Manager",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "เปิดตัวสินค้าใหม่แบบจับจริง เห็นจริง ไม่ใช่ดูสไลด์อย่างเดียว"
+      ],
+      "objectives_bullets": [
+        "ทำให้ผู้ร่วมงานจำจุดขายและข้อจำกัดได้จริง"
+      ],
+      "outcomes_bullets": [
+        "Feedback ต่อสินค้าใหม่และการตั้งราคา/แพ็กเกจ"
+      ],
+      "target_groups": [
+        "VIP Dealer"
+      ],
+      "team_notes": "รอบละ 15 นาที 4 รอบ",
+      "owner": ""
+    },
+    {
+      "sort_order": 14,
+      "session_date": "2026-09-07",
+      "title": "Ask Me Anything",
+      "category": "Interactive",
+      "format": "Q&A",
+      "start_time": "22:27",
+      "end_time": "22:57",
+      "minutes": 30,
+      "speaker": "Moderator",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "ถามตอบสดกับผู้บริหาร/ทีมหลักแบบควบคุมประเด็น"
+      ],
+      "objectives_bullets": [
+        "เคลียร์ข้อสงสัยสำคัญก่อนปิดงาน"
+      ],
+      "outcomes_bullets": [
+        "FAQ และประเด็นที่ต้องสื่อสารต่อ"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "สรุปสิ่งที่จะทยอยเปิด + follow-up",
+      "owner": ""
+    },
+    {
+      "sort_order": 15,
+      "session_date": "2026-09-07",
+      "title": "Closing & Next Step",
+      "category": "Logistics",
+      "format": "Keynote",
+      "start_time": "22:42",
+      "end_time": "23:12",
+      "minutes": 30,
+      "speaker": "ผู้บริหารฝ่ายการตลาด",
+      "status": "Confirmed",
+      "detail_bullets": [
+        "สรุปสิ่งที่เกิดขึ้น สิ่งที่จะทยอยเปิด และช่องทางติดตามหลังงาน"
+      ],
+      "objectives_bullets": [
+        "ปิดงานด้วย Action ไม่ใช่จบแล้วหาย"
+      ],
+      "outcomes_bullets": [
+        "รายการ Follow-up, Owner, Timeline"
+      ],
+      "target_groups": [
+        "Mixed Audience"
+      ],
+      "team_notes": "ใช้เฉพาะถ้างานเป็นครึ่งวันบ่ายถึงเย็น",
+      "owner": ""
+    }
+  ],
+  "counts": {
+    "target_groups": 8,
+    "purposes": 9,
+    "speakers": 14,
+    "session_formats": 13,
+    "session_statuses": 7,
+    "session_categories": 10,
+    "session_library": 48
+  }
+}

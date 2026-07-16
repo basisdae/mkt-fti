@@ -69,6 +69,9 @@ export interface GiftPlanTierRow {
   sales_threshold: number | null;
   sales_threshold_label: string;
   customer_count: number;
+  estimated_total_sales: number | null;
+  gift_budget_percent: number | null;
+  estimated_customer_count: number | null;
   notes: string;
   gift_policy: string;
   created_at: string;
@@ -126,6 +129,9 @@ export interface GiftPlanTierInput {
   sales_threshold: number | null;
   sales_threshold_label: string;
   customer_count: number;
+  estimated_total_sales: number | null;
+  gift_budget_percent: number | null;
+  estimated_customer_count: number | null;
   notes: string;
   gift_policy: string;
   items: GiftPlanItemInput[];
@@ -173,6 +179,18 @@ export interface GiftPlanListSummary {
   budget_percent: number | null;
   updated_at: string;
   last_saved_at: string;
+}
+
+/** Plan metadata edited from the home card (no tiers/items). */
+export interface GiftPlanBasicsForm {
+  id: string;
+  name: string;
+  campaign_year: number;
+  campaign_headline: string;
+  description: string;
+  owner: string;
+  status: GiftPlanStatus;
+  campaign_conditions: string;
 }
 
 /** Full editor bundle returned to users with edit permission. */

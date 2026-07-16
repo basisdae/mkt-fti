@@ -155,7 +155,8 @@ export function GiftCatalogView() {
           if (prevPath && prevPath !== uploaded.imagePath) {
             await removeGiftCatalogCover(prevPath).catch(() => {});
           }
-        } catch {
+        } catch (err) {
+          console.error("[gift-catalog] image upload after save:", err);
           setSaveError(
             editing?.id
               ? t.catalogImageUploadFailedEdit

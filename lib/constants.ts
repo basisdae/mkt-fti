@@ -11,6 +11,7 @@ import {
   Calculator,
   Settings,
   Gift,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 import type { PipelineStage, PipelineStageTone, ProductStatus } from "@/types/product";
@@ -57,6 +58,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
   { label: "Simulator", href: "/simulator", icon: Calculator },
   { label: "แผนของขวัญลูกค้า", href: "/gift-plans", icon: Gift },
+  { label: "อบรม / สัมมนา", href: "/seminars", icon: GraduationCap },
   { label: "Timeline", href: "/timeline", icon: Clock3 },
   { label: "Notes", href: "/notes", icon: StickyNote },
 ];

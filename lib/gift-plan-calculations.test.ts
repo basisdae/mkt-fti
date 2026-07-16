@@ -4,6 +4,7 @@ import {
   calcGiftCampaign,
   calcGiftItem,
   calcGiftTier,
+  calcTierBudget,
   safeNumber,
   tierNamesConflict,
 } from "@/lib/gift-plan-calculations";
@@ -135,6 +136,56 @@ function testPurchasingSummaryGrouping() {
   assert.equal(rows[0]?.total_actual_cost, 1200);
 }
 
+function testTierBudgetAcceptance() {
+  const budget = calcTierBudget({
+    estimated_total_sales: 1_000_000,
+    gift_budget_percent: 0.2,
+    estimated_customer_count: null,
+    actual_customer_count: 0,
+    items: [
+      { qty_per_customer: 1, estimated_gift_value_per_unit: 1500 },
+    ],
+  });
+
+  assert.equal(budget.tier_budget_target, 2000);
+  assert.equal(budget.current_plan_value, 1500);
+  assert.equal(budget.actual_percent_of_sales, 0.15);
+  assert.equal(budget.budget_remaining, 500);
+  assert.equal(budget.budget_used_percent, 75);
+  assert.equal(budget.is_over_budget, false);
+  assert.equal(budget.avg_budget_per_customer, null);
+}
+
+function testTierBudgetAvgPerCustomer() {
+  const budget = calcTierBudget({
+    estimated_total_sales: 1_000_000,
+    gift_budget_percent: 0.2,
+    estimated_customer_count: 100,
+    actual_customer_count: 0,
+    items: [],
+  });
+
+  assert.equal(budget.tier_budget_target, 2000);
+  assert.equal(budget.avg_budget_per_customer, 20);
+}
+
+function testTierBudgetNoNaN() {
+  const budget = calcTierBudget({
+    estimated_total_sales: null,
+    gift_budget_percent: null,
+    estimated_customer_count: null,
+    actual_customer_count: 0,
+    items: [],
+  });
+
+  assert.equal(budget.tier_budget_target, null);
+  assert.equal(budget.actual_percent_of_sales, null);
+  assert.equal(budget.budget_remaining, null);
+  assert.equal(budget.budget_used_percent, null);
+  assert.equal(budget.avg_budget_per_customer, null);
+  assert.equal(Number.isNaN(budget.current_plan_value), false);
+}
+
 function testTierNameConflict() {
   const tiers = [
     { id: "a", name: "Gold" },
@@ -150,6 +201,9 @@ export function runGiftPlanCalculationTests() {
   testGiftTierCalc();
   testCampaignBudgetPercent();
   testPurchasingSummaryGrouping();
+  testTierBudgetAcceptance();
+  testTierBudgetAvgPerCustomer();
+  testTierBudgetNoNaN();
   testTierNameConflict();
 }
 

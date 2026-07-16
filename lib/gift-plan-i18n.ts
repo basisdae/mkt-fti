@@ -26,6 +26,12 @@ export const GIFT_PLAN_COPY = {
   statusArchived: "เก็บถาวร",
   statusDraft: "แบบร่าง",
   open: "เปิด",
+  openPlan: "เปิดแผน",
+  editPlanBasics: "แก้ไขข้อมูล",
+  editPlanBasicsTitle: "แก้ไขข้อมูลพื้นฐานแผน",
+  editPlanBasicsSubtitle:
+    "อัปเดตชื่อ ปี หัวข้อ รายละเอียด สถานะ และข้อมูลพื้นฐานของแผนเดิม",
+  loadingPlanBasics: "กำลังโหลดข้อมูลแผน…",
   duplicate: "ทำสำเนา",
   rename: "เปลี่ยนชื่อ",
   archive: "เก็บถาวร",
@@ -91,6 +97,36 @@ export const GIFT_PLAN_COPY = {
   salesThreshold: "เกณฑ์ยอดขาย",
   thresholdLabel: "ป้ายเกณฑ์ยอดขาย",
   tierDescription: "รายละเอียด Tier",
+  customerCountPurchasing: "จำนวนลูกค้า (คำนวณจัดซื้อ)",
+
+  // Tier budget planning
+  tierBudgetTitle: "วางงบของขวัญตาม Tier",
+  tierBudgetSubtitle:
+    "คำนวณจากยอดขายรวมโดยประมาณ × เปอร์เซ็นต์งบ — ไม่จำเป็นต้องระบุจำนวนลูกค้าก่อนวางแผน",
+  estimatedTotalSales: "ยอดขายรวมโดยประมาณ",
+  estimatedTotalSalesHint: "ยอดขายรวมโดยประมาณของ Tier นี้ (บาท)",
+  giftBudgetPercent: "เปอร์เซ็นต์งบของขวัญ",
+  giftBudgetPercentHint: "เช่น 0.20 = 0.20% ของยอดขาย",
+  giftBudgetPercentSet: "% งบของขวัญที่ตั้งไว้",
+  estimatedCustomerCount: "จำนวนลูกค้าโดยประมาณ",
+  estimatedCustomerCountHint: "ไม่บังคับ — ใช้คำนวณงบเฉลี่ยต่อลูกค้า",
+  actualCustomerCount: "จำนวนลูกค้าจริง",
+  optionalPlaceholder: "เว้นว่างได้",
+  notSpecifiedYet: "ยังไม่ระบุ",
+  bahtSuffix: "บาท",
+  tierBudgetSummaryTitle: "สรุปงบ Tier",
+  budgetTarget: "งบเป้าหมาย",
+  budgetCurrentPlanValue: "มูลค่าแผนปัจจุบัน",
+  budgetCurrentPlanUnset: "ยังไม่ระบุ",
+  budgetRemaining: "งบคงเหลือ",
+  budgetOverLabel: "เกินงบ",
+  budgetOverSuffix: "เกินงบ",
+  budgetActualPercentOfSales: "% ใช้จริงเทียบยอดขาย",
+  budgetUsedPercent: "ใช้งบเป้าหมายไปแล้ว",
+  avgBudgetPerCustomer: "งบเฉลี่ยต่อลูกค้า",
+  budgetOverWarning:
+    "มูลค่าแผนปัจจุบันเกินงบเป้าหมายของ Tier นี้ กรุณาปรับของขวัญหรือเปอร์เซ็นต์งบ",
+
   openCatalog: "เปิดคลังของพรีเมียม",
   removeTier: "ลบ Tier",
   unsavedChanges: "มีการแก้ไขที่ยังไม่ได้บันทึก",
@@ -334,6 +370,13 @@ export const GIFT_PLAN_COPY = {
   noPermissionEditGiftCatalog: "คุณไม่มีสิทธิ์แก้ไขคลังของพรีเมียม",
   catalogNotFound: "ไม่พบรายการในคลัง",
   catalogCreateFailed: "ไม่สามารถสร้างรายการในคลังได้",
+  catalogDbMissingImagePath:
+    "ฐานข้อมูลยังไม่มีคอลัมน์เก็บรูป (image_path) กรุณารัน Migration ใน Supabase SQL Editor ตามคำแนะนำ แล้วลองบันทึกอีกครั้ง",
+  catalogDbSchemaMismatch:
+    "โครงสร้างฐานข้อมูลยังไม่ตรงกับแอป กรุณารัน Migration ล่าสุดใน Supabase SQL Editor แล้วลองใหม่",
+  catalogDbGenericError:
+    "ไม่สามารถบันทึกลงฐานข้อมูลได้ กรุณาลองใหม่หรือติดต่อผู้ดูแลระบบ",
+  catalogDuplicateInternalCode: "รหัสภายในซ้ำกับรายการอื่นในคลัง",
   planNameRequired: "กรุณาระบุชื่อแผน",
   giftPlanNotFound: "ไม่พบแผนของขวัญ",
   planUpdatedElsewhere:

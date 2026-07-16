@@ -21,6 +21,7 @@ import { getAuthenticatedSupabaseForActions } from "@/lib/supabase/authenticated
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
+  GiftPlanBasicsForm,
   GiftPlanCommunicationReport,
   GiftPlanEditorBundle,
   GiftPlanEditorPayload,
@@ -219,6 +220,39 @@ export async function getGiftPlanEditorBundleAction(
   return { ok: true, data: bundle };
 }
 
+export async function getGiftPlanBasicsAction(
+  planId: string,
+): Promise<ActionResult<GiftPlanBasicsForm>> {
+  const auth = await requireEdit();
+  if (!auth.ok) return auth;
+
+  const { supabase } = auth.data;
+  const { data, error } = await supabase
+    .from("gift_plans")
+    .select(
+      "id, name, campaign_year, campaign_headline, description, owner, status, campaign_conditions",
+    )
+    .eq("id", planId)
+    .maybeSingle();
+
+  if (error) return fail(error.message);
+  if (!data) return fail(t.giftPlanNotFound);
+
+  return {
+    ok: true,
+    data: {
+      id: data.id as string,
+      name: data.name as string,
+      campaign_year: Number(data.campaign_year),
+      campaign_headline: (data.campaign_headline as string) ?? "",
+      description: (data.description as string) ?? "",
+      owner: (data.owner as string) ?? "",
+      status: data.status as GiftPlanBasicsForm["status"],
+      campaign_conditions: (data.campaign_conditions as string) ?? "",
+    },
+  };
+}
+
 export async function getGiftPlanCommunicationReportAction(
   planId: string,
 ): Promise<ActionResult<GiftPlanCommunicationReport>> {
@@ -341,6 +375,9 @@ export async function saveGiftPlanAction(
       sales_threshold: tier.sales_threshold,
       sales_threshold_label: tier.sales_threshold_label,
       customer_count: tier.customer_count,
+      estimated_total_sales: tier.estimated_total_sales,
+      gift_budget_percent: tier.gift_budget_percent,
+      estimated_customer_count: tier.estimated_customer_count,
       notes: tier.notes,
       gift_policy: tier.gift_policy,
       updated_at: now,
@@ -480,6 +517,9 @@ export async function duplicateGiftPlanAction(
         sales_threshold: tier.sales_threshold,
         sales_threshold_label: tier.sales_threshold_label,
         customer_count: tier.customer_count,
+        estimated_total_sales: tier.estimated_total_sales,
+        gift_budget_percent: tier.gift_budget_percent,
+        estimated_customer_count: tier.estimated_customer_count,
         notes: tier.notes,
         gift_policy: tier.gift_policy,
       })
@@ -576,6 +616,44 @@ export async function renameGiftPlanAction(
 
   if (error) return fail(error.message);
   return { ok: true, data: null };
+}
+
+export async function updateGiftPlanBasicsAction(
+  input: Omit<GiftPlanBasicsForm, "id"> & { id: string },
+): Promise<ActionResult<{ updated_at: string }>> {
+  const auth = await requireEdit();
+  if (!auth.ok) return auth;
+
+  const trimmed = input.name.trim();
+  if (!trimmed) return fail(t.planNameRequired);
+
+  const year = Number(input.campaign_year);
+  if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+    return fail("ปีแคมเปญไม่ถูกต้อง");
+  }
+
+  const { user, supabase } = auth.data;
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("gift_plans")
+    .update({
+      name: trimmed,
+      campaign_year: year,
+      campaign_headline: input.campaign_headline.trim(),
+      description: input.description.trim(),
+      owner: input.owner.trim(),
+      status: input.status,
+      campaign_conditions: input.campaign_conditions.trim(),
+      updated_by_email: user.email,
+      updated_at: now,
+    })
+    .eq("id", input.id)
+    .select("updated_at")
+    .maybeSingle();
+
+  if (error) return fail(error.message);
+  if (!data) return fail(t.giftPlanNotFound);
+  return { ok: true, data: { updated_at: data.updated_at as string } };
 }
 
 export async function createPurchaseGroupAction(input: {

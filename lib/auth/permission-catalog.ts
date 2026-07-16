@@ -28,6 +28,8 @@ export const PERMISSION_KEYS = [
   "gift_plans.view",
   "gift_plans.edit",
   "gift_plans.export",
+  "seminar_planner.view",
+  "seminar_planner.edit",
   "settings.view",
   "users.manage",
 ] as const;
@@ -74,6 +76,8 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
   { key: "gift_plans.view", group: "Gift Plans", label: "View" },
   { key: "gift_plans.edit", group: "Gift Plans", label: "Edit" },
   { key: "gift_plans.export", group: "Gift Plans", label: "Export" },
+  { key: "seminar_planner.view", group: "Seminar Planner", label: "View" },
+  { key: "seminar_planner.edit", group: "Seminar Planner", label: "Edit" },
   { key: "settings.view", group: "Settings", label: "View" },
   { key: "users.manage", group: "Manage Users", label: "Access" },
 ];
@@ -113,7 +117,9 @@ const VIEW_ONLY: PermissionKey[] = [
 /** Role templates — starting permissions only; admin may customize per user. */
 export const ROLE_PERMISSION_TEMPLATES: Record<string, PermissionKey[]> = {
   admin: ALL,
-  mkt_hq: ALL.filter((key) => key !== "users.manage"),
+  mkt_hq: ALL.filter(
+    (key) => key !== "users.manage" && !key.startsWith("seminar_planner."),
+  ),
   rnd: [
     "dashboard.view",
     "products.view",
@@ -193,5 +199,6 @@ export const NAV_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/ideas": "ideas.view",
   "/brand-board": "brand_board.view",
   "/gift-plans": "gift_plans.view",
+  "/seminars": "seminar_planner.view",
   "/settings": "settings.view",
 };

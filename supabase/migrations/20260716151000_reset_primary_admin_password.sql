@@ -1,4 +1,4 @@
--- Password changes for Gift Plans operators must be done manually:
+-- -- Password changes for Gift Plans operators must be done manually:
 -- 1. Update public.app_users.password (via secure admin process)
 -- 2. Update the same user in Supabase Dashboard → Authentication → Users
 --    (email must match app_users; password must match for signInWithPassword bridge)

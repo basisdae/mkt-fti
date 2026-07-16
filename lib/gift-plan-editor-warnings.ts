@@ -35,13 +35,6 @@ export function deriveGiftPlanEditorWarnings(
   }
 
   for (const tier of payload.tiers) {
-    if (tier.customer_count <= 0) {
-      warnings.push({
-        id: `tier-customers-${tier.id}`,
-        message: t.warningTierNoCustomers(tier.name),
-        severity: "warning",
-      });
-    }
     if (tier.items.length === 0) {
       warnings.push({
         id: `tier-items-${tier.id}`,

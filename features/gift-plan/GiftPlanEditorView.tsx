@@ -21,6 +21,7 @@ import { GiftPlanPurchasingSummary } from "@/components/gift-plan/GiftPlanPurcha
 import { GiftCatalogPickerModal } from "@/components/gift-plan/GiftCatalogPickerModal";
 import { GiftPlanTierTabs } from "@/components/gift-plan/GiftPlanTierTabs";
 import { GiftPlanTierOverviewPanel } from "@/components/gift-plan/GiftPlanTierOverviewPanel";
+import { GiftPlanTierBudgetPanel } from "@/components/gift-plan/GiftPlanTierBudgetPanel";
 import { TierGiftCart } from "@/components/gift-plan/TierGiftCart";
 import { CampaignBasketSummary } from "@/components/gift-plan/CampaignBasketSummary";
 import { GiftPlanEditorWarnings } from "@/components/gift-plan/GiftPlanEditorWarnings";
@@ -133,6 +134,18 @@ function bundleToPayload(bundle: GiftPlanEditorBundle): GiftPlanEditorPayload {
           tier.sales_threshold != null ? Number(tier.sales_threshold) : null,
         sales_threshold_label: tier.sales_threshold_label,
         customer_count: tier.customer_count,
+        estimated_total_sales:
+          tier.estimated_total_sales != null
+            ? Number(tier.estimated_total_sales)
+            : null,
+        gift_budget_percent:
+          tier.gift_budget_percent != null
+            ? Number(tier.gift_budget_percent)
+            : null,
+        estimated_customer_count:
+          tier.estimated_customer_count != null
+            ? Number(tier.estimated_customer_count)
+            : null,
         notes: tier.notes,
         gift_policy: tier.gift_policy,
         items: (itemsByTier.get(tier.id) ?? []).sort(
@@ -301,6 +314,9 @@ export function GiftPlanEditorView({
         sales_threshold: null,
         sales_threshold_label: "",
         customer_count: 0,
+        estimated_total_sales: null,
+        gift_budget_percent: null,
+        estimated_customer_count: null,
         notes: "",
         gift_policy: "",
         items: [],
@@ -777,7 +793,7 @@ export function GiftPlanEditorView({
                       className={cn(nameConflict && "border-fti-red")}
                     />
                     <Input
-                      label={t.customerCount}
+                      label={t.customerCountPurchasing}
                       type="number"
                       value={String(tier.customer_count)}
                       onChange={(e) =>
@@ -889,6 +905,20 @@ export function GiftPlanEditorView({
                       <Trash2 className="h-4 w-4 text-fti-red" />
                     </Button>
                   </div>
+                </div>
+
+                <div className="mt-4">
+                  <GiftPlanTierBudgetPanel
+                    tier={tier}
+                    onUpdateTier={(patch) =>
+                      updatePayload((current) => ({
+                        ...current,
+                        tiers: current.tiers.map((row) =>
+                          row.id === tier.id ? { ...row, ...patch } : row,
+                        ),
+                      }))
+                    }
+                  />
                 </div>
 
                 <TierGiftCart

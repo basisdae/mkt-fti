@@ -345,3 +345,154 @@ export function tierNamesConflict(
       normalizeTierName(tier.name).toLowerCase() === normalized,
   );
 }
+
+export interface TierBudgetItemInput {
+  qty_per_customer: number;
+  estimated_gift_value_per_unit: number;
+}
+
+export interface TierBudgetCalcInput {
+  estimated_total_sales: number | null;
+  gift_budget_percent: number | null;
+  estimated_customer_count: number | null;
+  actual_customer_count: number;
+  items: TierBudgetItemInput[];
+}
+
+export interface TierBudgetCalc {
+  tier_budget_target: number | null;
+  current_plan_value: number;
+  current_plan_value_status: "value" | "unset" | "empty";
+  actual_percent_of_sales: number | null;
+  budget_remaining: number | null;
+  budget_used_percent: number | null;
+  is_over_budget: boolean;
+  customer_count_for_avg: number;
+  avg_budget_per_customer: number | null;
+}
+
+function divSafe(numerator: number, denominator: number): number | null {
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator)) {
+    return null;
+  }
+  if (denominator <= 0) return null;
+  const result = numerator / denominator;
+  return Number.isFinite(result) ? result : null;
+}
+
+export function calcTierCurrentPlanValue(
+  items: TierBudgetItemInput[],
+): { value: number; status: "value" | "unset" | "empty" } {
+  if (items.length === 0) {
+    return { value: 0, status: "empty" };
+  }
+
+  let hasQty = false;
+  const value = items.reduce((sum, item) => {
+    const qty = safeNumber(item.qty_per_customer);
+    const unitValue = safeNumber(item.estimated_gift_value_per_unit);
+    if (qty > 0) hasQty = true;
+    return sum + qty * unitValue;
+  }, 0);
+
+  if (!hasQty) {
+    return { value: 0, status: "unset" };
+  }
+
+  return { value, status: "value" };
+}
+
+export function resolveTierCustomerCountForAvg(input: {
+  estimated_customer_count: number | null;
+  actual_customer_count: number;
+}): number {
+  const actual = safeNumber(input.actual_customer_count);
+  if (actual > 0) return actual;
+
+  const estimated =
+    input.estimated_customer_count != null
+      ? safeNumber(input.estimated_customer_count)
+      : 0;
+  return estimated > 0 ? estimated : 0;
+}
+
+/** Actual customers from tier roster when available; 0 until a list module exists. */
+export function resolveTierActualCustomerCount(_tierId: string): number {
+  return 0;
+}
+
+export function calcTierBudget(input: TierBudgetCalcInput): TierBudgetCalc {
+  const sales =
+    input.estimated_total_sales != null
+      ? safeNumber(input.estimated_total_sales)
+      : null;
+  const percent =
+    input.gift_budget_percent != null
+      ? safeNumber(input.gift_budget_percent)
+      : null;
+
+  const { value: currentPlanValue, status: currentPlanValueStatus } =
+    calcTierCurrentPlanValue(input.items);
+
+  const tierBudgetTarget =
+    sales != null && sales > 0 && percent != null
+      ? sales * (percent / 100)
+      : null;
+
+  const actualPercentOfSales =
+    sales != null && sales > 0
+      ? (divSafe(currentPlanValue, sales) ?? 0) * 100
+      : null;
+
+  const budgetRemaining =
+    tierBudgetTarget != null ? tierBudgetTarget - currentPlanValue : null;
+
+  const budgetUsedPercent =
+    tierBudgetTarget != null && tierBudgetTarget > 0
+      ? (divSafe(currentPlanValue, tierBudgetTarget) ?? 0) * 100
+      : null;
+
+  const customerCountForAvg = resolveTierCustomerCountForAvg({
+    estimated_customer_count: input.estimated_customer_count,
+    actual_customer_count: input.actual_customer_count,
+  });
+
+  const avgBudgetPerCustomer =
+    tierBudgetTarget != null && customerCountForAvg > 0
+      ? divSafe(tierBudgetTarget, customerCountForAvg)
+      : null;
+
+  return {
+    tier_budget_target: tierBudgetTarget,
+    current_plan_value: currentPlanValue,
+    current_plan_value_status: currentPlanValueStatus,
+    actual_percent_of_sales: actualPercentOfSales,
+    budget_remaining: budgetRemaining,
+    budget_used_percent: budgetUsedPercent,
+    is_over_budget: budgetRemaining != null && budgetRemaining < 0,
+    customer_count_for_avg: customerCountForAvg,
+    avg_budget_per_customer: avgBudgetPerCustomer,
+  };
+}
+
+export function toTierBudgetCalcInput(
+  tier: Pick<
+    GiftPlanTierInput,
+    | "estimated_total_sales"
+    | "gift_budget_percent"
+    | "estimated_customer_count"
+    | "items"
+    | "id"
+  >,
+): TierBudgetCalcInput {
+  return {
+    estimated_total_sales: tier.estimated_total_sales,
+    gift_budget_percent: tier.gift_budget_percent,
+    estimated_customer_count: tier.estimated_customer_count,
+    actual_customer_count: resolveTierActualCustomerCount(tier.id),
+    items: tier.items.map((item) => ({
+      qty_per_customer: item.qty_per_customer,
+      estimated_gift_value_per_unit: item.estimated_gift_value_per_unit,
+    })),
+  };
+}

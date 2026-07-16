@@ -23,6 +23,7 @@ import {
   SimulatorKpiGrid,
 } from "@/components/simulator/SimulatorKpiCard";
 import { ScenarioTable } from "@/components/simulator/ScenarioTable";
+import { SimulatorPlansModal } from "@/components/simulator/SimulatorPlansModal";
 import { SimulatorUndoToolbar } from "@/components/simulator/SimulatorUndoToolbar";
 import { SimulatorUnitPreview } from "@/components/simulator/SimulatorUnitPreview";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
@@ -35,6 +36,17 @@ import {
 } from "@/lib/pricing";
 import { useLiveProducts } from "@/hooks/PipelineStore";
 import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
+import {
+  EMPTY_SIMULATOR_NOTES,
+  type SimulatorPlan,
+  type SimulatorPlanSnapshot,
+  saveSimulatorPlan,
+} from "@/lib/simulator-plans";
+import {
+  downloadBlob,
+  exportSalesPlanWorkbook,
+  salesPlanFileName,
+} from "@/lib/simulator-sales-plan-export";
 import { resolveProductImageAlt } from "@/lib/product-image";
 import { formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import type { ScenarioRow } from "@/lib/pricing";
@@ -70,6 +82,11 @@ export function SimulatorView({
   const [tierId, setTierId] = useState("");
   const [targetRevenue, setTargetRevenue] = useState(50_000_000);
   const [expectedQty, setExpectedQty] = useState(0);
+  const [planName, setPlanName] = useState("");
+  const [activePlanId, setActivePlanId] = useState<string | null>(null);
+  const [plansModalOpen, setPlansModalOpen] = useState(false);
+  const [exportingPlan, setExportingPlan] = useState(false);
+  const [planToast, setPlanToast] = useState<string | null>(null);
 
   useEffect(() => {
     if (catalogProducts.length === 0) {
@@ -188,6 +205,74 @@ export function SimulatorView({
     commitScenarioRows(nextRows);
   }
 
+  function buildPlanSnapshot(): SimulatorPlanSnapshot {
+    return {
+      productId,
+      tierId: activeTierId,
+      targetRevenue,
+      expectedQty,
+      scenarioRows,
+      notes: EMPTY_SIMULATOR_NOTES,
+    };
+  }
+
+  function handleSaveProject() {
+    const name =
+      planName.trim() ||
+      window.prompt("ชื่อแผน / แคมเปญ", planName || "Sales Plan")?.trim();
+    if (!name) return;
+
+    const result = saveSimulatorPlan(name, buildPlanSnapshot(), activePlanId);
+    if (!result.ok) {
+      setPlanToast(result.error ?? "ไม่สามารถบันทึกแผนได้");
+      return;
+    }
+
+    setPlanName(result.plan.name);
+    setActivePlanId(result.plan.id);
+    setPlanToast(`บันทึกแผน "${result.plan.name}" แล้ว`);
+  }
+
+  function handleOpenPlan(plan: SimulatorPlan) {
+    setProductId(plan.productId);
+    setTierId(plan.tierId);
+    setTargetRevenue(plan.targetRevenue);
+    setExpectedQty(plan.expectedQty);
+    commitScenarioRows(plan.scenarioRows);
+    setPlanName(plan.name);
+    setActivePlanId(plan.id);
+    setPlansModalOpen(false);
+    setPlanToast(`โหลดแผน "${plan.name}" แล้ว`);
+  }
+
+  function handleResetPlan() {
+    if (
+      scenarioRows.length > 0 &&
+      !window.confirm(t.resetPlanConfirm)
+    ) {
+      return;
+    }
+
+    commitScenarioRows([]);
+    setActivePlanId(null);
+    setPlanToast(null);
+  }
+
+  async function handleExportSalesPlan(rows = scenarioRows) {
+    if (rows.length === 0) return;
+
+    setExportingPlan(true);
+    try {
+      const blob = await exportSalesPlanWorkbook(rows, catalogProducts);
+      downloadBlob(blob, salesPlanFileName());
+    } catch (err) {
+      console.error("Sales plan export failed:", err);
+      setPlanToast(t.exportSalesPlanFailed);
+    } finally {
+      setExportingPlan(false);
+    }
+  }
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
@@ -250,182 +335,192 @@ export function SimulatorView({
           </PageEmptyState>
         </>
       ) : (
-        <>
-          <div className="grid items-start gap-6 md:grid-cols-5">
-            <Card
-              className="md:col-span-2 md:sticky md:top-4"
-              interactive
-            >
-              <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
-                {t.productDetailTitle}
-              </h2>
+        <div className="grid items-start gap-6 lg:grid-cols-5">
+          <Card className="lg:col-span-2" interactive>
+            <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
+              {t.inputsTitle}
+            </h2>
 
-              <SimulatorSection title={t.sectionProductSelection}>
-                <div className="flex items-center gap-4 rounded-xl border border-[#EEF0F6] bg-[#FBFBFD] p-3">
-                  <ProductImageDisplay
-                    src={product?.imageUrl}
-                    alt={product ? resolveProductImageAlt(product) : "—"}
-                    size="md"
-                    className="p-1.5"
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-[#1F2937]">
-                      {product?.name}
-                    </p>
-                    <p className="truncate text-xs text-[#8A94A6]">
-                      {product?.supplier}
-                    </p>
-                  </div>
+            <SimulatorSection title={t.sectionProductSelection}>
+              <div className="flex items-center gap-4 rounded-xl border border-[#EEF0F6] bg-[#FBFBFD] p-3">
+                <ProductImageDisplay
+                  src={product?.imageUrl}
+                  alt={product ? resolveProductImageAlt(product) : "—"}
+                  size="md"
+                  className="p-1.5"
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#1F2937]">
+                    {product?.name}
+                  </p>
+                  <p className="truncate text-xs text-[#8A94A6]">
+                    {product?.supplier}
+                  </p>
                 </div>
+              </div>
 
-                <Select
-                  label={t.selectProduct}
-                  labelClassName={fieldLabelClass}
-                  options={productOptions}
-                  value={productId}
-                  onChange={handleProductChange}
-                />
-                <Select
-                  label={t.moqTier}
-                  labelClassName={fieldLabelClass}
-                  options={moqOptions}
-                  value={activeTierId}
-                  onChange={(e) => setTierId(e.target.value)}
-                />
-              </SimulatorSection>
+              <Select
+                label={t.selectProduct}
+                labelClassName={fieldLabelClass}
+                options={productOptions}
+                value={productId}
+                onChange={handleProductChange}
+              />
+              <Select
+                label={t.moqTier}
+                labelClassName={fieldLabelClass}
+                options={moqOptions}
+                value={activeTierId}
+                onChange={(e) => setTierId(e.target.value)}
+              />
+            </SimulatorSection>
 
-              <SimulatorDivider />
+            <SimulatorDivider />
 
-              <SimulatorSection title={t.sectionResultPreview}>
-                {pricing && <SimulatorUnitPreview pricing={pricing} />}
-              </SimulatorSection>
-            </Card>
+            <SimulatorSection title={t.sectionSalesTarget}>
+              <Input
+                label={t.targetRevenue}
+                labelClassName={fieldLabelClass}
+                type="number"
+                min={0}
+                value={targetRevenue}
+                onChange={(e) =>
+                  setTargetRevenue(Number(e.target.value) || 0)
+                }
+              />
+              <Input
+                label={t.expectedQty}
+                labelClassName={fieldLabelClass}
+                type="number"
+                min={0}
+                value={expectedQty}
+                onChange={(e) => setExpectedQty(Number(e.target.value) || 0)}
+              />
+            </SimulatorSection>
 
-            <Card className="min-w-0 md:col-span-3" interactive>
-              <h2 className="mb-5 text-base font-semibold text-[#1F2937]">
-                {t.salesPlanSimulatorTitle}
-              </h2>
+            <SimulatorDivider />
 
-              <SimulatorSection title={t.sectionSalesTarget}>
-                <Input
-                  label={t.targetRevenue}
-                  labelClassName={fieldLabelClass}
-                  type="number"
-                  min={0}
-                  value={targetRevenue}
-                  onChange={(e) =>
-                    setTargetRevenue(Number(e.target.value) || 0)
-                  }
-                />
-                <Input
-                  label={t.expectedQty}
-                  labelClassName={fieldLabelClass}
-                  type="number"
-                  min={0}
-                  value={expectedQty}
-                  onChange={(e) => setExpectedQty(Number(e.target.value) || 0)}
-                />
-              </SimulatorSection>
-
-              <SimulatorDivider />
-
-              <SimulatorKpiGrid>
-                <SimulatorKpiCard
-                  label={t.summaryRevenue}
-                  value={formatCurrencyTHB(result.revenue)}
-                  subtitle={t.revenueCalcHint(
-                    qtyLabel,
-                    formatCurrencyTHB(sellingPrice),
-                  )}
-                  icon={TrendingUp}
-                  variant="neutral"
-                />
-                <SimulatorKpiCard
-                  label={t.summaryTotalCost}
-                  value={formatCurrencyTHB(result.totalCost)}
-                  subtitle={t.costCalcHint(
-                    qtyLabel,
-                    formatCurrencyTHB(pricing?.costThb ?? 0),
-                  )}
-                  icon={Receipt}
-                  variant="neutral"
-                />
-                <SimulatorKpiCard
-                  label={t.summaryGrossProfit}
-                  value={formatCurrencyTHB(result.grossProfit)}
-                  subtitle={t.profitMarginHint(
-                    formatPercent(result.grossProfitPercent),
-                  )}
-                  icon={CircleDollarSign}
-                  variant={lowMargin ? "profit-warn" : "profit"}
-                />
-                <SimulatorKpiCard
-                  label={t.summaryProfitPercent}
-                  value={formatPercent(result.grossProfitPercent)}
-                  subtitle={t.profitMarginHint(
-                    formatPercent(result.grossProfitPercent),
-                  )}
-                  icon={Percent}
-                  variant={lowMargin ? "profit-warn" : "profit"}
-                />
-                <SimulatorKpiCard
-                  label={t.summaryExcessTarget}
-                  value={formatCurrencyTHB(Math.abs(revenueGap))}
-                  subtitle={
-                    exceedsTarget ? t.excessAboveTarget : t.excessBelowTarget
-                  }
-                  icon={Target}
-                  variant={exceedsTarget ? "goal" : "warn"}
-                />
-                <SimulatorKpiCard
-                  label={t.summaryQtyRequired}
-                  value={t.qtyUnits(qtyForTarget)}
-                  subtitle={
-                    exceedsTarget
-                      ? t.qtyRequiredHint(formatCurrencyTHB(sellingPrice))
-                      : t.qtyRequiredGapHint(
-                          additionalQtyNeeded.toLocaleString("th-TH"),
-                        )
-                  }
-                  icon={Hash}
-                  variant="goal"
-                />
-              </SimulatorKpiGrid>
+            <SimulatorSection title={t.sectionResultPreview}>
+              {pricing && <SimulatorUnitPreview pricing={pricing} />}
 
               {lowMargin && (
-                <div className="warning-banner mt-4">
+                <div className="warning-banner">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   {t.lowMarginWarning}
                 </div>
               )}
+            </SimulatorSection>
 
-              <div className="mt-5">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full"
-                  onClick={handleAddToScenario}
-                  disabled={expectedQty <= 0}
-                >
-                  <Plus className="h-4 w-4" />
-                  {t.addToScenario}
-                </Button>
-              </div>
-            </Card>
+            <div className="mt-5">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={handleAddToScenario}
+                disabled={expectedQty <= 0}
+              >
+                <Plus className="h-4 w-4" />
+                {t.addToScenario}
+              </Button>
+            </div>
+          </Card>
+
+          <div className="flex min-w-0 flex-col gap-4 lg:col-span-3 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-5.5rem)] lg:self-start">
+            <SimulatorKpiGrid className="shrink-0">
+              <SimulatorKpiCard
+                label={t.summaryRevenue}
+                value={formatCurrencyTHB(result.revenue)}
+                subtitle={t.revenueCalcHint(
+                  qtyLabel,
+                  formatCurrencyTHB(sellingPrice),
+                )}
+                icon={TrendingUp}
+                variant="neutral"
+              />
+              <SimulatorKpiCard
+                label={t.summaryTotalCost}
+                value={formatCurrencyTHB(result.totalCost)}
+                subtitle={t.costCalcHint(
+                  qtyLabel,
+                  formatCurrencyTHB(pricing?.costThb ?? 0),
+                )}
+                icon={Receipt}
+                variant="neutral"
+              />
+              <SimulatorKpiCard
+                label={t.summaryGrossProfit}
+                value={formatCurrencyTHB(result.grossProfit)}
+                subtitle={t.profitMarginHint(
+                  formatPercent(result.grossProfitPercent),
+                )}
+                icon={CircleDollarSign}
+                variant={lowMargin ? "profit-warn" : "profit"}
+              />
+              <SimulatorKpiCard
+                label={t.summaryProfitPercent}
+                value={formatPercent(result.grossProfitPercent)}
+                subtitle={t.profitMarginHint(
+                  formatPercent(result.grossProfitPercent),
+                )}
+                icon={Percent}
+                variant={lowMargin ? "profit-warn" : "profit"}
+              />
+              <SimulatorKpiCard
+                label={t.summaryExcessTarget}
+                value={formatCurrencyTHB(Math.abs(revenueGap))}
+                subtitle={
+                  exceedsTarget ? t.excessAboveTarget : t.excessBelowTarget
+                }
+                icon={Target}
+                variant={exceedsTarget ? "goal" : "warn"}
+              />
+              <SimulatorKpiCard
+                label={t.summaryQtyRequired}
+                value={t.qtyUnits(qtyForTarget)}
+                subtitle={
+                  exceedsTarget
+                    ? t.qtyRequiredHint(formatCurrencyTHB(sellingPrice))
+                    : t.qtyRequiredGapHint(
+                        additionalQtyNeeded.toLocaleString("th-TH"),
+                      )
+                }
+                icon={Hash}
+                variant="goal"
+              />
+            </SimulatorKpiGrid>
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <ScenarioTable
+                rows={scenarioRows}
+                onChange={handleScenarioChange}
+                historyRevision={scenarioRevision}
+                headerActions={{
+                  planName,
+                  onPlanNameChange: setPlanName,
+                  onSave: handleSaveProject,
+                  onLoad: () => setPlansModalOpen(true),
+                  onReset: handleResetPlan,
+                  onExport: () => handleExportSalesPlan(),
+                  exporting: exportingPlan,
+                }}
+              />
+            </div>
           </div>
-        </>
+        </div>
       )}
 
-      <div className="mt-8">
-        <ScenarioTable
-          rows={scenarioRows}
-          onChange={handleScenarioChange}
-          historyRevision={scenarioRevision}
-          sectionTitle={
-            catalogProducts.length > 0 ? t.multiProductSummaryTitle : undefined
-          }
-        />
-      </div>
+      {planToast && (
+        <p className="mt-4 rounded-xl border border-gray-100 bg-gray-50 px-4 py-2 text-sm text-gray-700">
+          {planToast}
+        </p>
+      )}
+
+      <SimulatorPlansModal
+        open={plansModalOpen}
+        onClose={() => setPlansModalOpen(false)}
+        onOpenPlan={handleOpenPlan}
+        onExportPlan={(plan) => handleExportSalesPlan(plan.scenarioRows)}
+      />
     </div>
   );
 }

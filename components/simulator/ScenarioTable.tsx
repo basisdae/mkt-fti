@@ -12,10 +12,14 @@ import {
   CircleDollarSign,
   Check,
   Copy,
+  Download,
+  FolderOpen,
   ListPlus,
   Pencil,
   Percent,
   Receipt,
+  RotateCcw,
+  Save,
   Trash2,
   TrendingUp,
   X,
@@ -34,13 +38,26 @@ import { SIMULATOR_COPY as t } from "@/lib/simulator-i18n";
 import { resolveProductImageAlt } from "@/lib/product-image";
 import { cn, formatCurrencyTHB, formatPercent } from "@/lib/utils";
 import { ProductImageDisplay } from "@/components/product/ProductImageDisplay";
+import { Input } from "@/components/forms/Input";
 import type { ProductView } from "@/types/product";
+
+export interface ScenarioTableHeaderActions {
+  planName: string;
+  onPlanNameChange: (value: string) => void;
+  onSave: () => void;
+  onLoad: () => void;
+  onReset: () => void;
+  onExport: () => void | Promise<void>;
+  exporting?: boolean;
+}
 
 interface ScenarioTableProps {
   rows: ScenarioRow[];
   onChange: (rows: ScenarioRow[]) => void;
   historyRevision?: number;
   sectionTitle?: string;
+  headerActions?: ScenarioTableHeaderActions;
+  className?: string;
 }
 
 const compactField =
@@ -85,6 +102,8 @@ export function ScenarioTable({
   onChange,
   historyRevision = 0,
   sectionTitle,
+  headerActions,
+  className,
 }: ScenarioTableProps) {
   const products = useLiveProducts();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -180,30 +199,100 @@ export function ScenarioTable({
     });
   }
 
+  const panelTitle = sectionTitle ?? t.scenarioTitle;
+
+  function renderHeader() {
+    return (
+      <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-gray-900">{panelTitle}</h2>
+            <p className="mt-1 text-xs text-amber-700/90">{t.simulationDisclaimer}</p>
+          </div>
+          {headerActions ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="shrink-0 gap-1.5 self-start"
+              disabled={rows.length === 0 || headerActions.exporting}
+              onClick={() => void headerActions.onExport()}
+            >
+              <Download className="h-3.5 w-3.5" />
+              {headerActions.exporting ? "…" : t.exportSalesPlan}
+            </Button>
+          ) : null}
+        </div>
+
+        {headerActions ? (
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+            <div className="min-w-[180px] flex-1 sm:max-w-xs">
+              <Input
+                label={t.planNameLabel}
+                placeholder={t.planNamePlaceholder}
+                value={headerActions.planName}
+                onChange={(e) => headerActions.onPlanNameChange(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="gap-1.5"
+                onClick={headerActions.onSave}
+              >
+                <Save className="h-3.5 w-3.5" />
+                {t.saveProject}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="gap-1.5"
+                onClick={headerActions.onLoad}
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+                {t.loadPlan}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="gap-1.5"
+                onClick={headerActions.onReset}
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t.resetPlan}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-gray-400">{t.editRowHint}</p>
+        )}
+      </div>
+    );
+  }
+
   if (rows.length === 0) {
     return (
-      <Card className="border-dashed">
-        <EmptyState
-          icon={ListPlus}
-          title={t.scenarioEmptyTitle}
-          description={t.scenarioEmptyDescription}
-          compact
-        />
+      <Card className={cn("border-dashed", className)} padding="none" interactive>
+        {renderHeader()}
+        <div className="px-5 py-6 sm:px-6">
+          <EmptyState
+            icon={ListPlus}
+            title={t.scenarioEmptyTitle}
+            description={t.scenarioEmptyDescription}
+            compact
+          />
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card padding="none" interactive>
-      <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900">
-            {sectionTitle ?? t.scenarioTitle}
-          </h2>
-          <p className="mt-1 text-xs text-amber-700/90">{t.simulationDisclaimer}</p>
-        </div>
-        <p className="text-xs text-gray-400">{t.editRowHint}</p>
-      </div>
+    <Card padding="none" interactive className={className}>
+      {renderHeader()}
 
       <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
         <SimulatorKpiGrid className="sm:grid-cols-2 lg:grid-cols-4">

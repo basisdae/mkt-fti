@@ -17,6 +17,8 @@ export interface GiftCatalogImageValue {
   removeRequested: boolean;
   /** True when preview is from an existing saved image. */
   hasPersistedImage?: boolean;
+  /** Saved image URL — restored when cancelling a pending upload. */
+  persistedPreviewUrl?: string | null;
 }
 
 interface GiftCatalogImageUploadProps {
@@ -70,6 +72,7 @@ export function GiftCatalogImageUpload({
       file,
       removeRequested: false,
       hasPersistedImage: false,
+      persistedPreviewUrl: value.persistedPreviewUrl ?? null,
     });
   }
 
@@ -91,11 +94,13 @@ export function GiftCatalogImageUpload({
 
   function handleCancelPending() {
     revokeIfBlob(value.previewUrl);
+    const restore = value.persistedPreviewUrl ?? null;
     onChange({
-      previewUrl: value.hasPersistedImage ? value.previewUrl : null,
+      previewUrl: restore,
       file: null,
       removeRequested: false,
-      hasPersistedImage: value.hasPersistedImage,
+      hasPersistedImage: Boolean(restore),
+      persistedPreviewUrl: value.persistedPreviewUrl ?? null,
     });
     if (inputRef.current) inputRef.current.value = "";
     setError(null);
@@ -246,6 +251,7 @@ export function createEmptyGiftCatalogImageValue(): GiftCatalogImageValue {
     file: null,
     removeRequested: false,
     hasPersistedImage: false,
+    persistedPreviewUrl: null,
   };
 }
 
@@ -257,5 +263,6 @@ export function createGiftCatalogImageValueFromRow(
     file: null,
     removeRequested: false,
     hasPersistedImage: Boolean(imageUrl),
+    persistedPreviewUrl: imageUrl,
   };
 }
