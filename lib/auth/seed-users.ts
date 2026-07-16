@@ -21,7 +21,7 @@ export const SEED_USERS: SeedUserRecord[] = [
   {
     id: "user-system-admin",
     email: "mkt.dir@functioninter.co.th",
-    password: "Letgoparty2027!",
+    password: "vtwigsiv1",
     displayName: "System Administrator",
     role: "admin",
   },
