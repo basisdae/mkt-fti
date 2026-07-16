@@ -142,7 +142,10 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (appUserResult) {
-    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword);
+    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword, {
+      role: appUserResult.role,
+      displayName: appUserResult.displayName,
+    });
     return appUserResult;
   }
 
@@ -157,7 +160,10 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (localResult) {
-    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword);
+    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword, {
+      role: localResult.role,
+      displayName: localResult.displayName,
+    });
     return localResult;
   }
 
