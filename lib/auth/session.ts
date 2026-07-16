@@ -44,7 +44,7 @@ function decodeSession(raw: string): AuthSession | null {
     return {
       user,
       loggedInAt: parsed.loggedInAt || new Date().toISOString(),
-      supabaseAuthLinked: parsed.supabaseAuthLinked,
+      supabaseAuthLinked: parsed.supabaseAuthLinked === true,
     };
   } catch {
     return null;
@@ -64,7 +64,7 @@ export function createSession(
           : getDefaultPermissionsForRole(user.role),
     },
     loggedInAt: new Date().toISOString(),
-    supabaseAuthLinked: options?.supabaseAuthLinked ?? true,
+    supabaseAuthLinked: options?.supabaseAuthLinked === true,
   };
 }
 

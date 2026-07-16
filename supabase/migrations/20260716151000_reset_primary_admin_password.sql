@@ -1,9 +1,5 @@
--- Reset primary admin password for app_users login.
--- Also update the matching user in Supabase Dashboard → Authentication → Users
--- (same email + password) so Gift Plans Auth Bridge (signInWithPassword) works.
-
-update public.app_users
-set
-  password = 'vtwigsiv1',
-  updated_at = now()
-where lower(email) = 'mkt.dir@functioninter.co.th';
+-- Password changes for Gift Plans operators must be done manually:
+-- 1. Update public.app_users.password (via secure admin process)
+-- 2. Update the same user in Supabase Dashboard → Authentication → Users
+--    (email must match app_users; password must match for signInWithPassword bridge)
+-- Do not store plaintext passwords in migration files.

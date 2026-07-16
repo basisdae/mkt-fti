@@ -152,10 +152,6 @@ export async function authenticateUser(
       supabaseAuthLinked = await establishSupabaseAuthSession(
         normalizedEmail,
         normalizedPassword,
-        {
-          role: appUserResult.role,
-          displayName: appUserResult.displayName,
-        },
       );
     } catch {
       supabaseAuthLinked = false;
@@ -179,10 +175,6 @@ export async function authenticateUser(
       supabaseAuthLinked = await establishSupabaseAuthSession(
         normalizedEmail,
         normalizedPassword,
-        {
-          role: localResult.role,
-          displayName: localResult.displayName,
-        },
       );
     } catch {
       supabaseAuthLinked = false;

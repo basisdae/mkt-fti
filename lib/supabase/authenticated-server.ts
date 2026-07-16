@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE } from "@/lib/auth/gift-plan-auth";
 import { getServerSession } from "@/lib/auth/server-session";
 import { createClient } from "@/lib/supabase/server";
 import type { AppUser } from "@/types/auth";
@@ -18,8 +19,8 @@ export type AuthenticatedSupabaseResult =
   | { ok: false; error: string };
 
 /**
- * Resolves app session + verified Supabase Auth user for Server Actions.
- * Uses standard supabase.auth.getUser() — no custom JWT minting.
+ * Resolves app session + verified Supabase Auth user for Gift Plans Server Actions.
+ * Uses standard supabase.auth.getUser() — no custom JWT or service role.
  */
 export async function getAuthenticatedSupabaseForActions(): Promise<AuthenticatedSupabaseResult> {
   const session = await getServerSession();
@@ -34,17 +35,14 @@ export async function getAuthenticatedSupabaseForActions(): Promise<Authenticate
   } = await supabase.auth.getUser();
 
   if (error || !authUser?.email) {
-    return {
-      ok: false,
-      error: "Supabase session expired or missing. Please sign in again.",
-    };
+    return { ok: false, error: GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE };
   }
 
   const authEmail = normalizeEmail(authUser.email);
   if (authEmail !== normalizeEmail(session.user.email)) {
     return {
       ok: false,
-      error: "Session mismatch between app and Supabase Auth. Please sign in again.",
+      error: GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE,
     };
   }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { GiftCatalogCard } from "@/components/gift-plan/GiftCatalogCard";
 import { GiftCatalogItemDialog } from "@/components/gift-plan/GiftCatalogItemDialog";
+import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/forms/Select";
 import { useAuth } from "@/hooks/AuthStore";
@@ -113,6 +114,7 @@ export function GiftCatalogView() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+      <GiftPlanSupabaseAuthBanner />
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { DeleteGiftPlanDialog } from "@/components/gift-plan/DeleteGiftPlanDialog";
 import { GiftPlanCard } from "@/components/gift-plan/GiftPlanCard";
+import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { NewGiftPlanDialog } from "@/components/gift-plan/NewGiftPlanDialog";
 import { RenameGiftPlanDialog } from "@/components/gift-plan/RenameGiftPlanDialog";
 import { Button } from "@/components/ui/Button";
@@ -133,6 +134,7 @@ export function GiftPlansHomeView() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+      <GiftPlanSupabaseAuthBanner />
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">

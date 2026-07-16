@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GiftPlanEditorView } from "@/features/gift-plan/GiftPlanEditorView";
+import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { getGiftPlanEditorBundleAction } from "@/lib/actions/gift-plans";
 import { useAuth } from "@/hooks/AuthStore";
 import { canExportGiftPlans } from "@/lib/auth/permissions";
@@ -58,6 +59,9 @@ export function GiftPlanDetailView({ planId }: GiftPlanDetailViewProps) {
   if (!editorBundle) return null;
 
   return (
-    <GiftPlanEditorView initialBundle={editorBundle} canExport={canExport} />
+    <div className="space-y-4">
+      <GiftPlanSupabaseAuthBanner />
+      <GiftPlanEditorView initialBundle={editorBundle} canExport={canExport} />
+    </div>
   );
 }
