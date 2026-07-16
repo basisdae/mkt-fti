@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { linkSupabaseAuthUserAction } from "@/lib/actions/link-supabase-auth";
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -12,14 +13,14 @@ export interface SupabaseAuthBridgeProfile {
 
 /**
  * Establishes a Supabase Auth session (browser cookies) after app_users login.
- * Required for Gift Plans RLS — Server Actions use supabase.auth.getUser().
+ * Returns false when linking fails — login should still continue.
  */
 export async function establishSupabaseAuthSession(
   email: string,
   password: string,
   profile?: SupabaseAuthBridgeProfile,
-): Promise<void> {
-  if (!isSupabaseConfigured()) return;
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
 
   const supabase = createClient();
   const normalizedEmail = normalizeEmail(email);
@@ -33,39 +34,47 @@ export async function establishSupabaseAuthSession(
   }
 
   let { error } = await signIn();
+  if (!error) return true;
 
-  if (error) {
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: normalizedEmail,
-      password: normalizedPassword,
-      options: {
-        data: {
-          ...(profile?.role ? { role: profile.role } : {}),
-          ...(profile?.displayName
-            ? { display_name: profile.displayName }
-            : {}),
-        },
+  const { error: signUpError } = await supabase.auth.signUp({
+    email: normalizedEmail,
+    password: normalizedPassword,
+    options: {
+      data: {
+        ...(profile?.role ? { role: profile.role } : {}),
+        ...(profile?.displayName
+          ? { display_name: profile.displayName }
+          : {}),
       },
-    });
+    },
+  });
 
-    const alreadyRegistered =
-      signUpError?.message?.toLowerCase().includes("already") ?? false;
+  const alreadyRegistered =
+    signUpError?.message?.toLowerCase().includes("already") ?? false;
 
-    if (!signUpError || alreadyRegistered) {
-      const retry = await signIn();
-      error = retry.error;
-    }
+  if (!signUpError || alreadyRegistered) {
+    const retry = await signIn();
+    if (!retry.error) return true;
+    error = retry.error;
   }
 
-  if (error) {
-    const needsPasswordReset =
-      error.message.toLowerCase().includes("invalid") ||
-      error.message.toLowerCase().includes("credentials");
+  const provisioned = await linkSupabaseAuthUserAction({
+    email: normalizedEmail,
+    password: normalizedPassword,
+    role: profile?.role,
+    displayName: profile?.displayName,
+  });
 
-    throw new Error(
-      needsPasswordReset
-        ? "Supabase Authentication password does not match this account. In Supabase Dashboard → Authentication → Users, open this email and set the password to match your MKT HQ login, then sign in again."
-        : "Supabase Auth session could not be established. Ensure this email exists in Supabase Dashboard → Authentication → Users with the same password as MKT HQ login.",
-    );
+  if (provisioned.ok) {
+    const retry = await signIn();
+    if (!retry.error) return true;
+    error = retry.error;
   }
+
+  console.warn(
+    "Supabase Auth bridge failed:",
+    error?.message ??
+      (provisioned.ok ? "unknown" : provisioned.error),
+  );
+  return false;
 }

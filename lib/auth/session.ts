@@ -44,13 +44,17 @@ function decodeSession(raw: string): AuthSession | null {
     return {
       user,
       loggedInAt: parsed.loggedInAt || new Date().toISOString(),
+      supabaseAuthLinked: parsed.supabaseAuthLinked,
     };
   } catch {
     return null;
   }
 }
 
-export function createSession(user: AppUser): AuthSession {
+export function createSession(
+  user: AppUser,
+  options?: { supabaseAuthLinked?: boolean },
+): AuthSession {
   return {
     user: {
       ...user,
@@ -60,6 +64,7 @@ export function createSession(user: AppUser): AuthSession {
           : getDefaultPermissionsForRole(user.role),
     },
     loggedInAt: new Date().toISOString(),
+    supabaseAuthLinked: options?.supabaseAuthLinked ?? true,
   };
 }
 

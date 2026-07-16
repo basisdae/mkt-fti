@@ -50,8 +50,8 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const user = await authenticateUser(email, password);
-    const next = createSession(user);
+    const { user, supabaseAuthLinked } = await authenticateUser(email, password);
+    const next = createSession(user, { supabaseAuthLinked });
     writeSession(next);
     setSession(next);
     return user;
@@ -86,17 +86,19 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
         setSession(null);
         return;
       }
-      const user: AppUser = {
-        id: record.id,
-        email: record.email,
-        displayName: record.displayName,
-        role: record.role,
-        permissions:
-          record.permissions.length > 0
-            ? record.permissions
-            : getDefaultPermissionsForRole(record.role),
-      };
-      const next = createSession(user);
+    const user: AppUser = {
+      id: record.id,
+      email: record.email,
+      displayName: record.displayName,
+      role: record.role,
+      permissions:
+        record.permissions.length > 0
+          ? record.permissions
+          : getDefaultPermissionsForRole(record.role),
+    };
+    const next = createSession(user, {
+      supabaseAuthLinked: current.supabaseAuthLinked,
+    });
       writeSession(next);
       setSession(next);
     })();

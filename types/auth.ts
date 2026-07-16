@@ -14,6 +14,8 @@ export interface AppUser {
 export interface AuthSession {
   user: AppUser;
   loggedInAt: string;
+  /** False when app_users login succeeded but Supabase Auth cookies were not linked. */
+  supabaseAuthLinked?: boolean;
 }
 
 /** Local auth registry record (password never sent to list UI). */

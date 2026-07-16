@@ -14,6 +14,11 @@ import { establishSupabaseAuthSession } from "@/lib/auth/supabase-session-bridge
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppUser } from "@/types/auth";
 
+export interface AuthLoginResult {
+  user: AppUser;
+  supabaseAuthLinked: boolean;
+}
+
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -127,7 +132,7 @@ async function loginWithSupabaseAuth(
 export async function authenticateUser(
   email: string,
   password: string,
-): Promise<AppUser> {
+): Promise<AuthLoginResult> {
   const normalizedEmail = normalizeEmail(email);
   const normalizedPassword = password.trim();
 
@@ -142,11 +147,15 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (appUserResult) {
-    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword, {
-      role: appUserResult.role,
-      displayName: appUserResult.displayName,
-    });
-    return appUserResult;
+    const supabaseAuthLinked = await establishSupabaseAuthSession(
+      normalizedEmail,
+      normalizedPassword,
+      {
+        role: appUserResult.role,
+        displayName: appUserResult.displayName,
+      },
+    );
+    return { user: appUserResult, supabaseAuthLinked };
   }
 
   const localResult = await loginWithLocalRegistry(
@@ -160,18 +169,24 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (localResult) {
-    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword, {
-      role: localResult.role,
-      displayName: localResult.displayName,
-    });
-    return localResult;
+    const supabaseAuthLinked = await establishSupabaseAuthSession(
+      normalizedEmail,
+      normalizedPassword,
+      {
+        role: localResult.role,
+        displayName: localResult.displayName,
+      },
+    );
+    return { user: localResult, supabaseAuthLinked };
   }
 
   const supabaseAuthUser = await loginWithSupabaseAuth(
     normalizedEmail,
     normalizedPassword,
   );
-  if (supabaseAuthUser) return supabaseAuthUser;
+  if (supabaseAuthUser) {
+    return { user: supabaseAuthUser, supabaseAuthLinked: true };
+  }
 
   throw new Error("Invalid email or password");
 }
