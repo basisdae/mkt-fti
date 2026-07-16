@@ -90,7 +90,12 @@ export function GiftPlanCard({
         </div>
 
         {(canEdit || canExport) && (
-          <div className="relative shrink-0">
+          <div
+            className="relative shrink-0"
+            data-gift-plan-menu
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
             <Button
               type="button"
               variant="ghost"
@@ -98,6 +103,7 @@ export function GiftPlanCard({
               className="h-8 w-8 p-0"
               onClick={onToggleMenu}
               aria-label={t.planActions}
+              aria-expanded={menuOpen}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -151,7 +157,7 @@ export function GiftPlanCard({
                     <button
                       type="button"
                       className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-fti-red hover:bg-red-50"
-                      onClick={onDelete}
+                      onClick={() => onDelete()}
                     >
                       <Trash2 className="h-4 w-4" /> {t.delete}
                     </button>

@@ -70,7 +70,14 @@ export function SeminarPlannerHomeView() {
   }, []);
 
   useEffect(() => {
-    function onPointerDown() {
+    function onPointerDown(event: MouseEvent) {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("[data-seminar-event-menu]")
+      ) {
+        return;
+      }
       setMenuId(null);
     }
     document.addEventListener("mousedown", onPointerDown);
@@ -149,14 +156,6 @@ export function SeminarPlannerHomeView() {
       return;
     }
     void refresh();
-  }
-
-  function openEvent(eventId: string) {
-    router.push(`/seminars/${eventId}`);
-  }
-
-  function editEvent(eventId: string) {
-    router.push(`/seminars/${eventId}?tab=overview`);
   }
 
   async function handleArchive(event: SeminarEventSummary, archived: boolean) {
@@ -271,13 +270,13 @@ export function SeminarPlannerHomeView() {
             <SeminarEventCard
               key={event.id}
               event={event}
+              eventHref={`/seminars/${event.id}`}
+              editHref={`/seminars/${event.id}?tab=overview`}
               canEdit={canEdit}
               menuOpen={menuId === event.id}
               onToggleMenu={() =>
                 setMenuId((prev) => (prev === event.id ? null : event.id))
               }
-              onOpen={() => openEvent(event.id)}
-              onEdit={() => editEvent(event.id)}
               onDuplicate={() => void handleDuplicate(event)}
               onArchive={() => void handleArchive(event, true)}
               onUnarchive={() => void handleArchive(event, false)}

@@ -595,10 +595,42 @@ export async function deleteGiftPlanAction(
   const auth = await requireEdit();
   if (!auth.ok) return auth;
 
-  const { error } = await auth.data.supabase
+  const { supabase } = auth.data;
+
+  const { data: plan } = await supabase
     .from("gift_plans")
+    .select("id")
+    .eq("id", planId)
+    .maybeSingle();
+  if (!plan) return fail(t.giftPlanNotFound);
+
+  const { data: tiers } = await supabase
+    .from("gift_plan_tiers")
+    .select("id")
+    .eq("plan_id", planId);
+  const tierIds = (tiers ?? []).map((row) => row.id as string);
+
+  if (tierIds.length > 0) {
+    const { error: itemsError } = await supabase
+      .from("gift_plan_items")
+      .delete()
+      .in("tier_id", tierIds);
+    if (itemsError) return fail(itemsError.message);
+
+    const { error: tiersError } = await supabase
+      .from("gift_plan_tiers")
+      .delete()
+      .eq("plan_id", planId);
+    if (tiersError) return fail(tiersError.message);
+  }
+
+  const { error: groupsError } = await supabase
+    .from("gift_plan_purchase_groups")
     .delete()
-    .eq("id", planId);
+    .eq("plan_id", planId);
+  if (groupsError) return fail(groupsError.message);
+
+  const { error } = await supabase.from("gift_plans").delete().eq("id", planId);
   if (error) return fail(error.message);
   return { ok: true, data: null };
 }

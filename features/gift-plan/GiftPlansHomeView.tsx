@@ -91,7 +91,14 @@ export function GiftPlansHomeView() {
   }, []);
 
   useEffect(() => {
-    function onPointerDown() {
+    function onPointerDown(event: MouseEvent) {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest("[data-gift-plan-menu]")
+      ) {
+        return;
+      }
       setMenuId(null);
     }
     document.addEventListener("mousedown", onPointerDown);
@@ -276,7 +283,10 @@ export function GiftPlansHomeView() {
                 if (!result.ok) setError(result.error);
                 else void refresh();
               }}
-              onDelete={() => setDeleteTarget(plan)}
+              onDelete={() => {
+                setMenuId(null);
+                setDeleteTarget(plan);
+              }}
               onExport={() => void handleExport(plan)}
             />
           ))}

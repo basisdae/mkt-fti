@@ -93,6 +93,19 @@ export const SEMINAR_PLANNER_COPY = {
   agendaSection: "วาระงาน",
   agendaEmpty: "ยังไม่มีเซสชันใน Agenda — เพิ่มจากคลังหรือสร้างเซสชันใหม่",
   addFromLibrary: "เพิ่มจากคลัง",
+  pickFromLibrary: "เลือกหัวข้อจากคลัง…",
+  libraryPickHint: "เลือกรายการแล้วจะเพิ่มลง Agenda ทันที",
+  viewSummary: "ดูสรุป",
+  closeSummary: "ปิด",
+  editInLibrary: "ไปแก้ที่คลังเซสชัน",
+  targetGroupsLabel: "กลุ่มเป้าหมาย",
+  expandSessionFields: "แก้ไขเวลาและหมายเหตุ",
+  agendaSnapshotHint:
+    "รายละเอียดนี้เป็นสำเนาจากคลังเซสชัน — แก้ต้นฉบับที่คลังเซสชัน",
+  customSessionSummaryHint:
+    "เซสชันนี้ไม่ได้เชื่อมคลัง — แก้รายละเอียดที่คลังเซสชันแล้วเพิ่มใหม่ถ้าต้องการ",
+  agendaCompactHint:
+    "คลิกชื่อเซสชันหรือ “ดูสรุป” เพื่ออ่านรายละเอียด — แก้เวลาและหมายเหตุที่ลูกศรด้านขวา",
   addCustomSession: "เพิ่มเซสชันใหม่",
   librarySearch: "ค้นหาเซสชันในคลัง…",
   sessionTitle: "ชื่อเซสชัน",

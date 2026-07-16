@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BookOpen, Pencil, Plus, RefreshCw, Search } from "lucide-react";
-import { SeminarAgendaSessionCard } from "@/components/seminar-planner/SeminarAgendaSessionCard";
+import { Pencil, Plus, RefreshCw } from "lucide-react";
+import { SeminarAgendaCompactRow } from "@/components/seminar-planner/SeminarAgendaCompactRow";
+import { SeminarAgendaLibraryDropdown } from "@/components/seminar-planner/SeminarAgendaLibraryDropdown";
+import { SeminarAgendaSessionSummaryDrawer } from "@/components/seminar-planner/SeminarAgendaSessionSummaryDrawer";
 import { SeminarAgendaSummary } from "@/components/seminar-planner/SeminarAgendaSummary";
 import { SeminarEventStatusBadge } from "@/components/seminar-planner/SeminarEventStatusBadge";
 import { Button } from "@/components/ui/Button";
@@ -21,7 +23,6 @@ import {
   listCategoriesAction,
   listFormatsAction,
   listPurposesAction,
-  listSessionLibraryAction,
   listSessionStatusesAction,
   listTargetGroupsAction,
 } from "@/lib/actions/seminar-library";
@@ -138,14 +139,8 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   const [purposeIds, setPurposeIds] = useState<string[]>([]);
   const [agendaItems, setAgendaItems] = useState<SeminarAgendaItemInput[]>([]);
 
-  const [librarySessions, setLibrarySessions] = useState<SeminarLibSessionRow[]>(
-    [],
-  );
-  const [libraryQuery, setLibraryQuery] = useState("");
-  const [libraryCategory, setLibraryCategory] = useState("all");
-  const [libraryLoading, setLibraryLoading] = useState(false);
-  const [showLibrary, setShowLibrary] = useState(false);
   const [dragAgendaIndex, setDragAgendaIndex] = useState<number | null>(null);
+  const [summaryItemIndex, setSummaryItemIndex] = useState<number | null>(null);
 
   const [masterOptions, setMasterOptions] = useState<{
     formats: { value: string; label: string }[];
@@ -250,23 +245,6 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     void loadMasterData();
   }, [eventId]);
 
-  async function searchLibrary(q: string, category: string) {
-    setLibraryLoading(true);
-    const result = await listSessionLibraryAction({
-      search: q,
-      categoryName: category === "all" ? undefined : category,
-      activeOnly: true,
-    });
-    setLibraryLoading(false);
-    if (!result.ok) return;
-    setLibrarySessions(result.data);
-  }
-
-  useEffect(() => {
-    if (!showLibrary) return;
-    void searchLibrary(libraryQuery, libraryCategory);
-  }, [showLibrary, libraryQuery, libraryCategory]);
-
   const agendaWarnings = useMemo(
     () => validateAgendaItems(agendaItems, { dirty }),
     [agendaItems, dirty],
@@ -331,21 +309,6 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     setDragAgendaIndex(null);
   }
 
-  function duplicateAgendaItem(index: number) {
-    const source = agendaItems[index];
-    const copy: SeminarAgendaItemInput = {
-      ...source,
-      id: undefined,
-      title: `${source.title}${source.title ? " (สำเนา)" : ""}`,
-      detail_bullets: duplicateBullets(source.detail_bullets ?? []),
-      objectives_bullets: duplicateBullets(source.objectives_bullets ?? []),
-      outcomes_bullets: duplicateBullets(source.outcomes_bullets ?? []),
-    };
-    const next = [...agendaItems];
-    next.splice(index + 1, 0, copy);
-    reorderAgenda(next);
-  }
-
   function removeAgendaItem(index: number) {
     reorderAgenda(agendaItems.filter((_, i) => i !== index));
   }
@@ -355,7 +318,6 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
       ...agendaItems,
       sessionToAgendaItem(session, agendaItems.length),
     ]);
-    setShowLibrary(false);
   }
 
   function addCustomSession() {
@@ -552,6 +514,12 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               </dd>
             </div>
           </dl>
+          {eventForm.team_members?.trim() ? (
+            <p className="mt-3 text-xs text-gray-600">
+              <span className="text-gray-400">{t.teamMembers}: </span>
+              {eventForm.team_members}
+            </p>
+          ) : null}
         </div>
       </header>
 
@@ -794,25 +762,27 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
       ) : (
         <section className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-gray-900">
-              {t.agendaSection}
-            </h2>
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900">
+                {t.agendaSection}
+              </h2>
+              <p className="mt-1 text-xs text-gray-500">{t.agendaCompactHint}</p>
+            </div>
             {canEdit ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowLibrary((v) => !v)}
-                >
-                  <BookOpen className="h-4 w-4" />
-                  {t.addFromLibrary}
-                </Button>
-                <Button onClick={addCustomSession}>
-                  <Plus className="h-4 w-4" />
-                  {t.addCustomSession}
-                </Button>
-              </div>
+              <Button variant="secondary" onClick={addCustomSession}>
+                <Plus className="h-4 w-4" />
+                {t.addCustomSession}
+              </Button>
             ) : null}
           </div>
+
+          {canEdit ? (
+            <SeminarAgendaLibraryDropdown
+              disabled={!canEdit}
+              categoryOptions={masterOptions.categories}
+              onSelect={addFromLibrary}
+            />
+          ) : null}
 
           <SeminarAgendaSummary items={agendaItems} />
 
@@ -836,65 +806,12 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
             </ul>
           ) : null}
 
-          {showLibrary ? (
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap gap-3">
-                <div className="relative min-w-[12rem] flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    value={libraryQuery}
-                    onChange={(e) => setLibraryQuery(e.target.value)}
-                    placeholder={t.librarySearch}
-                    className="w-full rounded-xl border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
-                  />
-                </div>
-                <Select
-                  value={libraryCategory}
-                  onChange={(e) => setLibraryCategory(e.target.value)}
-                  className="w-44"
-                  options={[
-                    { value: "all", label: t.filterAllCategories },
-                    ...masterOptions.categories,
-                  ]}
-                />
-              </div>
-              {libraryLoading ? (
-                <p className="mt-3 text-sm text-gray-500">{t.loadingLibrary}</p>
-              ) : librarySessions.length === 0 ? (
-                <p className="mt-3 text-sm text-gray-500">{t.emptyLibrary}</p>
-              ) : (
-                <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto">
-                  {librarySessions.map((session) => (
-                    <li key={session.id}>
-                      <button
-                        type="button"
-                        className="flex w-full items-start justify-between gap-3 rounded-xl border border-gray-100 px-3 py-2 text-left hover:border-primary/30 hover:bg-primary/5"
-                        onClick={() => addFromLibrary(session)}
-                        disabled={!canEdit}
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {session.title}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {session.category_name || "—"}
-                          </p>
-                        </div>
-                        <Plus className="h-4 w-4 shrink-0 text-primary" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : null}
-
           {agendaItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
               <p className="text-sm text-gray-500">{t.agendaEmpty}</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {agendaItems.map((item, index) => (
                 <div
                   key={item.id ?? `new-${index}`}
@@ -910,27 +827,37 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
                     dropAgendaItem(index);
                   }}
                   className={cn(
-                    dragAgendaIndex === index && "opacity-60 ring-2 ring-primary/30",
+                    dragAgendaIndex === index &&
+                      "opacity-60 ring-2 ring-primary/30 rounded-xl",
                   )}
                 >
-                  <SeminarAgendaSessionCard
+                  <SeminarAgendaCompactRow
                     item={item}
                     index={index}
                     total={agendaItems.length}
                     allItems={agendaItems}
-                    formatOptions={masterOptions.formats}
                     statusOptions={masterOptions.statuses}
                     disabled={!canEdit}
                     onChange={(next) => updateAgendaItem(index, next)}
                     onMoveUp={() => moveAgenda(index, -1)}
                     onMoveDown={() => moveAgenda(index, 1)}
-                    onDuplicate={() => duplicateAgendaItem(index)}
                     onRemove={() => removeAgendaItem(index)}
+                    onViewSummary={() => setSummaryItemIndex(index)}
                   />
                 </div>
               ))}
             </div>
           )}
+
+          <SeminarAgendaSessionSummaryDrawer
+            open={summaryItemIndex != null}
+            item={
+              summaryItemIndex != null
+                ? agendaItems[summaryItemIndex] ?? null
+                : null
+            }
+            onClose={() => setSummaryItemIndex(null)}
+          />
         </section>
       )}
     </div>
