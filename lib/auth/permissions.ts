@@ -80,6 +80,18 @@ export function canExportCompanyProfile(source: PermissionSource): boolean {
   return hasPermission(source, "suppliers.company_profile");
 }
 
+export function canViewGiftPlans(source: PermissionSource): boolean {
+  return hasPermission(source, "gift_plans.view");
+}
+
+export function canEditGiftPlans(source: PermissionSource): boolean {
+  return hasPermission(source, "gift_plans.edit");
+}
+
+export function canExportGiftPlans(source: PermissionSource): boolean {
+  return hasPermission(source, "gift_plans.export");
+}
+
 export function canAccessPath(
   source: PermissionSource,
   pathname: string,
@@ -129,6 +141,14 @@ export function canAccessPath(
   if (path.startsWith("/ideas")) return perms.has("ideas.view");
   if (path.startsWith("/brand-board")) return perms.has("brand_board.view");
 
+  if (path.startsWith("/gift-plans")) {
+    return (
+      perms.has("gift_plans.view") ||
+      perms.has("gift_plans.edit") ||
+      perms.has("gift_plans.export")
+    );
+  }
+
   return false;
 }
 
@@ -159,6 +179,7 @@ export function getHomePathForUser(source: PermissionSource): string {
   if (perms.has("products.view")) return "/products";
   if (perms.has("suppliers.view")) return "/suppliers";
   if (perms.has("timeline.view")) return "/timeline";
+  if (perms.has("gift_plans.view")) return "/gift-plans";
   if (perms.has("settings.view") || perms.has("users.manage")) {
     return "/settings";
   }

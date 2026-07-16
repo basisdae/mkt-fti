@@ -1,0 +1,27 @@
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #gift-plan-communication-print,
+  #gift-plan-communication-print * {
+    visibility: visible;
+  }
+
+  #gift-plan-communication-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .communication-tier-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

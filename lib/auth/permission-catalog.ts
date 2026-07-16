@@ -25,6 +25,9 @@ export const PERMISSION_KEYS = [
   "brand_board.edit",
   "simulator.view",
   "simulator.edit",
+  "gift_plans.view",
+  "gift_plans.edit",
+  "gift_plans.export",
   "settings.view",
   "users.manage",
 ] as const;
@@ -68,6 +71,9 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
   { key: "brand_board.edit", group: "Brand Board", label: "Edit" },
   { key: "simulator.view", group: "Simulator", label: "View" },
   { key: "simulator.edit", group: "Simulator", label: "Edit" },
+  { key: "gift_plans.view", group: "Gift Plans", label: "View" },
+  { key: "gift_plans.edit", group: "Gift Plans", label: "Edit" },
+  { key: "gift_plans.export", group: "Gift Plans", label: "Export" },
   { key: "settings.view", group: "Settings", label: "View" },
   { key: "users.manage", group: "Manage Users", label: "Access" },
 ];
@@ -186,5 +192,6 @@ export const NAV_PERMISSION_MAP: Record<string, PermissionKey> = {
   "/notes": "notes.view",
   "/ideas": "ideas.view",
   "/brand-board": "brand_board.view",
+  "/gift-plans": "gift_plans.view",
   "/settings": "settings.view",
 };

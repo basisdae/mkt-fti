@@ -9,6 +9,7 @@ import {
   getAppUserByEmailFromSupabase,
   upsertAppUserInSupabase,
 } from "@/lib/services/app-users";
+import { establishSupabaseAuthSession } from "@/lib/auth/supabase-session-bridge";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppUser } from "@/types/auth";
 
@@ -138,7 +139,10 @@ export async function authenticateUser(
   if (appUserResult === "invalid") {
     throw new Error("Invalid email or password");
   }
-  if (appUserResult) return appUserResult;
+  if (appUserResult) {
+    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword);
+    return appUserResult;
+  }
 
   const localResult = await loginWithLocalRegistry(
     normalizedEmail,
@@ -150,7 +154,10 @@ export async function authenticateUser(
   if (localResult === "invalid") {
     throw new Error("Invalid email or password");
   }
-  if (localResult) return localResult;
+  if (localResult) {
+    await establishSupabaseAuthSession(normalizedEmail, normalizedPassword);
+    return localResult;
+  }
 
   const supabaseAuthUser = await loginWithSupabaseAuth(
     normalizedEmail,

@@ -10,6 +10,7 @@ import {
   StickyNote,
   Calculator,
   Settings,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import type { PipelineStage, PipelineStageTone, ProductStatus } from "@/types/product";
@@ -55,6 +56,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
   { label: "Simulator", href: "/simulator", icon: Calculator },
+  { label: "Gift Plans", href: "/gift-plans", icon: Gift },
   { label: "Timeline", href: "/timeline", icon: Clock3 },
   { label: "Notes", href: "/notes", icon: StickyNote },
 ];

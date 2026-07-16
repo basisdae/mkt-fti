@@ -85,6 +85,26 @@ export function buildComparisonExportFileName(date = new Date()): string {
   return `MKT_HQ_Sales_Plan_Comparison_${datePart}_${timePart}.xlsx`;
 }
 
+/** MKT_HQ_Gift_Plan_{PlanName}_{Year}_{YYYYMMDD}.xlsx */
+export function buildGiftPlanExportFileName(
+  planName: string,
+  campaignYear: number,
+  date = new Date(),
+): string {
+  const { datePart } = getExportDateParts(date);
+  return `MKT_HQ_Gift_Plan_${sanitizeExportFileName(planName)}_${campaignYear}_${datePart}.xlsx`;
+}
+
+/** MKT_HQ_Gift_Plan_Communication_{PlanName}_{Year}_{YYYYMMDD}.xlsx */
+export function buildGiftPlanCommunicationExportFileName(
+  planName: string,
+  campaignYear: number,
+  date = new Date(),
+): string {
+  const { datePart } = getExportDateParts(date);
+  return `MKT_HQ_Gift_Plan_Communication_${sanitizeExportFileName(planName)}_${campaignYear}_${datePart}.xlsx`;
+}
+
 /** Safe cell value — never throws on missing/odd data. */
 export function exportCell(value: unknown): string | number | boolean {
   if (value == null) return "";
