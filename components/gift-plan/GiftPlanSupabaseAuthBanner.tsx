@@ -1,6 +1,6 @@
 "use client";
 
-import { GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE } from "@/lib/auth/gift-plan-auth";
+import { resolveGiftPlanAuthError } from "@/lib/auth/gift-plan-auth";
 import { useAuth } from "@/hooks/AuthStore";
 
 export function GiftPlanSupabaseAuthBanner() {
@@ -9,7 +9,7 @@ export function GiftPlanSupabaseAuthBanner() {
 
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-      {GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE}
+      {resolveGiftPlanAuthError(session)}
     </div>
   );
 }

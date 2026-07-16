@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE } from "@/lib/auth/gift-plan-auth";
+import { resolveGiftPlanAuthError } from "@/lib/auth/gift-plan-auth";
 import { getServerSession } from "@/lib/auth/server-session";
 import { createClient } from "@/lib/supabase/server";
 import type { AppUser } from "@/types/auth";
@@ -35,15 +35,12 @@ export async function getAuthenticatedSupabaseForActions(): Promise<Authenticate
   } = await supabase.auth.getUser();
 
   if (error || !authUser?.email) {
-    return { ok: false, error: GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE };
+    return { ok: false, error: resolveGiftPlanAuthError(session) };
   }
 
   const authEmail = normalizeEmail(authUser.email);
   if (authEmail !== normalizeEmail(session.user.email)) {
-    return {
-      ok: false,
-      error: GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE,
-    };
+    return { ok: false, error: resolveGiftPlanAuthError(session) };
   }
 
   return {

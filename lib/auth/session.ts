@@ -45,6 +45,7 @@ function decodeSession(raw: string): AuthSession | null {
       user,
       loggedInAt: parsed.loggedInAt || new Date().toISOString(),
       supabaseAuthLinked: parsed.supabaseAuthLinked === true,
+      supabaseAuthBridgeError: parsed.supabaseAuthBridgeError ?? null,
     };
   } catch {
     return null;
@@ -53,7 +54,10 @@ function decodeSession(raw: string): AuthSession | null {
 
 export function createSession(
   user: AppUser,
-  options?: { supabaseAuthLinked?: boolean },
+  options?: {
+    supabaseAuthLinked?: boolean;
+    supabaseAuthBridgeError?: AuthSession["supabaseAuthBridgeError"];
+  },
 ): AuthSession {
   return {
     user: {
@@ -65,6 +69,9 @@ export function createSession(
     },
     loggedInAt: new Date().toISOString(),
     supabaseAuthLinked: options?.supabaseAuthLinked === true,
+    supabaseAuthBridgeError: options?.supabaseAuthLinked
+      ? null
+      : (options?.supabaseAuthBridgeError ?? null),
   };
 }
 

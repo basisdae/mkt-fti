@@ -4,8 +4,22 @@ import {
   getHomePathForUser,
 } from "@/lib/auth/permissions";
 import { readSessionFromCookieHeader } from "@/lib/auth/session";
+import { refreshSupabaseSession } from "@/lib/supabase/proxy-session";
 
-export function proxy(request: NextRequest) {
+function forwardRefreshedCookies(
+  refreshed: NextResponse,
+  target: NextResponse,
+): NextResponse {
+  refreshed.cookies.getAll().forEach((cookie) => {
+    target.cookies.set(cookie);
+  });
+  return target;
+}
+
+export async function proxy(request: NextRequest) {
+  let response = NextResponse.next({ request });
+  response = await refreshSupabaseSession(request, response);
+
   const { pathname } = request.nextUrl;
   const session = readSessionFromCookieHeader(request.headers.get("cookie"));
   const hasSession = Boolean(session?.user);
@@ -15,14 +29,17 @@ export function proxy(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    return forwardRefreshedCookies(
+      response,
+      NextResponse.redirect(loginUrl),
+    );
   }
 
   if (hasSession && isLoginPage) {
     const homeUrl = request.nextUrl.clone();
     homeUrl.pathname = getHomePathForUser(session?.user);
     homeUrl.search = "";
-    return NextResponse.redirect(homeUrl);
+    return forwardRefreshedCookies(response, NextResponse.redirect(homeUrl));
   }
 
   if (
@@ -33,10 +50,10 @@ export function proxy(request: NextRequest) {
     const fallback = request.nextUrl.clone();
     fallback.pathname = getHomePathForUser(session.user);
     fallback.search = "";
-    return NextResponse.redirect(fallback);
+    return forwardRefreshedCookies(response, NextResponse.redirect(fallback));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

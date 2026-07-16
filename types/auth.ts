@@ -16,6 +16,15 @@ export interface AuthSession {
   loggedInAt: string;
   /** False when app_users login succeeded but Supabase Auth cookies were not linked. */
   supabaseAuthLinked?: boolean;
+  /** Last bridge failure reason — used for Gift Plans error messages. */
+  supabaseAuthBridgeError?:
+    | "not_configured"
+    | "not_provisioned"
+    | "invalid_credentials"
+    | "email_not_confirmed"
+    | "session_expired"
+    | "unknown"
+    | null;
 }
 
 /** Local auth registry record (password never sent to list UI). */

@@ -5,9 +5,10 @@ Gift Plans uses **standard Supabase Auth** only. There is no automatic `auth.use
 ## Architecture
 
 1. **MKT HQ login** — `app_users` table (email + password)
-2. **Login bridge** — `supabase.auth.signInWithPassword()` with the same email and password
-3. **Server Actions** — `supabase.auth.getUser()` + RLS on `gift_plans` / `gift_catalog` tables
-4. **RLS** — `gift_plan_jwt_email()` maps Supabase Auth email → `app_users` role/permissions
+2. **Login bridge** — Server Action calls `supabase.auth.signInWithPassword()` (writes Supabase Auth cookies on the server response)
+3. **Proxy** — refreshes Supabase Auth cookies on each request without touching the app session cookie
+4. **Server Actions** — `supabase.auth.getUser()` + RLS on `gift_plans` / `gift_catalog` tables
+5. **RLS** — `gift_plan_jwt_email()` maps Supabase Auth email → `app_users` role/permissions
 
 ## Who needs a Supabase Auth user?
 
@@ -38,13 +39,14 @@ For each operator account:
 3. Login bridge calls `signInWithPassword` → Supabase Auth cookies are set
 4. Gift Plans menu and `/gift-plans` routes work under RLS
 
-## If Auth user is missing
+## If Auth user is missing or password mismatch
 
-The app still allows MKT HQ login, but Gift Plans shows:
+The app still allows MKT HQ login, but Gift Plans shows a specific message:
 
-> บัญชีนี้ยังไม่ได้รับสิทธิ์ใช้งาน Gift Plans กรุณาติดต่อผู้ดูแลระบบ
+- Not provisioned: **บัญชีนี้ยังไม่ได้เปิดสิทธิ์ Gift Plans**
+- Password out of sync: **รหัสผ่าน Supabase Auth ไม่ตรงกับบัญชี MKT HQ…**
 
-Server Actions return the same message.
+Server Actions return the same message (not a generic “session expired” when the bridge never succeeded).
 
 ## Database migrations (run manually in SQL Editor)
 

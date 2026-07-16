@@ -10,13 +10,11 @@ import {
   syncGiftPlanOperatorsInSupabase,
   upsertAppUserInSupabase,
 } from "@/lib/services/app-users";
-import { establishSupabaseAuthSession } from "@/lib/auth/supabase-session-bridge";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { AppUser } from "@/types/auth";
 
 export interface AuthLoginResult {
   user: AppUser;
-  supabaseAuthLinked: boolean;
 }
 
 function normalizeEmail(email: string): string {
@@ -147,16 +145,7 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (appUserResult) {
-    let supabaseAuthLinked = false;
-    try {
-      supabaseAuthLinked = await establishSupabaseAuthSession(
-        normalizedEmail,
-        normalizedPassword,
-      );
-    } catch {
-      supabaseAuthLinked = false;
-    }
-    return { user: appUserResult, supabaseAuthLinked };
+    return { user: appUserResult };
   }
 
   const localResult = await loginWithLocalRegistry(
@@ -170,16 +159,7 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (localResult) {
-    let supabaseAuthLinked = false;
-    try {
-      supabaseAuthLinked = await establishSupabaseAuthSession(
-        normalizedEmail,
-        normalizedPassword,
-      );
-    } catch {
-      supabaseAuthLinked = false;
-    }
-    return { user: localResult, supabaseAuthLinked };
+    return { user: localResult };
   }
 
   const supabaseAuthUser = await loginWithSupabaseAuth(
@@ -187,7 +167,7 @@ export async function authenticateUser(
     normalizedPassword,
   );
   if (supabaseAuthUser) {
-    return { user: supabaseAuthUser, supabaseAuthLinked: true };
+    return { user: supabaseAuthUser };
   }
 
   throw new Error("Invalid email or password");

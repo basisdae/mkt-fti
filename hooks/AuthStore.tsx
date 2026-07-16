@@ -10,6 +10,10 @@ import {
   type ReactNode,
 } from "react";
 import { authenticateUser, signOutRemote } from "@/lib/auth/credentials";
+import {
+  bridgeSupabaseAuthSessionAction,
+  signOutSupabaseAuthAction,
+} from "@/lib/actions/supabase-auth-bridge";
 import { getDefaultPermissionsForRole } from "@/lib/auth/permission-catalog";
 import { formatAppRole } from "@/lib/auth/roles";
 import {
@@ -50,14 +54,19 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { user, supabaseAuthLinked } = await authenticateUser(email, password);
-    const next = createSession(user, { supabaseAuthLinked });
+    const { user } = await authenticateUser(email, password);
+    const bridge = await bridgeSupabaseAuthSessionAction(email, password);
+    const next = createSession(user, {
+      supabaseAuthLinked: bridge.linked,
+      supabaseAuthBridgeError: bridge.linked ? null : bridge.errorCode,
+    });
     writeSession(next);
     setSession(next);
     return user;
   }, []);
 
   const logout = useCallback(async () => {
+    await signOutSupabaseAuthAction();
     await signOutRemote();
     clearSession();
     setSession(null);
@@ -98,6 +107,7 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
     };
     const next = createSession(user, {
       supabaseAuthLinked: current.supabaseAuthLinked,
+      supabaseAuthBridgeError: current.supabaseAuthBridgeError ?? null,
     });
       writeSession(next);
       setSession(next);
