@@ -1,7 +1,12 @@
-import { PRIMARY_ADMIN_EMAIL } from "@/lib/auth/gift-plan-operators";
+import {
+  GIFT_PLAN_OPERATOR_PERMISSIONS,
+  PRIMARY_ADMIN_EMAIL,
+  PRIMARY_MKT_SUPPORT_EMAIL,
+} from "@/lib/auth/gift-plan-operators";
 import {
   getDefaultPermissionsForRole,
   normalizePermissions,
+  PERMISSION_KEYS,
   type PermissionKey,
 } from "@/lib/auth/permission-catalog";
 import { SEED_USERS } from "@/lib/auth/seed-users";
@@ -175,6 +180,35 @@ export async function syncPrimaryAdminFromSeedInSupabase(): Promise<void> {
     isActive: existing?.isActive ?? true,
     lastLoginAt: existing?.lastLoginAt ?? null,
   });
+}
+
+function mergeGiftPlanOperatorPermissions(
+  role: AppRole,
+  existing: PermissionKey[],
+): PermissionKey[] {
+  const merged = new Set<PermissionKey>([
+    ...getDefaultPermissionsForRole(role),
+    ...existing,
+    ...(GIFT_PLAN_OPERATOR_PERMISSIONS as readonly PermissionKey[]),
+  ]);
+  return PERMISSION_KEYS.filter((key) => merged.has(key));
+}
+
+/** Ensure primary MKT support operator has mkt_hq + Gift Plans permissions. */
+async function syncMktSupportOperatorInSupabase(): Promise<void> {
+  const existing = await getAppUserByEmailFromSupabase(PRIMARY_MKT_SUPPORT_EMAIL);
+  if (!existing) return;
+
+  await upsertAppUserInSupabase({
+    ...existing,
+    role: "mkt_hq",
+    permissions: mergeGiftPlanOperatorPermissions("mkt_hq", existing.permissions),
+  });
+}
+
+export async function syncGiftPlanOperatorsInSupabase(): Promise<void> {
+  await syncPrimaryAdminFromSeedInSupabase();
+  await syncMktSupportOperatorInSupabase();
 }
 
 export async function listAuthAuditFromSupabase(limit = 30) {

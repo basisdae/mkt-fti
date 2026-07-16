@@ -22,59 +22,67 @@ export async function establishSupabaseAuthSession(
 ): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
 
-  const supabase = createClient();
-  const normalizedEmail = normalizeEmail(email);
-  const normalizedPassword = password.trim();
+  try {
+    const supabase = createClient();
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedPassword = password.trim();
 
-  async function signIn() {
-    return supabase.auth.signInWithPassword({
+    async function signIn() {
+      return supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: normalizedPassword,
+      });
+    }
+
+    let { error } = await signIn();
+    if (!error) return true;
+
+    const { error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password: normalizedPassword,
-    });
-  }
-
-  let { error } = await signIn();
-  if (!error) return true;
-
-  const { error: signUpError } = await supabase.auth.signUp({
-    email: normalizedEmail,
-    password: normalizedPassword,
-    options: {
-      data: {
-        ...(profile?.role ? { role: profile.role } : {}),
-        ...(profile?.displayName
-          ? { display_name: profile.displayName }
-          : {}),
+      options: {
+        data: {
+          ...(profile?.role ? { role: profile.role } : {}),
+          ...(profile?.displayName
+            ? { display_name: profile.displayName }
+            : {}),
+        },
       },
-    },
-  });
+    });
 
-  const alreadyRegistered =
-    signUpError?.message?.toLowerCase().includes("already") ?? false;
+    const alreadyRegistered =
+      signUpError?.message?.toLowerCase().includes("already") ?? false;
 
-  if (!signUpError || alreadyRegistered) {
-    const retry = await signIn();
-    if (!retry.error) return true;
-    error = retry.error;
+    if (!signUpError || alreadyRegistered) {
+      const retry = await signIn();
+      if (!retry.error) return true;
+      error = retry.error;
+    }
+
+    const provisioned = await linkSupabaseAuthUserAction({
+      email: normalizedEmail,
+      password: normalizedPassword,
+      role: profile?.role,
+      displayName: profile?.displayName,
+    });
+
+    if (provisioned.ok) {
+      const retry = await signIn();
+      if (!retry.error) return true;
+      error = retry.error;
+    }
+
+    console.warn(
+      "Supabase Auth bridge failed:",
+      error?.message ??
+        (provisioned.ok ? "unknown" : provisioned.error),
+    );
+    return false;
+  } catch (error) {
+    console.warn(
+      "Supabase Auth bridge error:",
+      error instanceof Error ? error.message : error,
+    );
+    return false;
   }
-
-  const provisioned = await linkSupabaseAuthUserAction({
-    email: normalizedEmail,
-    password: normalizedPassword,
-    role: profile?.role,
-    displayName: profile?.displayName,
-  });
-
-  if (provisioned.ok) {
-    const retry = await signIn();
-    if (!retry.error) return true;
-    error = retry.error;
-  }
-
-  console.warn(
-    "Supabase Auth bridge failed:",
-    error?.message ??
-      (provisioned.ok ? "unknown" : provisioned.error),
-  );
-  return false;
 }

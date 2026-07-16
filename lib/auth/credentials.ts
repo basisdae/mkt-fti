@@ -7,7 +7,7 @@ import {
 import {
   ensureSeedUsersInSupabase,
   getAppUserByEmailFromSupabase,
-  syncPrimaryAdminFromSeedInSupabase,
+  syncGiftPlanOperatorsInSupabase,
   upsertAppUserInSupabase,
 } from "@/lib/services/app-users";
 import { establishSupabaseAuthSession } from "@/lib/auth/supabase-session-bridge";
@@ -48,7 +48,7 @@ async function loginWithSupabaseAppUsers(
 
   try {
     await ensureSeedUsersInSupabase();
-    await syncPrimaryAdminFromSeedInSupabase();
+    await syncGiftPlanOperatorsInSupabase();
     const match = await getAppUserByEmailFromSupabase(email);
     if (!match) return null;
     if (match.password !== password.trim()) return "invalid";
@@ -147,14 +147,19 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (appUserResult) {
-    const supabaseAuthLinked = await establishSupabaseAuthSession(
-      normalizedEmail,
-      normalizedPassword,
-      {
-        role: appUserResult.role,
-        displayName: appUserResult.displayName,
-      },
-    );
+    let supabaseAuthLinked = false;
+    try {
+      supabaseAuthLinked = await establishSupabaseAuthSession(
+        normalizedEmail,
+        normalizedPassword,
+        {
+          role: appUserResult.role,
+          displayName: appUserResult.displayName,
+        },
+      );
+    } catch {
+      supabaseAuthLinked = false;
+    }
     return { user: appUserResult, supabaseAuthLinked };
   }
 
@@ -169,14 +174,19 @@ export async function authenticateUser(
     throw new Error("Invalid email or password");
   }
   if (localResult) {
-    const supabaseAuthLinked = await establishSupabaseAuthSession(
-      normalizedEmail,
-      normalizedPassword,
-      {
-        role: localResult.role,
-        displayName: localResult.displayName,
-      },
-    );
+    let supabaseAuthLinked = false;
+    try {
+      supabaseAuthLinked = await establishSupabaseAuthSession(
+        normalizedEmail,
+        normalizedPassword,
+        {
+          role: localResult.role,
+          displayName: localResult.displayName,
+        },
+      );
+    } catch {
+      supabaseAuthLinked = false;
+    }
     return { user: localResult, supabaseAuthLinked };
   }
 
