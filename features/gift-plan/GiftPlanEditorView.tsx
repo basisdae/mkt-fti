@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { GiftPlanCommunicationPreview } from "@/components/gift-plan/GiftPlanCommunicationPreview";
 import { GiftPlanSummaryDashboard } from "@/components/gift-plan/GiftPlanSummaryDashboard";
+import { GiftPlanPurchasingSummary } from "@/components/gift-plan/GiftPlanPurchasingSummary";
 import { GiftCatalogPickerModal } from "@/components/gift-plan/GiftCatalogPickerModal";
 import { GiftPlanTierTabs } from "@/components/gift-plan/GiftPlanTierTabs";
 import { GiftPlanTierOverviewPanel } from "@/components/gift-plan/GiftPlanTierOverviewPanel";
@@ -93,6 +94,8 @@ function bundleToPayload(bundle: GiftPlanEditorBundle): GiftPlanEditorPayload {
       purchase_group_id: item.purchase_group_id,
       gift_catalog_id: item.gift_catalog_id ?? null,
       specification: item.specification ?? "",
+      reference_url: item.reference_url ?? null,
+      operational_status: item.operational_status ?? "interested",
     });
     itemsByTier.set(item.tier_id, list);
   }
@@ -905,6 +908,7 @@ export function GiftPlanEditorView({
             )}
 
             <GiftPlanSummaryDashboard payload={payload} />
+            <GiftPlanPurchasingSummary payload={payload} />
 
       {payload.purchase_groups.length > 0 ? (
         <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">

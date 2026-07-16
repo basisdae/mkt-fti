@@ -72,6 +72,9 @@ export interface PurchasingSummaryRow {
   supplier: string | null;
   source: string;
   category: string;
+  reference_url: string | null;
+  operational_status: string | null;
+  notes: string | null;
   total_required_qty: number;
   unit_actual_cost: number | "mixed";
   total_actual_cost: number;
@@ -195,6 +198,8 @@ export function buildPurchasingSummary(
         | "supplier"
         | "notes"
         | "purchase_group_id"
+        | "reference_url"
+        | "operational_status"
       >
     >;
   }>,
@@ -218,6 +223,9 @@ export function buildPurchasingSummary(
           supplier: item.supplier ?? null,
           source: item.source,
           category: item.category,
+          reference_url: item.reference_url ?? null,
+          operational_status: item.operational_status ?? null,
+          notes: item.notes ?? null,
           total_required_qty: totalQty,
           unit_actual_cost: unitCost,
           total_actual_cost: totalCost,

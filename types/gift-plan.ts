@@ -90,6 +90,8 @@ export interface GiftPlanItemRow {
   purchase_group_id: string | null;
   gift_catalog_id: string | null;
   specification: string;
+  reference_url: string | null;
+  operational_status: string;
   created_at: string;
   updated_at: string;
 }
@@ -109,6 +111,8 @@ export interface GiftPlanItemInput {
   purchase_group_id: string | null;
   gift_catalog_id: string | null;
   specification: string;
+  reference_url?: string | null;
+  operational_status?: string;
   /** Client-only display fields from catalog snapshot (not persisted). */
   image_path?: string | null;
   image_url?: string | null;

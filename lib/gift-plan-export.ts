@@ -19,6 +19,7 @@ import {
   formatGiftPercent,
   formatGiftQty,
 } from "@/lib/gift-plan-format";
+import { formatOperationalStatus } from "@/lib/gift-catalog-format";
 import { buildCommunicationReport } from "@/lib/gift-plan-communication";
 import type { GiftPlanEditorBundle } from "@/types/gift-plan";
 import type { PurchasingSummaryRow } from "@/lib/gift-plan-calculations";
@@ -202,29 +203,37 @@ export async function exportGiftPlanWorkbook(input: {
 
   const purchasingSheet = workbook.addWorksheet("Purchasing Summary");
   purchasingSheet.addRow([
-    "Gift Name",
-    "Supplier",
+    "Gift Item",
     "Source",
-    "Category",
-    "Total Required Qty",
+    "Reference URL",
+    "Operational Status",
+    "Required Quantity",
     "Unit Actual Cost",
     "Total Actual Cost",
-    "Tiers",
-    "Item Count",
+    "Supplier",
+    "Notes",
   ]);
   styleHeaderRow(purchasingSheet.getRow(1));
   for (const row of purchasing) {
-    purchasingSheet.addRow([
+    const dataRow = purchasingSheet.addRow([
       row.gift_name,
-      row.supplier ?? "",
       GIFT_ITEM_SOURCE_LABELS[row.source as keyof typeof GIFT_ITEM_SOURCE_LABELS] ?? row.source,
-      GIFT_ITEM_CATEGORY_LABELS[row.category as keyof typeof GIFT_ITEM_CATEGORY_LABELS] ?? row.category,
+      row.reference_url ?? "",
+      formatOperationalStatus(row.operational_status),
       row.total_required_qty,
       row.unit_actual_cost === "mixed" ? "Mixed" : row.unit_actual_cost,
       row.total_actual_cost,
-      row.tier_names.join(", "),
-      row.item_ids.length,
+      row.supplier ?? "",
+      row.notes ?? "",
     ]);
+    if (row.reference_url?.trim()) {
+      const urlCell = dataRow.getCell(3);
+      urlCell.value = {
+        text: row.reference_url,
+        hyperlink: row.reference_url,
+      };
+      urlCell.font = { color: { argb: "FF0563C1" }, underline: true };
+    }
   }
 
   const communication = buildCommunicationReport(bundle);

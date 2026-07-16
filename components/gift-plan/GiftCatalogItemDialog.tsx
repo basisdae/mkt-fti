@@ -12,6 +12,7 @@ import {
   createGiftCatalogImageValueFromRow,
   type GiftCatalogImageValue,
 } from "@/components/gift-plan/GiftCatalogImageUpload";
+import { GiftCatalogReferenceLink } from "@/components/gift-plan/GiftCatalogReferenceLink";
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import {
   GIFT_ITEM_CATEGORY_LABELS,
@@ -19,15 +20,17 @@ import {
 } from "@/lib/gift-plan-format";
 import {
   GIFT_CATALOG_STATUS_LABELS,
+  GIFT_CATALOG_OPERATIONAL_LABELS,
   GIFT_CATALOG_UNIT_OTHER,
   GIFT_CATALOG_UNIT_PRESETS,
 } from "@/lib/gift-catalog-format";
+import { isValidReferenceUrl } from "@/lib/gift-catalog-url";
 import { resolveGiftCatalogImageUrl } from "@/lib/gift-catalog-display";
 import {
   GIFT_ITEM_CATEGORIES,
   GIFT_ITEM_SOURCES,
 } from "@/types/gift-plan";
-import { GIFT_CATALOG_STATUSES } from "@/types/gift-catalog";
+import { GIFT_CATALOG_STATUSES, GIFT_CATALOG_OPERATIONAL_STATUSES } from "@/types/gift-catalog";
 import type { GiftCatalogInput, GiftCatalogRow } from "@/types/gift-catalog";
 
 export type GiftCatalogSavePayload = {
@@ -60,6 +63,8 @@ const emptyValues: GiftCatalogInput = {
   specification: "",
   notes: "",
   status: "active",
+  reference_url: null,
+  operational_status: "interested",
 };
 
 function isPresetUnit(unit: string): boolean {
@@ -83,6 +88,7 @@ export function GiftCatalogItemDialog({
   );
   const [unitPreset, setUnitPreset] = useState("piece");
   const [customUnit, setCustomUnit] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -104,6 +110,8 @@ export function GiftCatalogItemDialog({
         specification: initial.specification,
         notes: initial.notes,
         status: initial.status,
+        reference_url: initial.reference_url,
+        operational_status: initial.operational_status ?? "interested",
       });
       setUnitPreset(preset);
       setCustomUnit(preset === GIFT_CATALOG_UNIT_OTHER ? unit : "");
@@ -126,6 +134,11 @@ export function GiftCatalogItemDialog({
   }
 
   function handleSaveClick() {
+    if (!isValidReferenceUrl(values.reference_url)) {
+      setUrlError(t.referenceUrlInvalid);
+      return;
+    }
+    setUrlError(null);
     onSave({
       values: { ...values, unit: resolvedUnit() },
       image,
@@ -271,6 +284,30 @@ export function GiftCatalogItemDialog({
             {t.sectionDetails}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
+            <Input
+              label={t.referenceUrl}
+              value={values.reference_url ?? ""}
+              placeholder={t.referenceUrlPlaceholder}
+              onChange={(e) => {
+                setUrlError(null);
+                setValues((v) => ({
+                  ...v,
+                  reference_url: e.target.value || null,
+                }));
+              }}
+              className="sm:col-span-2"
+            />
+            <p className="sm:col-span-2 -mt-1 text-[11px] text-gray-500">
+              {t.referenceUrlHint}
+            </p>
+            {urlError ? (
+              <p className="sm:col-span-2 text-xs text-fti-red">{urlError}</p>
+            ) : null}
+            {values.reference_url?.trim() ? (
+              <div className="sm:col-span-2">
+                <GiftCatalogReferenceLink url={values.reference_url} />
+              </div>
+            ) : null}
             <Textarea
               label={t.specification}
               rows={2}
@@ -299,7 +336,7 @@ export function GiftCatalogItemDialog({
               className="sm:col-span-2"
             />
             <Select
-              label={t.status}
+              label={t.recordStatus}
               value={values.status}
               onChange={(e) =>
                 setValues((v) => ({
@@ -310,6 +347,21 @@ export function GiftCatalogItemDialog({
               options={GIFT_CATALOG_STATUSES.map((value) => ({
                 value,
                 label: GIFT_CATALOG_STATUS_LABELS[value],
+              }))}
+            />
+            <Select
+              label={t.operationalStatus}
+              value={values.operational_status}
+              onChange={(e) =>
+                setValues((v) => ({
+                  ...v,
+                  operational_status: e.target
+                    .value as GiftCatalogInput["operational_status"],
+                }))
+              }
+              options={GIFT_CATALOG_OPERATIONAL_STATUSES.map((value) => ({
+                value,
+                label: GIFT_CATALOG_OPERATIONAL_LABELS[value],
               }))}
             />
           </div>

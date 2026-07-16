@@ -74,6 +74,18 @@ Uploads use existing bucket **`product-images`** (same as Product/Supplier) with
 
 Existing bucket policies apply (path isolation — does not affect product or supplier assets).
 
+## Gift Catalog reference URL + operational status
+
+Run `20260716170000_gift_catalog_operational_reference.sql` in SQL Editor to add:
+
+- `gift_catalog.reference_url` (optional, http/https only)
+- `gift_catalog.operational_status` (enum, default `interested`)
+- Snapshot columns on `gift_plan_items` for purchasing summary/export
+
+Existing catalog rows receive `operational_status = 'interested'`. Record status (`status`: active/inactive/archived) is unchanged.
+
+## Production smoke test
+
 1. Sign in as Admin in an **Incognito** window
 2. Confirm **Gift Plans** appears in the sidebar
 3. Open `/gift-plans` — list loads without auth error

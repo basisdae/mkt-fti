@@ -404,6 +404,8 @@ export async function saveGiftPlanAction(
         purchase_group_id: item.purchase_group_id,
         gift_catalog_id: item.gift_catalog_id ?? null,
         specification: item.specification ?? "",
+        reference_url: item.reference_url ?? null,
+        operational_status: item.operational_status ?? "interested",
         updated_at: now,
       });
       if (error) return fail(error.message);
@@ -508,6 +510,8 @@ export async function duplicateGiftPlanAction(
       purchase_group_id: newGroupId,
       gift_catalog_id: item.gift_catalog_id ?? null,
       specification: item.specification ?? "",
+      reference_url: item.reference_url ?? null,
+      operational_status: item.operational_status ?? "interested",
     });
     if (error) return fail(error.message);
   }

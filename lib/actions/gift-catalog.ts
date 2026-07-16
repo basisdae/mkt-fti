@@ -6,6 +6,10 @@ import {
   canViewGiftPlans,
 } from "@/lib/auth/permissions";
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
+import {
+  isValidReferenceUrl,
+  normalizeReferenceUrl,
+} from "@/lib/gift-catalog-url";
 import { getAuthenticatedSupabaseForActions } from "@/lib/supabase/authenticated-server";
 import type { GiftCatalogInput, GiftCatalogRow } from "@/types/gift-catalog";
 import type { AppUser } from "@/types/auth";
@@ -47,16 +51,27 @@ async function requireEdit(): Promise<
 }
 
 function mapRow(row: Record<string, unknown>): GiftCatalogRow {
-  return row as unknown as GiftCatalogRow;
+  const mapped = row as unknown as GiftCatalogRow;
+  return {
+    ...mapped,
+    reference_url: mapped.reference_url ?? null,
+    operational_status: mapped.operational_status ?? "interested",
+  };
 }
 
 function normalizeInput(input: GiftCatalogInput) {
+  const referenceUrl = normalizeReferenceUrl(input.reference_url);
+  if (referenceUrl && !isValidReferenceUrl(referenceUrl)) {
+    throw new Error(t.referenceUrlInvalid);
+  }
   return {
     gift_name: input.gift_name.trim(),
     internal_code: input.internal_code?.trim() || null,
     category: input.category,
     source: input.source,
     description: input.description.trim(),
+    reference_url: referenceUrl,
+    operational_status: input.operational_status,
     unit: input.unit.trim() || "piece",
     default_actual_cost: input.default_actual_cost,
     default_estimated_gift_value: input.default_estimated_gift_value,
@@ -94,7 +109,12 @@ export async function saveGiftCatalogAction(input: {
   const auth = await requireEdit();
   if (!auth.ok) return auth;
 
-  const values = normalizeInput(input.values);
+  let values;
+  try {
+    values = normalizeInput(input.values);
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : t.referenceUrlInvalid);
+  }
   if (!values.gift_name) return fail(t.giftNameRequired);
 
   const { user, supabase } = auth.data;
@@ -201,6 +221,8 @@ export async function duplicateGiftCatalogAction(
       specification: source.specification,
       notes: source.notes,
       status: "active",
+      reference_url: null,
+      operational_status: "interested",
     },
   });
 }

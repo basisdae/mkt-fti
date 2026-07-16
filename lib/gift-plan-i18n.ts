@@ -112,7 +112,8 @@ export const GIFT_PLAN_COPY = {
   searchNameOrCode: "ค้นหาจากชื่อหรือรหัส…",
   allCategories: "ทุกหมวดหมู่",
   allSources: "ทุกแหล่งที่มา",
-  allStatus: "ทุกสถานะ",
+  allStatus: "ทุกสถานะรายการ",
+  allOperationalStatus: "ทุกสถานะดำเนินการ",
   sortByName: "เรียงตามชื่อ",
   sortLatestUpdated: "อัปเดตล่าสุด",
   sortActualCost: "ต้นทุนจริง",
@@ -144,9 +145,21 @@ export const GIFT_PLAN_COPY = {
   image: "รูปภาพ",
   sectionPricing: "ราคาและต้นทุน",
   sectionDetails: "รายละเอียดเพิ่มเติม",
+  recordStatus: "สถานะรายการ",
+  operationalStatus: "สถานะดำเนินการ",
+  referenceUrl: "ลิงก์ที่มา",
+  referenceUrlPlaceholder: "https://example.com/product",
+  referenceUrlHint:
+    "ลิงก์หน้าสินค้าหรือแหล่งที่พบรายการนี้ เพื่อกลับไปตรวจสอบภายหลัง",
+  openReferenceLink: "เปิดลิงก์ต้นทาง",
+  referenceUrlInvalid: "ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://",
 
   // Image upload
-  imageDropHint: "ลากรูปมาวางหรือคลิกเพื่อเลือก",
+  imageDropHere: "ลากรูปมาวางที่นี่",
+  imageOr: "หรือ",
+  imageUploadAreaLabel: "พื้นที่อัปโหลดรูปภาพ",
+  imageSingleFileOnly: "ในรอบนี้รองรับรูปหลัก 1 รูปเท่านั้น",
+  cancelImageSelection: "ยกเลิกรูปที่เลือก",
   imageFormatHint: "JPG, JPEG, PNG, WEBP · สูงสุด 5 MB",
   chooseImage: "เลือกรูปจากเครื่อง",
   uploadImage: "อัปโหลดรูปภาพ",
@@ -160,7 +173,14 @@ export const GIFT_PLAN_COPY = {
   catalogImageUploadFailedNew: (id: string) =>
     `บันทึกรายการแล้ว (รหัส ${id.slice(0, 8)}…) แต่อัปโหลดรูปไม่สำเร็จ กรุณาแก้ไขรายการแล้วลองอัปโหลดใหม่`,
 
-  // Catalog card / picker
+  // Operational summary
+  summaryInterested: "รายการที่สนใจ",
+  summaryInProgress: "กำลังดำเนินการ",
+  summaryOrdered: "สั่งแล้ว",
+  summaryBlocked: "มีปัญหา",
+  summaryReceived: "รับของแล้ว",
+
+  // Catalog card
   estLabel: "ประเมิน",
   perCustomer: "ต่อลูกค้า",
   addedToTier: (tier: string) => `เพิ่มแล้วใน ${tier}`,
@@ -227,6 +247,15 @@ export const GIFT_PLAN_COPY = {
   actualBudgetPercent: "เปอร์เซ็นต์งบจริง",
   purchasingSummary: "สรุปการจัดซื้อ",
   purchasingGroup: "กลุ่มจัดซื้อ",
+  purchasingGiftItem: "รายการของขวัญ",
+  purchasingReferenceUrl: "ลิงก์ที่มา",
+  purchasingOperationalStatus: "สถานะดำเนินการ",
+  purchasingRequiredQty: "จำนวนที่ต้องใช้",
+  purchasingUnitCost: "ต้นทุนต่อหน่วย",
+  purchasingTotalCost: "ต้นทุนรวม",
+  purchasingSupplier: "ผู้จำหน่าย",
+  purchasingNotes: "หมายเหตุ",
+  purchasingMixed: "หลายค่า",
   tierCol: "Tier",
   actualPerCustomerCol: "ต้นทุน/คน",
   estPerCustomerCol: "มูลค่า/คน",

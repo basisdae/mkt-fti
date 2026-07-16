@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { GiftCatalogCard } from "@/components/gift-plan/GiftCatalogCard";
@@ -8,6 +8,7 @@ import {
   GiftCatalogItemDialog,
   type GiftCatalogSavePayload,
 } from "@/components/gift-plan/GiftCatalogItemDialog";
+import { GiftCatalogSummaryStrip, emptyOperationalCounts } from "@/components/gift-plan/GiftCatalogSummaryStrip";
 import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/forms/Select";
@@ -37,7 +38,9 @@ import {
 } from "@/lib/gift-plan-format";
 import { GIFT_CATALOG_STATUSES } from "@/types/gift-catalog";
 import { GIFT_CATALOG_STATUS_LABELS } from "@/lib/gift-catalog-format";
-import type { GiftCatalogRow, GiftCatalogSortKey } from "@/types/gift-catalog";
+import { GIFT_CATALOG_OPERATIONAL_LABELS } from "@/lib/gift-catalog-format";
+import { GIFT_CATALOG_OPERATIONAL_STATUSES } from "@/types/gift-catalog";
+import type { GiftCatalogOperationalFilter, GiftCatalogRow, GiftCatalogSortKey } from "@/types/gift-catalog";
 
 export function GiftCatalogView() {
   const { user } = useAuth();
@@ -49,7 +52,9 @@ export function GiftCatalogView() {
   const [category, setCategory] = useState("all");
   const [source, setSource] = useState("all");
   const [status, setStatus] = useState("all");
+  const [operational, setOperational] = useState<GiftCatalogOperationalFilter>("all");
   const [sort, setSort] = useState<GiftCatalogSortKey>("name");
+  const savingRef = useRef(false);
   const [showArchived, setShowArchived] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<GiftCatalogRow | null>(null);
@@ -74,11 +79,24 @@ export function GiftCatalogView() {
     void refresh();
   }, []);
 
+  const operationalCounts = useMemo(() => {
+    const counts = emptyOperationalCounts();
+    for (const item of items) {
+      if (item.status === "archived" && !showArchived) continue;
+      const key = item.operational_status ?? "interested";
+      if (key in counts) counts[key as keyof typeof counts] += 1;
+    }
+    return counts;
+  }, [items, showArchived]);
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     let rows = items.filter((item) => {
       if (!showArchived && item.status === "archived") return false;
       if (status !== "all" && item.status !== status) return false;
+      if (operational !== "all" && item.operational_status !== operational) {
+        return false;
+      }
       if (category !== "all" && item.category !== category) return false;
       if (source !== "all" && item.source !== source) return false;
       if (!q) return true;
@@ -103,65 +121,69 @@ export function GiftCatalogView() {
       return a.gift_name.localeCompare(b.gift_name, "th");
     });
     return rows;
-  }, [items, query, category, source, status, sort, showArchived]);
+  }, [items, query, category, source, status, operational, sort, showArchived]);
 
   async function handleSave({ values, image }: GiftCatalogSavePayload) {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     const prevPath = editing?.image_path ?? null;
 
-    const result = await saveGiftCatalogAction({
-      id: editing?.id,
-      values,
-    });
-    if (!result.ok) {
-      setSaving(false);
-      setSaveError(result.error);
-      return;
-    }
-
-    const catalogId = editing?.id ?? result.data.id;
-
-    if (image.file) {
-      setUploadingImage(true);
-      try {
-        const uploaded = await uploadGiftCatalogCover(catalogId, image.file);
-        const imgResult = await updateGiftCatalogImageAction({
-          id: catalogId,
-          imagePath: uploaded.imagePath,
-          imageUrl: uploaded.imageUrl,
-        });
-        if (!imgResult.ok) throw new Error(imgResult.error);
-        if (prevPath && prevPath !== uploaded.imagePath) {
-          await removeGiftCatalogCover(prevPath).catch(() => {});
-        }
-      } catch {
-        setSaving(false);
-        setUploadingImage(false);
-        setSaveError(
-          editing?.id
-            ? t.catalogImageUploadFailedEdit
-            : t.catalogImageUploadFailedNew(catalogId),
-        );
-        void refresh();
+    try {
+      const result = await saveGiftCatalogAction({
+        id: editing?.id,
+        values,
+      });
+      if (!result.ok) {
+        setSaveError(result.error);
         return;
       }
-      setUploadingImage(false);
-    } else if (image.removeRequested && prevPath) {
-      const imgResult = await updateGiftCatalogImageAction({
-        id: catalogId,
-        imagePath: null,
-        imageUrl: null,
-      });
-      if (imgResult.ok) {
-        await removeGiftCatalogCover(prevPath).catch(() => {});
-      }
-    }
 
-    setSaving(false);
-    setDialogOpen(false);
-    setEditing(null);
-    void refresh();
+      const catalogId = editing?.id ?? result.data.id;
+
+      if (image.file) {
+        setUploadingImage(true);
+        try {
+          const uploaded = await uploadGiftCatalogCover(catalogId, image.file);
+          const imgResult = await updateGiftCatalogImageAction({
+            id: catalogId,
+            imagePath: uploaded.imagePath,
+            imageUrl: uploaded.imageUrl,
+          });
+          if (!imgResult.ok) throw new Error(imgResult.error);
+          if (prevPath && prevPath !== uploaded.imagePath) {
+            await removeGiftCatalogCover(prevPath).catch(() => {});
+          }
+        } catch {
+          setSaveError(
+            editing?.id
+              ? t.catalogImageUploadFailedEdit
+              : t.catalogImageUploadFailedNew(catalogId),
+          );
+          void refresh();
+          return;
+        } finally {
+          setUploadingImage(false);
+        }
+      } else if (image.removeRequested && prevPath) {
+        const imgResult = await updateGiftCatalogImageAction({
+          id: catalogId,
+          imagePath: null,
+          imageUrl: null,
+        });
+        if (imgResult.ok) {
+          await removeGiftCatalogCover(prevPath).catch(() => {});
+        }
+      }
+
+      setDialogOpen(false);
+      setEditing(null);
+      void refresh();
+    } finally {
+      setSaving(false);
+      savingRef.current = false;
+    }
   }
 
   return (
@@ -192,6 +214,12 @@ export function GiftCatalogView() {
           </Button>
         ) : null}
       </header>
+
+      <GiftCatalogSummaryStrip
+        counts={operationalCounts}
+        activeFilter={operational}
+        onFilter={(filter) => setOperational(filter)}
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative min-w-[12rem] flex-1">
@@ -240,6 +268,20 @@ export function GiftCatalogView() {
           ]}
         />
         <Select
+          value={operational}
+          onChange={(e) =>
+            setOperational(e.target.value as GiftCatalogOperationalFilter)
+          }
+          className="w-44"
+          options={[
+            { value: "all", label: t.allOperationalStatus },
+            ...GIFT_CATALOG_OPERATIONAL_STATUSES.map((value) => ({
+              value,
+              label: GIFT_CATALOG_OPERATIONAL_LABELS[value],
+            })),
+          ]}
+        />
+        <Select
           value={sort}
           onChange={(e) => setSort(e.target.value as GiftCatalogSortKey)}
           className="w-40"
@@ -278,16 +320,17 @@ export function GiftCatalogView() {
                 inActiveTier={false}
                 activeTierQty={null}
                 otherTierUsage={[]}
-                onAdd={() => {
-                  if (!canEdit) return;
-                  setEditing(item);
-                  setDialogOpen(true);
-                }}
-                onEditQty={() => {
-                  if (!canEdit) return;
-                  setEditing(item);
-                  setDialogOpen(true);
-                }}
+                showTierActions={false}
+                onAdd={() => {}}
+                onEditQty={() => {}}
+                onEdit={
+                  canEdit
+                    ? () => {
+                        setEditing(item);
+                        setDialogOpen(true);
+                      }
+                    : undefined
+                }
               />
               {canEdit ? (
                 <div className="flex flex-wrap gap-2 px-1">

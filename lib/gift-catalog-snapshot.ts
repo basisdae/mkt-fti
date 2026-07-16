@@ -36,5 +36,7 @@ export function applyCatalogToPlanItem(
     purchase_group_id: null,
     image_path: catalog.image_path,
     image_url: catalog.image_url,
+    reference_url: catalog.reference_url,
+    operational_status: catalog.operational_status ?? "interested",
   };
 }
