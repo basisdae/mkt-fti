@@ -2,15 +2,37 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/AuthStore";
-import { getNavItemsForUser } from "@/lib/auth/permissions";
+import { getSidebarSectionsForUser } from "@/lib/auth/permissions";
 import { APP_TAGLINE, APP_TITLE, type NavItem } from "@/lib/constants";
+import {
+  isSidebarSectionCollapsed,
+  readSidebarCollapseState,
+  writeSidebarCollapseState,
+  type SidebarCollapseState,
+} from "@/lib/nav/sidebar-collapse";
+import {
+  navItemMatchesPath,
+  sectionIsActive,
+  sumSectionBadgeCounts,
+  type SidebarSection,
+} from "@/lib/nav/sidebar-config";
 
 interface SidebarProps {
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+}
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ml-auto inline-flex min-h-[1.125rem] min-w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-fti-red/10 px-1.5 text-[10px] font-semibold leading-none text-fti-red">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
 }
 
 function SidebarNavLink({
@@ -22,8 +44,7 @@ function SidebarNavLink({
   pathname: string;
   onMobileClose?: () => void;
 }) {
-  const isActive =
-    pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const isActive = navItemMatchesPath(item, pathname);
   const Icon = item.icon;
 
   return (
@@ -31,22 +52,119 @@ function SidebarNavLink({
       href={item.href}
       onClick={onMobileClose}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+        "relative flex items-center gap-2.5 rounded-lg py-2 pl-3 pr-2 text-[13px] font-normal transition-colors",
         isActive
-          ? "bg-light-purple text-primary shadow-sm"
-          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+          ? "bg-primary/10 font-medium text-primary before:absolute before:-left-px before:bottom-1 before:top-1 before:w-0.5 before:rounded-full before:bg-primary"
+          : "text-gray-600 hover:bg-gray-50/90 hover:text-gray-900",
       )}
     >
-      <Icon className="h-5 w-5 shrink-0" />
-      {item.label}
+      <Icon
+        className={cn(
+          "h-4 w-4 shrink-0",
+          isActive ? "text-primary" : "text-gray-400",
+        )}
+      />
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      <NavBadge count={item.badgeCount ?? 0} />
     </Link>
+  );
+}
+
+function SidebarSectionBlock({
+  section,
+  pathname,
+  collapsed,
+  onToggle,
+  onMobileClose,
+}: {
+  section: SidebarSection;
+  pathname: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  onMobileClose?: () => void;
+}) {
+  const active = sectionIsActive(section, pathname);
+  const sectionBadge = sumSectionBadgeCounts(section);
+
+  return (
+    <section className="py-1">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+        className={cn(
+          "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors",
+          active
+            ? "bg-gray-100/80 text-gray-900"
+            : "text-gray-800 hover:bg-gray-50",
+        )}
+      >
+        <span className="min-w-0 flex-1 truncate text-xs font-bold tracking-tight">
+          {section.label}
+        </span>
+        <NavBadge count={sectionBadge} />
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-gray-400 transition-transform",
+            collapsed && "-rotate-90",
+          )}
+        />
+      </button>
+
+      {!collapsed ? (
+        <div className="relative mt-0.5 ml-2 border-l border-gray-200/90 pl-2">
+          <div className="space-y-0.5">
+            {section.items.map((item) => (
+              <SidebarNavLink
+                key={item.href}
+                item={item}
+                pathname={pathname}
+                onMobileClose={onMobileClose}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 }
 
 export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useAuth();
-  const navGroups = getNavItemsForUser(user);
+  const sections = useMemo(() => getSidebarSectionsForUser(user), [user]);
+  const [collapseState, setCollapseState] = useState<SidebarCollapseState>({});
+
+  useEffect(() => {
+    setCollapseState(readSidebarCollapseState());
+  }, []);
+
+  useEffect(() => {
+    const activeSection = sections.find((section) =>
+      sectionIsActive(section, pathname),
+    );
+    if (!activeSection) return;
+
+    setCollapseState((prev) => {
+      if (prev[activeSection.id] === false || prev[activeSection.id] === undefined) {
+        return prev;
+      }
+      const next = { ...prev, [activeSection.id]: false };
+      writeSidebarCollapseState(next);
+      return next;
+    });
+  }, [pathname, sections]);
+
+  const toggleSection = useCallback((sectionId: string) => {
+    setCollapseState((prev) => {
+      const next = {
+        ...prev,
+        [sectionId]: !isSidebarSectionCollapsed(prev, sectionId),
+      };
+      writeSidebarCollapseState(next);
+      return next;
+    });
+  }, []);
 
   return (
     <aside
@@ -55,7 +173,7 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
       )}
     >
-      <div className="border-b border-gray-100 px-5 py-5 sm:px-6 sm:py-6">
+      <div className="shrink-0 border-b border-gray-100 px-5 py-5 sm:px-6 sm:py-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -84,30 +202,22 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {navGroups.map((group, groupIndex) => (
-          <div
-            key={group.label}
-            className={cn(groupIndex > 0 && "mt-4 border-t border-gray-100 pt-4")}
-          >
-            <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-              {group.label}
-            </p>
-            <div className="space-y-1">
-              {group.items.map((item) => (
-                <SidebarNavLink
-                  key={item.href}
-                  item={item}
-                  pathname={pathname}
-                  onMobileClose={onMobileClose}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
+      <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
+        <div className="space-y-1">
+          {sections.map((section) => (
+            <SidebarSectionBlock
+              key={section.id}
+              section={section}
+              pathname={pathname}
+              collapsed={isSidebarSectionCollapsed(collapseState, section.id)}
+              onToggle={() => toggleSection(section.id)}
+              onMobileClose={onMobileClose}
+            />
+          ))}
+        </div>
       </nav>
 
-      <div className="border-t border-gray-100 px-5 py-4 sm:px-6">
+      <div className="shrink-0 border-t border-gray-100 px-5 py-4 sm:px-6">
         <div className="rounded-xl bg-light-purple/60 px-4 py-3">
           <p className="text-xs font-semibold text-primary">Internal Use Only</p>
           <p className="mt-0.5 text-[11px] text-gray-500">

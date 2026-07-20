@@ -84,9 +84,6 @@ export function MonthlyPlanWorkDetailView({ workId }: MonthlyPlanWorkDetailViewP
       status: values.status,
       priority: values.priority || null,
       owner_user_id: values.owner_user_id || null,
-      collaborator_user_ids: values.collaborator_user_ids,
-      start_date: values.start_date || null,
-      deadline: values.deadline || null,
     });
 
     if (!updateResult.ok) {

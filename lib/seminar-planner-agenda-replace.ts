@@ -11,11 +11,13 @@ import type {
 /** Agenda-only fields preserved when swapping library session. */
 const PRESERVED_KEYS = new Set([
   "id",
+  "client_key",
   "sort_order",
   "start_time",
   "status_name",
   "owner_name",
   "team_notes",
+  "agenda_short_detail",
   "is_parallel",
 ]);
 

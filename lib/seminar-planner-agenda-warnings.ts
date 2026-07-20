@@ -1,4 +1,5 @@
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
+import { agendaItemKey } from "@/lib/seminar-planner-agenda-keys";
 import {
   calcDurationMinutes,
   detectAgendaOverlaps,
@@ -38,7 +39,7 @@ export function validateAgendaItems(
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    const itemId = item.id ?? `new-${i}`;
+    const itemId = agendaItemKey(item, i);
 
     if (!item.title?.trim()) {
       warnings.push({
@@ -101,17 +102,17 @@ export function validateAgendaItems(
 
   const timeItems: AgendaTimeItem[] = items.map((item, index) => ({
     ...item,
-    id: item.id ?? `new-${index}`,
+    id: agendaItemKey(item, index),
     title: item.title,
   }));
 
   const overlaps = detectAgendaOverlaps(timeItems);
   for (const overlap of overlaps) {
     const a = items.find(
-      (item, idx) => (item.id ?? `new-${idx}`) === overlap.itemAId,
+      (item, idx) => agendaItemKey(item, idx) === overlap.itemAId,
     );
     const b = items.find(
-      (item, idx) => (item.id ?? `new-${idx}`) === overlap.itemBId,
+      (item, idx) => agendaItemKey(item, idx) === overlap.itemBId,
     );
     const bothParallel = a?.is_parallel && b?.is_parallel;
     warnings.push({
@@ -124,10 +125,10 @@ export function validateAgendaItems(
 
   const parallelOverlaps = overlaps.filter((overlap) => {
     const a = items.find(
-      (item, idx) => (item.id ?? `new-${idx}`) === overlap.itemAId,
+      (item, idx) => agendaItemKey(item, idx) === overlap.itemAId,
     );
     const b = items.find(
-      (item, idx) => (item.id ?? `new-${idx}`) === overlap.itemBId,
+      (item, idx) => agendaItemKey(item, idx) === overlap.itemBId,
     );
     return a?.is_parallel && b?.is_parallel;
   });
@@ -159,7 +160,7 @@ export function countIncompleteAgendaItems(
 export function countAgendaOverlaps(items: SeminarAgendaItemInput[]): number {
   const timeItems: AgendaTimeItem[] = items.map((item, index) => ({
     ...item,
-    id: item.id ?? `new-${index}`,
+    id: agendaItemKey(item, index),
     title: item.title,
   }));
   return detectAgendaOverlaps(timeItems).length;
@@ -170,7 +171,7 @@ export function warningsForAgendaItem(
   index: number,
   allItems: SeminarAgendaItemInput[],
 ): SeminarAgendaWarning[] {
-  const itemId = item.id ?? `new-${index}`;
+  const itemId = agendaItemKey(item, index);
   return validateAgendaItems(allItems).filter(
     (w) => w.itemId === itemId || w.id.includes(itemId),
   );

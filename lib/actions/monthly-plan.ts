@@ -116,8 +116,6 @@ function normalizeWorkInput(values: MktWorkItemInput) {
     sort_order: values.sort_order ?? 0,
     owner_user_id: values.owner_user_id ?? null,
     collaborator_user_ids: values.collaborator_user_ids ?? [],
-    start_date: values.start_date ?? null,
-    deadline: values.deadline ?? null,
   };
 }
 
@@ -278,9 +276,19 @@ export async function updateMonthlyWorkItemAction(
 
   try {
     const merged = normalizeWorkInput({
-      ...existing.data,
-      ...values,
       title: values.title ?? existing.data.title,
+      description: values.description ?? existing.data.description,
+      status: values.status ?? existing.data.status,
+      priority:
+        values.priority !== undefined ? values.priority : existing.data.priority,
+      plan_year: existing.data.plan_year,
+      plan_month: existing.data.plan_month,
+      sort_order: existing.data.sort_order,
+      owner_user_id:
+        values.owner_user_id !== undefined
+          ? values.owner_user_id
+          : existing.data.owner_user_id,
+      collaborator_user_ids: existing.data.collaborator_user_ids,
     });
 
     const { data, error } = await supabase

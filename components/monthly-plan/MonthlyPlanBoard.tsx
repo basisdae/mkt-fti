@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
   TouchSensor,
-  closestCorners,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -20,6 +19,10 @@ import {
   parseBucketId,
   UNPLANNED_THEME,
 } from "@/lib/monthly-plan-format";
+import {
+  MONTHLY_PLAN_DRAG_ACTIVATION_PX,
+  monthlyPlanCollisionDetection,
+} from "@/lib/monthly-plan-dnd";
 import { MONTHLY_PLAN_COPY as t } from "@/lib/monthly-plan-i18n";
 import {
   findBucketForItem,
@@ -38,9 +41,12 @@ interface MonthlyPlanBoardProps {
   buckets: MonthlyPlanBuckets;
   assignees: MktWorkAssigneeOption[];
   disabled?: boolean;
+  canDelete?: boolean;
   onOpenItem: (id: string) => void;
+  onDeleteRequest?: (item: MktWorkItemCard) => void;
   onBucketsChange: (next: MonthlyPlanBuckets) => void;
   onCommit: (next: MonthlyPlanBuckets) => void;
+  onDragRevert?: () => void;
 }
 
 export function MonthlyPlanBoard({
@@ -48,16 +54,24 @@ export function MonthlyPlanBoard({
   buckets,
   assignees,
   disabled = false,
+  canDelete = false,
   onOpenItem,
+  onDeleteRequest,
   onBucketsChange,
   onCommit,
+  onDragRevert,
 }: MonthlyPlanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDropBucket, setActiveDropBucket] = useState<string | null>(null);
+  const activeDropBucketRef = useRef<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: MONTHLY_PLAN_DRAG_ACTIVATION_PX },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 8 },
+    }),
     useSensor(KeyboardSensor),
   );
 
@@ -78,6 +92,11 @@ export function MonthlyPlanBoard({
     return findBucketForItem(buckets, overId);
   }
 
+  function setDropBucketHighlight(bucketKey: string | null) {
+    activeDropBucketRef.current = bucketKey;
+    setActiveDropBucket(bucketKey);
+  }
+
   function handleDragStart(event: DragStartEvent) {
     setActiveId(String(event.active.id));
   }
@@ -85,7 +104,7 @@ export function MonthlyPlanBoard({
   function handleDragOver(event: DragOverEvent) {
     const { active, over } = event;
     if (!over) {
-      setActiveDropBucket(null);
+      setDropBucketHighlight(null);
       return;
     }
 
@@ -93,7 +112,7 @@ export function MonthlyPlanBoard({
     const overBucketKey = resolveBucketKey(String(over.id));
     if (!overBucketKey) return;
 
-    setActiveDropBucket(overBucketKey);
+    setDropBucketHighlight(overBucketKey);
 
     const activeBucketKey = findBucketForItem(buckets, activeItemId);
     if (!activeBucketKey || activeBucketKey === overBucketKey) return;
@@ -112,19 +131,12 @@ export function MonthlyPlanBoard({
     );
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    setActiveId(null);
-    setActiveDropBucket(null);
-    if (!over) return;
-
-    const activeItemId = String(active.id);
-    const overBucketKey = resolveBucketKey(String(over.id));
-    if (!overBucketKey) return;
-
-    const overItemId = String(over.id).startsWith("bucket:")
-      ? null
-      : String(over.id);
+  function finalizeDrag(
+    activeItemId: string,
+    overBucketKey: string,
+    overId: string,
+  ) {
+    const overItemId = overId.startsWith("bucket:") ? null : overId;
 
     const next = moveItemBetweenBuckets(
       buckets,
@@ -136,19 +148,46 @@ export function MonthlyPlanBoard({
     onCommit(next);
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    const activeItemId = String(active.id);
+    const lastDropBucket = activeDropBucketRef.current;
+
+    setActiveId(null);
+    setDropBucketHighlight(null);
+
+    const overBucketKey = over
+      ? resolveBucketKey(String(over.id))
+      : lastDropBucket;
+
+    if (!overBucketKey) {
+      onDragRevert?.();
+      return;
+    }
+
+    finalizeDrag(
+      activeItemId,
+      overBucketKey,
+      over ? String(over.id) : overBucketKey,
+    );
+  }
+
+  function handleDragCancel() {
+    setActiveId(null);
+    setDropBucketHighlight(null);
+    onDragRevert?.();
+  }
+
   const unplannedKey = bucketId(year, null);
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={monthlyPlanCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => {
-        setActiveId(null);
-        setActiveDropBucket(null);
-      }}
+      onDragCancel={handleDragCancel}
     >
       <div className="space-y-4">
         <MonthlyPlanBucket
@@ -161,8 +200,10 @@ export function MonthlyPlanBoard({
           assignees={assignees}
           month={null}
           disabled={disabled}
+          canDelete={canDelete}
           isActiveDrop={activeDropBucket === unplannedKey}
           onOpenItem={onOpenItem}
+          onDeleteRequest={onDeleteRequest}
           layout="strip"
         />
         <p className="text-xs text-gray-500">{t.unplannedHint}</p>
@@ -184,8 +225,10 @@ export function MonthlyPlanBoard({
                 assignees={assignees}
                 month={month}
                 disabled={disabled}
+                canDelete={canDelete}
                 isActiveDrop={activeDropBucket === key}
                 onOpenItem={onOpenItem}
+                onDeleteRequest={onDeleteRequest}
               />
             );
           })}

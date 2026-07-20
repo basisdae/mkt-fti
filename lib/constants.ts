@@ -49,32 +49,59 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Real notification count — omit or 0 to hide badge. */
+  badgeCount?: number;
 }
 
-export const MAIN_NAV_ITEMS: NavItem[] = [
+/** All primary sidebar destinations keyed by href. */
+export const ALL_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "แผนรายเดือน", href: "/monthly-plan", icon: CalendarDays },
   { label: "Products", href: "/products", icon: Package },
   { label: "R&D Specs", href: "/rnd/specs", icon: FlaskConical },
+  { label: "Brand Board", href: "/brand-board", icon: Sparkles },
+  { label: "Simulator", href: "/simulator", icon: Calculator },
   { label: "Suppliers", href: "/suppliers", icon: Factory },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
-  { label: "Simulator", href: "/simulator", icon: Calculator },
+  { label: "Timeline", href: "/timeline", icon: Clock3 },
   { label: "แผนของขวัญลูกค้า", href: "/gift-plans", icon: Gift },
   { label: "อบรม / สัมมนา", href: "/seminars", icon: GraduationCap },
-  { label: "แผนรายเดือน", href: "/monthly-plan", icon: CalendarDays },
-  { label: "Timeline", href: "/timeline", icon: Clock3 },
+  { label: "Idea Board", href: "/ideas", icon: Lightbulb },
   { label: "Notes", href: "/notes", icon: StickyNote },
-];
-
-export const SECONDARY_NAV_ITEMS: NavItem[] = [
-  { label: "Ideas", href: "/ideas", icon: Lightbulb },
-  { label: "Brand Board", href: "/brand-board", icon: Sparkles },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
+/** @deprecated Use ALL_NAV_ITEMS — kept for tests referencing flat lists. */
+export const MAIN_NAV_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter((item) =>
+  [
+    "/dashboard",
+    "/monthly-plan",
+    "/products",
+    "/rnd/specs",
+    "/suppliers",
+    "/pipeline",
+    "/simulator",
+    "/gift-plans",
+    "/seminars",
+    "/timeline",
+    "/notes",
+  ].includes(item.href),
+);
+
+/** @deprecated Use ALL_NAV_ITEMS */
+export const SECONDARY_NAV_ITEMS: NavItem[] = ALL_NAV_ITEMS.filter((item) =>
+  ["/ideas", "/brand-board", "/settings"].includes(item.href),
+);
+
+/** @deprecated Use SIDEBAR_SECTION_DEFINITIONS */
 export const NAV_GROUPS = [
   { label: "เมนูหลัก", items: MAIN_NAV_ITEMS },
   { label: "เครื่องมือเสริม", items: SECONDARY_NAV_ITEMS },
 ] as const;
+
+export const NAV_ITEM_BY_HREF: Map<string, NavItem> = new Map(
+  ALL_NAV_ITEMS.map((item) => [item.href, item]),
+);
 
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
   draft: "Draft",

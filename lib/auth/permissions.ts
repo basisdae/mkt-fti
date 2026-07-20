@@ -1,6 +1,5 @@
 import {
-  MAIN_NAV_ITEMS,
-  SECONDARY_NAV_ITEMS,
+  NAV_ITEM_BY_HREF,
   type NavItem,
 } from "@/lib/constants";
 import {
@@ -8,6 +7,10 @@ import {
   getDefaultPermissionsForRole,
   type PermissionKey,
 } from "@/lib/auth/permission-catalog";
+import {
+  SIDEBAR_SECTION_DEFINITIONS,
+  type SidebarSection,
+} from "@/lib/nav/sidebar-config";
 import {
   GIFT_PLAN_OPERATOR_PERMISSIONS,
   isGiftPlanOperatorEmail,
@@ -213,22 +216,62 @@ export function canAccessPath(
   return false;
 }
 
+export function canAccessNavHref(
+  href: string,
+  perms: Set<PermissionKey>,
+): boolean {
+  if (href === "/settings") {
+    return perms.has("settings.view") || perms.has("users.manage");
+  }
+  if (href === "/gift-plans") {
+    return (
+      perms.has("gift_plans.view") ||
+      perms.has("gift_plans.edit") ||
+      perms.has("gift_plans.export")
+    );
+  }
+  if (href === "/seminars") {
+    return (
+      perms.has("seminar_planner.view") || perms.has("seminar_planner.edit")
+    );
+  }
+  if (href === "/monthly-plan") {
+    return (
+      perms.has("monthly_plan.view") || perms.has("monthly_plan.edit")
+    );
+  }
+
+  const required = NAV_PERMISSION_MAP[href];
+  if (!required) return false;
+  return perms.has(required);
+}
+
+export function getSidebarSectionsForUser(
+  source: PermissionSource,
+): SidebarSection[] {
+  const perms = permissionSet(source);
+
+  return SIDEBAR_SECTION_DEFINITIONS.flatMap((section) => {
+    const items = section.hrefs
+      .map((href) => NAV_ITEM_BY_HREF.get(href))
+      .filter((item): item is NavItem => Boolean(item))
+      .filter((item) => canAccessNavHref(item.href, perms));
+
+    if (items.length === 0) return [];
+
+    return [{ id: section.id, label: section.label, items }];
+  });
+}
+
 export function getNavItemsForUser(
   source: PermissionSource,
 ): { label: string; items: NavItem[] }[] {
-  const perms = permissionSet(source);
-  const allItems = [...MAIN_NAV_ITEMS, ...SECONDARY_NAV_ITEMS];
-  const items = allItems.filter((item) => {
-    const required = NAV_PERMISSION_MAP[item.href];
-    if (!required) return false;
-    if (item.href === "/settings") {
-      return perms.has("settings.view") || perms.has("users.manage");
-    }
-    return perms.has(required);
-  });
-
-  if (items.length === 0) return [];
-  return [{ label: "Menu", items }];
+  const sections = getSidebarSectionsForUser(source);
+  if (sections.length === 0) return [];
+  return sections.map((section) => ({
+    label: section.label,
+    items: section.items,
+  }));
 }
 
 export function getHomePathForUser(source: PermissionSource): string {

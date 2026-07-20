@@ -19,8 +19,6 @@ export const MONTHLY_PLAN_COPY = {
   priorityMedium: "กลาง",
   priorityHigh: "สูง",
   noOwner: "ยังไม่ระบุ",
-  teamShort: "ทีม",
-  deadlineLabel: "Deadline",
   progressLabel: "ความคืบหน้า",
   dragHandle: "ลากเรียง",
   dropHere: "วางงานที่นี่",
@@ -36,16 +34,20 @@ export const MONTHLY_PLAN_COPY = {
   descriptionLabel: "รายละเอียดสั้น ๆ",
   statusLabel: "สถานะ",
   priorityLabel: "ความสำคัญ",
-  ownerLabel: "เจ้าของงาน",
-  collaboratorsLabel: "ผู้ร่วมงาน",
-  startDateLabel: "วันเริ่ม",
-  deadlineFieldLabel: "Deadline",
+  ownerLabel: "ผู้รับผิดชอบ",
   subtasksLabel: "Task ย่อย",
   addSubtask: "เพิ่ม Task",
   subtaskPlaceholder: "ชื่อ Task…",
   markAllDoneHint: "Task ครบแล้ว — เปลี่ยนสถานะเป็น DONE ได้",
   deleteWork: "ลบงาน",
+  deleteCardTooltip: "ลบงาน",
+  deleteDialogTitle: "ลบงานนี้?",
+  deleteDialogBody:
+    "งาน ‘{title}’ และ Task ภายในจะถูกลบ การดำเนินการนี้ไม่สามารถย้อนกลับได้",
   deleteConfirm: "ลบงานนี้และ Task ย่อยทั้งหมด?",
+  cancel: "ยกเลิก",
+  deleting: "กำลังลบ…",
+  deleteFailed: "ลบงานไม่สำเร็จ",
   save: "บันทึก",
   close: "ปิด",
   loading: "กำลังโหลด…",
@@ -66,6 +68,10 @@ export const MONTHLY_PLAN_COPY = {
     "ธ.ค.",
   ] as const,
 } as const;
+
+export function formatMonthlyPlanDeleteDialogMessage(title: string): string {
+  return MONTHLY_PLAN_COPY.deleteDialogBody.replace("{title}", title);
+}
 
 export const MONTHLY_PLAN_MONTH_THEMES = [
   { month: 1, accent: "#4F46E5", soft: "#EEF2FF", border: "#C7D2FE" },

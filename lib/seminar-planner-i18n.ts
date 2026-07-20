@@ -100,6 +100,10 @@ export const SEMINAR_PLANNER_COPY = {
   editInLibrary: "ไปแก้ที่คลังเซสชัน",
   targetGroupsLabel: "กลุ่มเป้าหมาย",
   expandSessionFields: "แก้ไขเวลาและหมายเหตุ",
+  agendaShortDetail: "รายละเอียดสั้น",
+  agendaShortDetailPlaceholder:
+    "เพิ่มรายละเอียดสั้นๆ สำหรับ Agenda นี้…",
+  dragHandle: "ลากเพื่อเรียงลำดับ",
   replaceFromLibrary: "รายการจากคลัง",
   replaceFromLibraryAction: "เปลี่ยน…",
   replaceFromLibraryEmpty: "เลือกรายการจากคลัง…",

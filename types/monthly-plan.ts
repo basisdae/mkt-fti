@@ -55,8 +55,6 @@ export interface MktWorkItemInput {
   sort_order?: number;
   owner_user_id?: string | null;
   collaborator_user_ids?: string[];
-  start_date?: string | null;
-  deadline?: string | null;
 }
 
 export interface MktWorkPlacementUpdate {

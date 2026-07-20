@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, RotateCcw } from "lucide-react";
 import { MonthlyPlanBoard } from "@/components/monthly-plan/MonthlyPlanBoard";
+import { MonthlyPlanDeleteWorkDialog } from "@/components/monthly-plan/MonthlyPlanDeleteWorkDialog";
 import { MonthlyPlanFilters } from "@/components/monthly-plan/MonthlyPlanFilters";
 import { MonthlyPlanWorkDrawer } from "@/components/monthly-plan/MonthlyPlanWorkDrawer";
 import { Button } from "@/components/ui/Button";
@@ -11,6 +12,7 @@ import { useAuth } from "@/hooks/AuthStore";
 import {
   batchUpdateMonthlyPlacementsAction,
   createMonthlyWorkItemAction,
+  deleteMonthlyWorkItemAction,
   listMonthlyPlanAssigneesAction,
   listMonthlyPlanBoardAction,
 } from "@/lib/actions/monthly-plan";
@@ -109,6 +111,9 @@ export function MonthlyPlanView() {
   const [drawerId, setDrawerId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
   const [undoSnapshot, setUndoSnapshot] = useState<MktWorkItemCard[] | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MktWorkItemCard | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const bucketsBeforeDragRef = useRef<MktWorkItemCard[] | null>(null);
   const isDraggingRef = useRef(false);
@@ -205,6 +210,12 @@ export function MonthlyPlanView() {
     await persistBuckets(next);
   }
 
+  function handleDragRevert() {
+    isDraggingRef.current = false;
+    bucketsBeforeDragRef.current = null;
+    setBuckets(displayBuckets);
+  }
+
   async function handleUndo() {
     if (!undoSnapshot || !canEdit) return;
     const snapshot = undoSnapshot;
@@ -254,6 +265,37 @@ export function MonthlyPlanView() {
   function handleItemDeleted(id: string) {
     setAllItems((current) => current.filter((row) => row.id !== id));
     if (drawerId === id) setDrawerId(null);
+  }
+
+  function handleDeleteRequest(item: MktWorkItemCard) {
+    if (!canEdit) return;
+    setDeleteError(null);
+    setDeleteTarget(item);
+  }
+
+  function handleDeleteClose() {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteError(null);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget || !canEdit || deleting) return;
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    const result = await deleteMonthlyWorkItemAction(deleteTarget.id);
+    setDeleting(false);
+
+    if (!result.ok) {
+      reportActionError(result.error, setDeleteError);
+      return;
+    }
+
+    handleItemDeleted(deleteTarget.id);
+    setDeleteTarget(null);
+    setDeleteError(null);
   }
 
   if (!canView) {
@@ -323,11 +365,22 @@ export function MonthlyPlanView() {
           buckets={buckets}
           assignees={assignees}
           disabled={!canEdit}
+          canDelete={canEdit}
           onOpenItem={setDrawerId}
+          onDeleteRequest={handleDeleteRequest}
           onBucketsChange={handleBucketsChange}
           onCommit={(next) => void handleDragCommitted(next)}
+          onDragRevert={handleDragRevert}
         />
       )}
+
+      <MonthlyPlanDeleteWorkDialog
+        item={deleteTarget}
+        deleting={deleting}
+        error={deleteError}
+        onClose={handleDeleteClose}
+        onConfirm={() => void handleDeleteConfirm()}
+      />
 
       <MonthlyPlanWorkDrawer
         workId={drawerId}

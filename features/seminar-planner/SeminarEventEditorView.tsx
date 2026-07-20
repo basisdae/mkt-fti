@@ -4,8 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Pencil, Plus, RefreshCw } from "lucide-react";
-import { SeminarAgendaCompactRow } from "@/components/seminar-planner/SeminarAgendaCompactRow";
 import { SeminarAgendaLibraryDropdown } from "@/components/seminar-planner/SeminarAgendaLibraryDropdown";
+import { SeminarAgendaSortableList } from "@/components/seminar-planner/SeminarAgendaSortableList";
 import { SeminarAgendaSessionSummaryDrawer } from "@/components/seminar-planner/SeminarAgendaSessionSummaryDrawer";
 import { SeminarAgendaSummary } from "@/components/seminar-planner/SeminarAgendaSummary";
 import { SeminarEventStatusBadge } from "@/components/seminar-planner/SeminarEventStatusBadge";
@@ -41,6 +41,7 @@ import {
   resolveEventAndAgendaDates,
   syncAgendaItemsToEventDate,
 } from "@/lib/seminar-planner-agenda-date";
+import { newAgendaClientKey } from "@/lib/seminar-planner-agenda-keys";
 import {
   formatSeminarDateRange,
   formatSeminarMinutes,
@@ -87,6 +88,7 @@ function agendaRowToInput(row: SeminarAgendaItemRow): SeminarAgendaItemInput {
     outcomes_bullets: normalizeBullets(row.outcomes_bullets),
     target_group_names: row.target_group_names,
     team_notes: row.team_notes,
+    agenda_short_detail: row.agenda_short_detail ?? "",
     owner_name: row.owner_name,
     status_name: row.status_name,
     is_parallel: row.is_parallel,
@@ -98,6 +100,7 @@ function sessionToAgendaItem(
   sortOrder: number,
 ): SeminarAgendaItemInput {
   return {
+    client_key: newAgendaClientKey(),
     library_session_id: session.id,
     sort_order: sortOrder,
     title: session.title,
@@ -119,6 +122,7 @@ function sessionToAgendaItem(
 
 function newCustomAgendaItem(sortOrder: number): SeminarAgendaItemInput {
   return {
+    client_key: newAgendaClientKey(),
     sort_order: sortOrder,
     title: "",
     category_name: "",
@@ -150,8 +154,9 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   const [targetGroupIds, setTargetGroupIds] = useState<string[]>([]);
   const [purposeIds, setPurposeIds] = useState<string[]>([]);
   const [agendaItems, setAgendaItems] = useState<SeminarAgendaItemInput[]>([]);
+  const agendaItemsRef = useRef<SeminarAgendaItemInput[]>([]);
 
-  const [dragAgendaIndex, setDragAgendaIndex] = useState<number | null>(null);
+  const [savingAgendaOrder, setSavingAgendaOrder] = useState(false);
   const [summaryItemIndex, setSummaryItemIndex] = useState<number | null>(null);
   const [replacingAgendaIndex, setReplacingAgendaIndex] = useState<number | null>(
     null,
@@ -199,6 +204,9 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
         .sort((a, b) => a.sort_order - b.sort_order)
         .map(agendaRowToInput),
     );
+    agendaItemsRef.current = [...resolved.agendaItems]
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(agendaRowToInput);
     setDirty(false);
   }, []);
 
@@ -302,47 +310,77 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     return list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
   }
 
-  function reorderAgenda(next: SeminarAgendaItemInput[]) {
+  function applyAgendaOrder(next: SeminarAgendaItemInput[]) {
     const eventDate = eventForm.start_date ?? null;
-    setAgendaItems(
-      next.map((item, index) => ({
+    const reordered = next.map((item, index) => ({
+      ...item,
+      sort_order: index,
+      session_date: eventDate,
+    }));
+    setAgendaItems(reordered);
+    agendaItemsRef.current = reordered;
+    setDirty(true);
+    return reordered;
+  }
+
+  async function persistAgendaItems(items?: SeminarAgendaItemInput[]) {
+    const payload =
+      items ??
+      agendaItemsRef.current.map((item, index) => ({
         ...item,
         sort_order: index,
-        session_date: eventDate,
-      })),
-    );
-    setDirty(true);
+        session_date: eventForm.start_date ?? null,
+      }));
+    return saveAgendaItemsOnly(payload);
+  }
+
+  async function handleAgendaReorder(next: SeminarAgendaItemInput[]) {
+    const reordered = applyAgendaOrder(next);
+    setSavingAgendaOrder(true);
+    setSaveError(null);
+    const saved = await persistAgendaItems(reordered);
+    setSavingAgendaOrder(false);
+    if (!saved) {
+      await loadBundle();
+    }
+  }
+
+  async function handleShortDetailBlur() {
+    if (!canEdit) return;
+    setSaveError(null);
+    const saved = await persistAgendaItems();
+    if (!saved) {
+      await loadBundle();
+    }
+  }
+
+  function reorderAgenda(next: SeminarAgendaItemInput[]) {
+    applyAgendaOrder(next);
   }
 
   function updateAgendaItem(index: number, item: SeminarAgendaItemInput) {
     const next = [...agendaItems];
-    next[index] = item;
-    reorderAgenda(next);
+    next[index] = {
+      ...item,
+      session_date: eventForm.start_date ?? null,
+    };
+    setAgendaItems(next);
+    agendaItemsRef.current = next;
+    setDirty(true);
   }
 
-  function moveAgenda(index: number, direction: -1 | 1) {
+  async function moveAgenda(index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= agendaItems.length) return;
     const next = [...agendaItems];
     const [removed] = next.splice(index, 1);
     next.splice(target, 0, removed);
-    reorderAgenda(next);
+    await handleAgendaReorder(next);
   }
 
-  function dropAgendaItem(targetIndex: number) {
-    if (dragAgendaIndex == null || dragAgendaIndex === targetIndex) {
-      setDragAgendaIndex(null);
-      return;
-    }
-    const next = [...agendaItems];
-    const [removed] = next.splice(dragAgendaIndex, 1);
-    next.splice(targetIndex, 0, removed);
-    reorderAgenda(next);
-    setDragAgendaIndex(null);
-  }
-
-  function removeAgendaItem(index: number) {
-    reorderAgenda(agendaItems.filter((_, i) => i !== index));
+  async function removeAgendaItem(index: number) {
+    const next = agendaItems.filter((_, i) => i !== index);
+    await handleAgendaReorder(next);
   }
 
   function addFromLibrary(session: SeminarLibSessionRow) {
@@ -908,46 +946,23 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               <p className="text-sm text-gray-500">{t.agendaEmpty}</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {agendaItems.map((item, index) => (
-                <div
-                  key={item.id ?? `new-${index}`}
-                  draggable={canEdit}
-                  onDragStart={() => setDragAgendaIndex(index)}
-                  onDragEnd={() => setDragAgendaIndex(null)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    dropAgendaItem(index);
-                  }}
-                  className={cn(
-                    dragAgendaIndex === index &&
-                      "opacity-60 ring-2 ring-primary/30 rounded-xl",
-                  )}
-                >
-                  <SeminarAgendaCompactRow
-                    item={item}
-                    index={index}
-                    total={agendaItems.length}
-                    allItems={agendaItems}
-                    statusOptions={masterOptions.statuses}
-                    disabled={!canEdit}
-                    replacing={replacingAgendaIndex === index}
-                    onChange={(next) => updateAgendaItem(index, next)}
-                    onReplaceFromLibrary={(session) =>
-                      void replaceAgendaFromLibrary(index, session)
-                    }
-                    onMoveUp={() => moveAgenda(index, -1)}
-                    onMoveDown={() => moveAgenda(index, 1)}
-                    onRemove={() => removeAgendaItem(index)}
-                    onViewSummary={() => setSummaryItemIndex(index)}
-                  />
-                </div>
-              ))}
-            </div>
+            <SeminarAgendaSortableList
+              items={agendaItems}
+              canEdit={canEdit}
+              statusOptions={masterOptions.statuses}
+              replacingIndex={replacingAgendaIndex}
+              savingOrder={savingAgendaOrder}
+              onReorder={(next) => void handleAgendaReorder(next)}
+              onChange={updateAgendaItem}
+              onReplaceFromLibrary={(index, session) =>
+                void replaceAgendaFromLibrary(index, session)
+              }
+              onMoveUp={(index) => void moveAgenda(index, -1)}
+              onMoveDown={(index) => void moveAgenda(index, 1)}
+              onRemove={(index) => void removeAgendaItem(index)}
+              onViewSummary={setSummaryItemIndex}
+              onShortDetailBlur={() => void handleShortDetailBlur()}
+            />
           )}
 
           <SeminarAgendaSessionSummaryDrawer

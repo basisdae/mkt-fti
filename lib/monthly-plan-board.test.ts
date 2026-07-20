@@ -8,6 +8,7 @@ import {
   moveItemBetweenBuckets,
 } from "@/lib/monthly-plan-board";
 import { bucketId } from "@/lib/monthly-plan-format";
+import { isMonthlyPlanTap } from "@/lib/monthly-plan-dnd";
 import type { MktWorkItemCard } from "@/types/monthly-plan";
 
 function assert(condition: boolean, message: string) {
@@ -63,5 +64,8 @@ assert(
   updates.some((row) => row.id === "a" && row.plan_month === 2),
   "placement update for moved item",
 );
+
+assert(isMonthlyPlanTap({ x: 0, y: 0 }, { x: 4, y: 4 }), "tap within threshold");
+assert(!isMonthlyPlanTap({ x: 0, y: 0 }, { x: 0, y: 12 }), "movement starts drag");
 
 console.log("monthly-plan-board: all tests passed");

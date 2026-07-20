@@ -73,6 +73,7 @@ function mapAgendaItem(row: Record<string, unknown>): SeminarAgendaItemRow {
       item.duration_minutes === null || item.duration_minutes === undefined
         ? null
         : Number(item.duration_minutes),
+    agenda_short_detail: String(item.agenda_short_detail ?? ""),
   };
 }
 
@@ -128,6 +129,7 @@ function normalizeAgendaInput(
     outcomes_bullets: bulletsToJson(values.outcomes_bullets ?? []),
     target_group_names: values.target_group_names ?? [],
     team_notes: values.team_notes?.trim() ?? "",
+    agenda_short_detail: values.agenda_short_detail?.trim() ?? "",
     owner_name: values.owner_name?.trim() ?? "",
     status_name: values.status_name?.trim() ?? "",
     is_parallel: values.is_parallel ?? false,
@@ -498,6 +500,7 @@ export async function duplicateSeminarEventAction(
       outcomes_bullets: duplicateBullets(item.outcomes_bullets),
       target_group_names: [...item.target_group_names],
       team_notes: item.team_notes,
+      agenda_short_detail: item.agenda_short_detail ?? "",
       owner_name: item.owner_name,
       status_name: item.status_name,
       is_parallel: item.is_parallel,

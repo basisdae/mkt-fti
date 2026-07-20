@@ -43,9 +43,6 @@ export interface MonthlyPlanWorkEditorValues {
   status: MktWorkStatus;
   priority: MktWorkPriority | "";
   owner_user_id: string;
-  collaborator_user_ids: string[];
-  start_date: string;
-  deadline: string;
   subtasks: MktWorkSubtaskInput[];
 }
 
@@ -140,9 +137,6 @@ export function itemToEditorValues(item: MktWorkItemCard): MonthlyPlanWorkEditor
     status: item.status,
     priority: item.priority ?? "",
     owner_user_id: item.owner_user_id ?? "",
-    collaborator_user_ids: [...item.collaborator_user_ids],
-    start_date: item.start_date ?? "",
-    deadline: item.deadline ?? "",
     subtasks: item.subtasks.map((task) => ({
       id: task.id,
       title: task.title,
@@ -289,52 +283,6 @@ export function MonthlyPlanWorkEditor({
           })),
         ]}
       />
-
-      <div>
-        <p className="mb-2 text-sm font-medium text-gray-700">{t.collaboratorsLabel}</p>
-        <div className="max-h-36 space-y-2 overflow-y-auto rounded-xl border border-gray-100 p-3">
-          {assignees.map((user) => {
-            const checked = values.collaborator_user_ids.includes(user.id);
-            return (
-              <label
-                key={user.id}
-                className="flex items-center gap-2 text-sm text-gray-700"
-              >
-                <input
-                  type="checkbox"
-                  disabled={disabled}
-                  checked={checked}
-                  onChange={() => {
-                    const next = checked
-                      ? values.collaborator_user_ids.filter((id) => id !== user.id)
-                      : [...values.collaborator_user_ids, user.id];
-                    patch({ collaborator_user_ids: next });
-                  }}
-                  className="rounded border-gray-300 text-primary focus:ring-primary"
-                />
-                {user.displayName}
-              </label>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Input
-          label={t.startDateLabel}
-          type="date"
-          value={values.start_date}
-          disabled={disabled}
-          onChange={(event) => patch({ start_date: event.target.value })}
-        />
-        <Input
-          label={t.deadlineFieldLabel}
-          type="date"
-          value={values.deadline}
-          disabled={disabled}
-          onChange={(event) => patch({ deadline: event.target.value })}
-        />
-      </div>
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-2">

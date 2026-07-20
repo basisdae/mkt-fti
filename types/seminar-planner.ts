@@ -173,6 +173,7 @@ export interface SeminarAgendaItemRow {
   outcomes_bullets: BulletItem[];
   target_group_names: string[];
   team_notes: string;
+  agenda_short_detail: string;
   owner_name: string;
   status_name: string;
   is_parallel: boolean;
@@ -200,6 +201,8 @@ export interface SeminarEventInput {
 
 export interface SeminarAgendaItemInput {
   id?: string;
+  /** Client-only stable key for new rows until persisted. */
+  client_key?: string;
   library_session_id?: string | null;
   sort_order: number;
   title: string;
@@ -216,6 +219,7 @@ export interface SeminarAgendaItemInput {
   outcomes_bullets?: BulletItem[];
   target_group_names?: string[];
   team_notes?: string;
+  agenda_short_detail?: string;
   owner_name?: string;
   status_name?: string;
   is_parallel?: boolean;
