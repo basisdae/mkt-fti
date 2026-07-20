@@ -1,0 +1,288 @@
+@import url("https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap");
+
+.seminar-agenda-document {
+  --agenda-accent: #695cff;
+  --agenda-text: #111827;
+  --agenda-muted: #4b5563;
+  --agenda-border: #e5e7eb;
+  box-sizing: border-box;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 14mm 16mm 18mm;
+  background: #ffffff;
+  color: var(--agenda-text);
+  font-family: "Sarabun", "Noto Sans Thai", "Segoe UI", Tahoma, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.seminar-agenda-document * {
+  box-sizing: border-box;
+}
+
+.seminar-agenda-document__running-header {
+  display: none;
+}
+
+.seminar-agenda-document__header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--agenda-border);
+}
+
+.seminar-agenda-document__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--agenda-muted);
+}
+
+.seminar-agenda-document__draft {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ffedd5;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.seminar-agenda-document__title {
+  margin: 8px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--agenda-text);
+}
+
+.seminar-agenda-document__accent-line {
+  width: 56px;
+  height: 3px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: var(--agenda-accent);
+}
+
+.seminar-agenda-document__meta {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--agenda-muted);
+}
+
+.seminar-agenda-document__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.seminar-agenda-document__meta-item strong {
+  color: var(--agenda-text);
+  font-weight: 600;
+}
+
+.seminar-agenda-document__stats {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--agenda-text);
+}
+
+.seminar-agenda-document__timeline {
+  margin-top: 18px;
+}
+
+.seminar-agenda-session {
+  display: grid;
+  grid-template-columns: 40px 18px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--agenda-border);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.seminar-agenda-session:last-child {
+  border-bottom: none;
+}
+
+.seminar-agenda-session__left {
+  text-align: right;
+  padding-top: 3px;
+}
+
+.seminar-agenda-session__order {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--agenda-muted);
+}
+
+.seminar-agenda-session__rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.seminar-agenda-session__dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  border: 2px solid var(--session-accent, var(--agenda-accent));
+  background: #ffffff;
+  z-index: 1;
+}
+
+.seminar-agenda-session__line {
+  position: absolute;
+  top: 16px;
+  bottom: -14px;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--agenda-border);
+}
+
+.seminar-agenda-session:last-child .seminar-agenda-session__line {
+  display: none;
+}
+
+.seminar-agenda-session__content {
+  min-width: 0;
+  padding-left: 14px;
+  border-left: 3px solid var(--session-accent, var(--agenda-accent));
+}
+
+.seminar-agenda-session__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--agenda-text);
+}
+
+.seminar-agenda-session__detail {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--agenda-text);
+}
+
+.seminar-agenda-session__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.seminar-agenda-session__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.seminar-agenda-session__tag--category {
+  background: var(--tag-bg, #f3f4f6);
+  color: var(--tag-text, #374151);
+}
+
+.seminar-agenda-document__footer {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--agenda-border);
+  text-align: center;
+  font-size: 11px;
+  color: var(--agenda-muted);
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm 16mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #seminar-agenda-document-print,
+  #seminar-agenda-document-print * {
+    visibility: visible;
+  }
+
+  #seminar-agenda-document-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .seminar-agenda-document {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  .seminar-agenda-document__running-header {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--agenda-border);
+    background: #ffffff;
+    font-size: 11px;
+    color: var(--agenda-muted);
+  }
+
+  .seminar-agenda-document__running-header strong {
+    color: var(--agenda-text);
+    font-weight: 700;
+  }
+
+  .seminar-agenda-document__running-header span {
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .seminar-agenda-document__header {
+    padding-top: 18mm;
+  }
+
+  .seminar-agenda-document__footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 6px 0 0;
+    border-top: 1px solid var(--agenda-border);
+    background: #ffffff;
+  }
+
+  .seminar-agenda-document__footer::after {
+    content: counter(page);
+  }
+
+  .seminar-agenda-session {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

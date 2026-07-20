@@ -169,74 +169,63 @@ export function GiftCatalogView() {
     setError(null);
   }
 
-  function renderCatalogActions(item: GiftCatalogRow) {
-    if (!canEdit) return null;
-    return (
-      <div className="flex flex-wrap gap-2 px-1" data-catalog-no-drag>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={async () => {
-            const result = await duplicateGiftCatalogAction(item.id);
-            if (!result.ok) reportActionError(result.error, setError);
-            else void refresh();
-          }}
-        >
-          {t.duplicate}
-        </Button>
-        {item.status !== "archived" ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-              const result = await setGiftCatalogStatusAction(item.id, "archived");
-              if (!result.ok) reportActionError(result.error, setError);
-              else void refresh();
-            }}
-          >
-            {t.archive}
-          </Button>
-        ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={async () => {
-              const result = await setGiftCatalogStatusAction(item.id, "active");
-              if (!result.ok) reportActionError(result.error, setError);
-              else void refresh();
-            }}
-          >
-            {t.restore}
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={async () => {
-            const usage = await isGiftCatalogInUseAction(item.id);
-            if (!usage.ok) {
-              setError(usage.error);
-              return;
+  function getCatalogActions(item: GiftCatalogRow) {
+    if (!canEdit) return undefined;
+    return {
+      onEdit: () => {
+        setEditing(item);
+        setDialogOpen(true);
+      },
+      onDuplicate: () => {
+        void (async () => {
+          const result = await duplicateGiftCatalogAction(item.id);
+          if (!result.ok) reportActionError(result.error, setError);
+          else void refresh();
+        })();
+      },
+      onArchive:
+        item.status !== "archived"
+          ? () => {
+              void (async () => {
+                const result = await setGiftCatalogStatusAction(item.id, "archived");
+                if (!result.ok) reportActionError(result.error, setError);
+                else void refresh();
+              })();
             }
-            if (usage.data) {
-              setError(t.catalogInUseArchive);
-              return;
+          : undefined,
+      onRestore:
+        item.status === "archived"
+          ? () => {
+              void (async () => {
+                const result = await setGiftCatalogStatusAction(item.id, "active");
+                if (!result.ok) reportActionError(result.error, setError);
+                else void refresh();
+              })();
             }
-            if (!window.confirm(t.deleteCatalogConfirm(item.gift_name))) return;
-            const result = await deleteGiftCatalogAction(item.id);
-            if (!result.ok) reportActionError(result.error, setError);
-            else {
-              if (result.data.imagePath) {
-                await removeGiftCatalogCover(result.data.imagePath).catch(() => {});
-              }
-              void refresh();
+          : undefined,
+      onDelete: () => {
+        void (async () => {
+          const usage = await isGiftCatalogInUseAction(item.id);
+          if (!usage.ok) {
+            setError(usage.error);
+            return;
+          }
+          if (usage.data) {
+            setError(t.catalogInUseArchive);
+            return;
+          }
+          if (!window.confirm(t.deleteCatalogConfirm(item.gift_name))) return;
+          const result = await deleteGiftCatalogAction(item.id);
+          if (!result.ok) reportActionError(result.error, setError);
+          else {
+            if (result.data.imagePath) {
+              await removeGiftCatalogCover(result.data.imagePath).catch(() => {});
             }
-          }}
-        >
-          {t.delete}
-        </Button>
-      </div>
-    );
+            void refresh();
+          }
+        })();
+      },
+    };
   }
 
   async function handleSave({ values, image }: GiftCatalogSavePayload) {
@@ -442,11 +431,7 @@ export function GiftCatalogView() {
           showManualHint={sort !== "manual"}
           savingOrder={reordering}
           onReorder={handleReorderVisible}
-          onEdit={(item) => {
-            setEditing(item);
-            setDialogOpen(true);
-          }}
-          renderActions={renderCatalogActions}
+          getCatalogActions={getCatalogActions}
         />
       )}
 

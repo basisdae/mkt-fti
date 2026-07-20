@@ -650,6 +650,40 @@ export async function saveSeminarAgendaItemsAction(input: {
   return { ok: true, data: { updated_at: now } };
 }
 
+export async function clearSeminarAgendaAction(
+  eventId: string,
+): Promise<ActionResult<{ updated_at: string }>> {
+  const auth = await requireEdit();
+  if (!auth.ok) return auth;
+
+  const { supabase, user } = auth.data;
+  const now = new Date().toISOString();
+
+  const { data: event } = await supabase
+    .from("seminar_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!event) return fail(t.eventNotFound);
+
+  const { error: deleteError } = await supabase
+    .from("seminar_agenda_items")
+    .delete()
+    .eq("event_id", eventId);
+  if (deleteError) return fail(deleteError.message);
+
+  const { error: touchError } = await supabase
+    .from("seminar_events")
+    .update({
+      updated_by_email: user.email,
+      updated_at: now,
+    })
+    .eq("id", eventId);
+  if (touchError) return fail(touchError.message);
+
+  return { ok: true, data: { updated_at: now } };
+}
+
 export async function addLibrarySessionToAgendaAction(input: {
   event_id: string;
   library_session_id: string;

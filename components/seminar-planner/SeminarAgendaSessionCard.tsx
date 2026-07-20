@@ -7,14 +7,15 @@ import {
   Trash2,
 } from "lucide-react";
 import { SeminarBulletListEditor } from "@/components/seminar-planner/SeminarBulletListEditor";
+import { SeminarTimeInput } from "@/components/seminar-planner/SeminarTimeInput";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
 import { Select } from "@/components/forms/Select";
 import { Textarea } from "@/components/forms/Textarea";
 import { warningsForAgendaItem } from "@/lib/seminar-planner-agenda-warnings";
+import { formatSeminarSessionStatusLabel } from "@/lib/seminar-planner-format";
 import {
   calcDurationMinutes,
-  normalizeTimeInput,
 } from "@/lib/seminar-planner-time";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import type { SeminarAgendaItemInput } from "@/types/seminar-planner";
@@ -187,18 +188,16 @@ export function SeminarAgendaSessionCard({
           disabled={disabled}
           options={[{ value: "", label: "—" }, ...formatOptions]}
         />
-        <Input
+        <SeminarTimeInput
           label={t.startTime}
-          type="time"
-          value={normalizeTimeInput(item.start_time)}
-          onChange={(e) => handleTimeChange("start_time", e.target.value)}
+          value={item.start_time}
+          onChange={(value) => handleTimeChange("start_time", value ?? "")}
           disabled={disabled}
         />
-        <Input
+        <SeminarTimeInput
           label={t.endTime}
-          type="time"
-          value={normalizeTimeInput(item.end_time)}
-          onChange={(e) => handleTimeChange("end_time", e.target.value)}
+          value={item.end_time}
+          onChange={(value) => handleTimeChange("end_time", value ?? "")}
           disabled={disabled}
         />
         <Input
@@ -232,7 +231,10 @@ export function SeminarAgendaSessionCard({
           value={item.status_name ?? ""}
           onChange={(e) => patch({ status_name: e.target.value })}
           disabled={disabled}
-          options={[{ value: "", label: "—" }, ...statusOptions]}
+          options={[
+            { value: "", label: formatSeminarSessionStatusLabel("") },
+            ...statusOptions,
+          ]}
         />
         <Input
           label={t.sessionOwner}

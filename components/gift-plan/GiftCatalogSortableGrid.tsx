@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -19,7 +19,10 @@ import {
   rectSortingStrategy,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { GiftCatalogSortableCard } from "@/components/gift-plan/GiftCatalogSortableCard";
+import {
+  GiftCatalogSortableCard,
+} from "@/components/gift-plan/GiftCatalogSortableCard";
+import type { GiftCatalogCardActions } from "@/components/gift-plan/GiftCatalogCard";
 import type { GiftCatalogRow } from "@/types/gift-catalog";
 
 interface GiftCatalogSortableGridProps {
@@ -28,8 +31,7 @@ interface GiftCatalogSortableGridProps {
   showManualHint: boolean;
   savingOrder?: boolean;
   onReorder: (reorderedVisible: GiftCatalogRow[]) => void;
-  onEdit: (item: GiftCatalogRow) => void;
-  renderActions: (item: GiftCatalogRow) => ReactNode;
+  getCatalogActions?: (item: GiftCatalogRow) => GiftCatalogCardActions | undefined;
 }
 
 export function GiftCatalogSortableGrid({
@@ -38,8 +40,7 @@ export function GiftCatalogSortableGrid({
   showManualHint,
   savingOrder = false,
   onReorder,
-  onEdit,
-  renderActions,
+  getCatalogActions,
 }: GiftCatalogSortableGridProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -92,15 +93,13 @@ export function GiftCatalogSortableGrid({
       <SortableContext items={sortIds} strategy={rectSortingStrategy}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {items.map((item) => (
-            <div key={item.id} className="space-y-2">
-              <GiftCatalogSortableCard
-                item={item}
-                dragEnabled={dragEnabled && !savingOrder}
-                showManualHint={showManualHint}
-                onEdit={() => onEdit(item)}
-              />
-              <div data-catalog-no-drag>{renderActions(item)}</div>
-            </div>
+            <GiftCatalogSortableCard
+              key={item.id}
+              item={item}
+              dragEnabled={dragEnabled && !savingOrder}
+              showManualHint={showManualHint}
+              catalogActions={getCatalogActions?.(item)}
+            />
           ))}
         </div>
       </SortableContext>
@@ -113,6 +112,7 @@ export function GiftCatalogSortableGrid({
               dragEnabled={false}
               showManualHint={false}
               isDragOverlay
+              catalogActions={getCatalogActions?.(activeItem)}
             />
           ) : null}
         </DragOverlay>

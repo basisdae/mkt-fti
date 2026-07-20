@@ -147,6 +147,8 @@ export const SEMINAR_PLANNER_COPY = {
   moveUp: "เลื่อนขึ้น",
   moveDown: "เลื่อนลง",
   removeSession: "ลบเซสชัน",
+  removeSessionConfirm: (title: string) =>
+    `ลบ "${title.trim() || "เซสชันนี้"}" ออกจาก Agenda หรือไม่?`,
   duplicateSession: "ทำสำเนาเซสชัน",
 
   // Agenda summary
@@ -157,6 +159,19 @@ export const SEMINAR_PLANNER_COPY = {
   agendaSessionCount: "จำนวนเซสชัน",
   agendaIncompleteCount: "ข้อมูลยังไม่ครบ",
   agendaOverlapCount: "เวลาซ้อนกัน",
+
+  // Agenda document export
+  agendaDocumentPreview: "ดูเอกสาร Agenda",
+  agendaDocumentPreviewTitle: "ตัวอย่างเอกสาร Agenda",
+  agendaDocumentPreviewSubtitle:
+    "Timeline บนกระดาษขาว — ใกล้เคียง PDF และการพิมพ์",
+  agendaDocumentPrintPdf: "พิมพ์ / บันทึก PDF",
+  agendaDocumentPrintHint:
+    "เลือก «บันทึกเป็น PDF» ในหน้าต่างพิมพ์เพื่อส่งออกไฟล์ A4",
+  agendaDocumentEyebrow: "AGENDA",
+  agendaDocumentDraft: "DRAFT",
+  agendaDocumentDate: "วันที่",
+  agendaDocumentIncompleteTag: "ข้อมูลไม่ครบ",
 
   // Event detail header
   eventDetailHeader: "รายละเอียดงาน",
@@ -194,6 +209,27 @@ export const SEMINAR_PLANNER_COPY = {
     `เซสชัน "${titleA}" ทับซ้อนกับ "${titleB}"`,
   warningParallelOverlap: (count: number) =>
     `มีเซสชันคู่ขนาน ${count} คู่ที่ทับซ้อนกันในช่วงเวลาเดียวกัน`,
+  warningBannerSummary: (issueCount: number, sessionCount: number) =>
+    `พบ ${issueCount.toLocaleString("th-TH")} รายการที่ต้องตรวจสอบ (${sessionCount.toLocaleString("th-TH")} เซสชัน)`,
+  warningBannerOpen: "เปิดดู",
+  warningDrawerTitle: "รายการที่ต้องตรวจสอบ",
+  warningDrawerSessionCount: (count: number) =>
+    `${count.toLocaleString("th-TH")} เซสชันที่มีปัญหา`,
+  warningDrawerIssueCount: (count: number) =>
+    `${count.toLocaleString("th-TH")} ปัญหาทั้งหมด`,
+  warningCategoryMissingOwner: "ยังไม่มีผู้รับผิดชอบ",
+  warningCategoryIncomplete: "ข้อมูลไม่ครบ",
+  warningCategoryOverlap: "เวลาซ้อนกัน",
+  warningCategoryInvalidDuration: "ระยะเวลาผิดปกติ",
+  sessionWarningTooltip: "มีรายการที่ต้องตรวจสอบ",
+
+  clearAgenda: "ล้าง Agenda",
+  clearAgendaDialogTitle: "ล้าง Agenda ทั้งหมด?",
+  clearAgendaDialogBody: (count: number) =>
+    `Session ทั้ง ${count.toLocaleString("th-TH")} รายการในโปรเจกต์นี้จะถูกนำออก กรุณายืนยันเมื่อต้องการเริ่มจัด Agenda ใหม่`,
+  clearAgendaConfirm: "ล้าง Agenda",
+  clearingAgenda: "กำลังล้าง…",
+  clearAgendaFailed: "ล้าง Agenda ไม่สำเร็จ — โหลดข้อมูลล่าสุดแล้ว",
 
   // Library page
   libraryEyebrow: "Seminar Planner",

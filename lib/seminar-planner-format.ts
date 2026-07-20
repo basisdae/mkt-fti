@@ -3,6 +3,7 @@ import type {
   SeminarEventStatus,
 } from "@/types/seminar-planner";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
+import { normalizeTimeInput } from "@/lib/seminar-planner-time";
 
 export const SEMINAR_EVENT_STATUS_LABELS: Record<SeminarEventStatus, string> =
   {
@@ -22,6 +23,27 @@ export const SEMINAR_EVENT_FORMAT_LABELS: Record<SeminarEventFormat, string> =
     online: "Online",
     hybrid: "Hybrid",
   };
+
+/** Display labels for session workflow statuses (DB `status_name` stays English). */
+export const SEMINAR_SESSION_STATUS_LABELS: Record<string, string> = {
+  Idea: "ไอเดีย",
+  Draft: "แบบร่าง",
+  "Need Detail": "รอรายละเอียด",
+  Confirmed: "ยืนยันแล้ว",
+  Assigned: "มอบหมายแล้ว",
+  Ready: "พร้อม",
+  "Cancel / Hold": "ยกเลิก / พักไว้",
+};
+
+export const SEMINAR_SESSION_STATUS_UNSET_LABEL = "ยังไม่กำหนด";
+
+export function formatSeminarSessionStatusLabel(
+  value: string | null | undefined,
+): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return SEMINAR_SESSION_STATUS_UNSET_LABEL;
+  return SEMINAR_SESSION_STATUS_LABELS[trimmed] ?? trimmed;
+}
 
 /** Muted badge classes per event status (Tailwind). */
 export function seminarEventStatusBadgeClass(
@@ -66,4 +88,27 @@ export function formatSeminarDateRange(
   if (!start && !end) return "—";
   if (start && end && start !== end) return `${start} – ${end}`;
   return start ?? end ?? "—";
+}
+
+/** Display clock time in 24h with Thai suffix, e.g. "15:42 น." */
+export function formatSeminarClockTime(
+  value: string | null | undefined,
+): string {
+  if (!value?.trim()) return "—";
+  const normalized = normalizeTimeInput(value);
+  if (!normalized) return "—";
+  return `${normalized} น.`;
+}
+
+/** Display time range in 24h, e.g. "15:42–16:02 น." */
+export function formatSeminarClockRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+): string {
+  const startNorm = start?.trim() ? normalizeTimeInput(start) : "";
+  const endNorm = end?.trim() ? normalizeTimeInput(end) : "";
+  if (startNorm && endNorm) return `${startNorm}–${endNorm} น.`;
+  if (startNorm) return `${startNorm} น.`;
+  if (endNorm) return `${endNorm} น.`;
+  return "—";
 }

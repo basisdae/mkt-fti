@@ -44,7 +44,10 @@ import {
   canEditWithSupabaseAuth,
   reportActionError,
 } from "@/lib/auth/supabase-auth-guard-ui";
-import { formatSeminarMinutes } from "@/lib/seminar-planner-format";
+import {
+  formatSeminarMinutes,
+  formatSeminarSessionStatusLabel,
+} from "@/lib/seminar-planner-format";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import type {
   SeminarLibCategoryInput,
@@ -591,7 +594,9 @@ export function SeminarLibraryView() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-sm font-semibold text-gray-900">
-                    {row.name}
+                    {tab === "statuses"
+                      ? formatSeminarSessionStatusLabel(row.name)
+                      : row.name}
                   </h3>
                   {row.is_archived ? (
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">

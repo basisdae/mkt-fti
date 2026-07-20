@@ -32,11 +32,12 @@ interface SeminarAgendaSortableListProps {
   statusOptions: { value: string; label: string }[];
   replacingIndex: number | null;
   savingOrder?: boolean;
+  expandedKeys: Set<string>;
+  highlightAgendaKey: string | null;
+  onExpandedChange: (sortId: string, expanded: boolean) => void;
   onReorder: (items: SeminarAgendaItemInput[]) => void;
   onChange: (index: number, item: SeminarAgendaItemInput) => void;
   onReplaceFromLibrary: (index: number, session: SeminarLibSessionRow) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
   onRemove: (index: number) => void;
   onViewSummary: (index: number) => void;
   onShortDetailBlur: () => void;
@@ -48,11 +49,12 @@ export function SeminarAgendaSortableList({
   statusOptions,
   replacingIndex,
   savingOrder = false,
+  expandedKeys,
+  highlightAgendaKey,
+  onExpandedChange,
   onReorder,
   onChange,
   onReplaceFromLibrary,
-  onMoveUp,
-  onMoveDown,
   onRemove,
   onViewSummary,
   onShortDetailBlur,
@@ -95,60 +97,59 @@ export function SeminarAgendaSortableList({
     setActiveId(null);
   }
 
-  const listBody = items.map((item, index) => (
-    <SeminarAgendaCompactRow
-      key={agendaItemKey(item, index)}
-      sortId={agendaItemKey(item, index)}
-      item={item}
-      index={index}
-      total={items.length}
-      allItems={items}
-      statusOptions={statusOptions}
-      disabled={!canEdit}
-      replacing={replacingIndex === index}
-      savingOrder={savingOrder}
-      isDragging={activeId === agendaItemKey(item, index)}
-      onChange={(next) => onChange(index, next)}
-      onReplaceFromLibrary={(session) => onReplaceFromLibrary(index, session)}
-      onMoveUp={() => onMoveUp(index)}
-      onMoveDown={() => onMoveDown(index)}
-      onRemove={() => onRemove(index)}
-      onViewSummary={() => onViewSummary(index)}
-      onShortDetailBlur={onShortDetailBlur}
-    />
-  ));
+  const listBody = items.map((item, index) => {
+    const sortId = agendaItemKey(item, index);
+    return (
+      <SeminarAgendaCompactRow
+        key={sortId}
+        sortId={sortId}
+        item={item}
+        index={index}
+        allItems={items}
+        statusOptions={statusOptions}
+        disabled={!canEdit}
+        replacing={replacingIndex === index}
+        savingOrder={savingOrder}
+        isDragging={activeId === sortId}
+        expanded={expandedKeys.has(sortId)}
+        highlighted={highlightAgendaKey === sortId}
+        onExpandedChange={(next) => onExpandedChange(sortId, next)}
+        onChange={(next) => onChange(index, next)}
+        onReplaceFromLibrary={(session) => onReplaceFromLibrary(index, session)}
+        onRemove={() => onRemove(index)}
+        onViewSummary={() => onViewSummary(index)}
+        onShortDetailBlur={onShortDetailBlur}
+      />
+    );
+  });
 
   return (
     <DndContext
       sensors={canEdit ? sensors : []}
       collisionDetection={closestCenter}
+      autoScroll
       onDragStart={canEdit ? handleDragStart : undefined}
       onDragEnd={canEdit ? handleDragEnd : undefined}
       onDragCancel={canEdit ? handleDragCancel : undefined}
     >
       <SortableContext items={sortIds} strategy={verticalListSortingStrategy}>
-        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-          {listBody}
-        </div>
+        <div className="flex flex-col gap-[3px]">{listBody}</div>
       </SortableContext>
 
       {canEdit ? (
         <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
           {activeItem && activeIndex >= 0 ? (
-            <div className="rotate-[0.5deg] scale-[1.02] shadow-xl">
+            <div className="rotate-[0.5deg] scale-[1.01]">
               <SeminarAgendaCompactRow
                 sortId={agendaItemKey(activeItem, activeIndex)}
                 item={activeItem}
                 index={activeIndex}
-                total={items.length}
                 allItems={items}
                 statusOptions={statusOptions}
                 disabled={false}
                 isDragOverlay
                 onChange={() => undefined}
                 onReplaceFromLibrary={() => undefined}
-                onMoveUp={() => undefined}
-                onMoveDown={() => undefined}
                 onRemove={() => undefined}
                 onViewSummary={() => undefined}
                 onShortDetailBlur={() => undefined}

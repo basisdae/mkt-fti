@@ -3,7 +3,10 @@
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GiftCatalogCard } from "@/components/gift-plan/GiftCatalogCard";
+import {
+  GiftCatalogCard,
+  type GiftCatalogCardActions,
+} from "@/components/gift-plan/GiftCatalogCard";
 import { isGiftCatalogTap } from "@/lib/gift-catalog-dnd";
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import { cn } from "@/lib/utils";
@@ -14,7 +17,7 @@ interface GiftCatalogSortableCardProps {
   dragEnabled: boolean;
   showManualHint: boolean;
   isDragOverlay?: boolean;
-  onEdit?: () => void;
+  catalogActions?: GiftCatalogCardActions;
 }
 
 export function GiftCatalogSortableCard({
@@ -22,11 +25,11 @@ export function GiftCatalogSortableCard({
   dragEnabled,
   showManualHint,
   isDragOverlay = false,
-  onEdit,
+  catalogActions,
 }: GiftCatalogSortableCardProps) {
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const dragStartedRef = useRef(false);
-  const suppressEditRef = useRef(false);
+  const suppressInteractionRef = useRef(false);
 
   const {
     attributes,
@@ -53,7 +56,7 @@ export function GiftCatalogSortableCard({
 
   function blockCardInteraction(event: ReactPointerEvent<HTMLElement>) {
     event.stopPropagation();
-    suppressEditRef.current = true;
+    suppressInteractionRef.current = true;
     dragStartedRef.current = true;
     pointerStartRef.current = null;
   }
@@ -64,8 +67,8 @@ export function GiftCatalogSortableCard({
       : {
           ...listeners,
           onPointerDown(event: ReactPointerEvent<HTMLElement>) {
-            if (suppressEditRef.current) {
-              suppressEditRef.current = false;
+            if (suppressInteractionRef.current) {
+              suppressInteractionRef.current = false;
               return;
             }
             pointerStartRef.current = {
@@ -90,26 +93,9 @@ export function GiftCatalogSortableCard({
           },
           onPointerUp(event: ReactPointerEvent<HTMLElement>) {
             listeners.onPointerUp?.(event);
-            if (suppressEditRef.current) {
-              suppressEditRef.current = false;
-              pointerStartRef.current = null;
-              dragStartedRef.current = false;
-              return;
-            }
-            if (
-              dragEnabled &&
-              !dragStartedRef.current &&
-              !isDragging &&
-              onEdit &&
-              isGiftCatalogTap(pointerStartRef.current, {
-                x: event.clientX,
-                y: event.clientY,
-              })
-            ) {
-              onEdit();
-            }
             pointerStartRef.current = null;
             dragStartedRef.current = false;
+            suppressInteractionRef.current = false;
           },
         };
 
@@ -123,7 +109,7 @@ export function GiftCatalogSortableCard({
       {...(dragListeners ?? {})}
       title={hintTitle}
       className={cn(
-        "touch-manipulation select-none",
+        "h-full touch-manipulation select-none",
         dragEnabled && "cursor-grab active:cursor-grabbing",
         isDragging && "z-20 opacity-0",
         isDragOverlay &&
@@ -132,6 +118,7 @@ export function GiftCatalogSortableCard({
     >
       <div
         className={cn(
+          "h-full",
           isDragOverlay && "rounded-2xl bg-white",
           isDragging && !isDragOverlay && "rounded-2xl ring-2 ring-primary/25",
         )}
@@ -149,16 +136,9 @@ export function GiftCatalogSortableCard({
           activeTierQty={null}
           otherTierUsage={[]}
           showTierActions={false}
+          catalogActions={catalogActions}
           onAdd={() => {}}
           onEditQty={() => {}}
-          onEdit={
-            onEdit
-              ? () => {
-                  if (suppressEditRef.current || dragStartedRef.current) return;
-                  onEdit();
-                }
-              : undefined
-          }
         />
       </div>
     </div>

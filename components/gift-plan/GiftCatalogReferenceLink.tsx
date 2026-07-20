@@ -30,7 +30,7 @@ export function GiftCatalogReferenceLink({
         title={t.openReferenceLink}
         data-catalog-no-drag
         className={cn(
-          "inline-flex h-7 w-7 items-center justify-center rounded-lg text-primary hover:bg-light-purple/60",
+          "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/95 text-primary shadow-sm hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 md:h-7 md:w-7",
           className,
         )}
         onClick={(e) => e.stopPropagation()}

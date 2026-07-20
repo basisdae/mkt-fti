@@ -5,6 +5,13 @@ import {
 } from "@/lib/product-filters";
 import type { ProductSortOption, ProductStatus } from "@/types/product";
 import type { ProductBrandFilter } from "@/lib/brand-strategy";
+import {
+  getAppMainScrollElement,
+  getAppMainScrollTop,
+  setAppMainScrollTop,
+} from "@/lib/app-scroll";
+
+export { getAppMainScrollElement, getAppMainScrollTop, setAppMainScrollTop };
 
 export const PRODUCTS_LIST_SESSION_KEY = "mkt_hq_products_list_session";
 
@@ -130,18 +137,4 @@ export function wasProductsListPageReload(): boolean {
     | undefined;
 
   return nav?.type === "reload";
-}
-
-export function getAppMainScrollElement(): HTMLElement | null {
-  if (typeof document === "undefined") return null;
-  return document.querySelector("main");
-}
-
-export function getAppMainScrollTop(): number {
-  return getAppMainScrollElement()?.scrollTop ?? 0;
-}
-
-export function setAppMainScrollTop(scrollY: number): void {
-  const main = getAppMainScrollElement();
-  if (main) main.scrollTop = Math.max(0, scrollY);
 }

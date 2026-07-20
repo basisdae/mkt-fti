@@ -5,6 +5,7 @@ import { ExternalLink } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { normalizeBullets } from "@/lib/seminar-planner-bullets";
+import { formatSeminarClockRange } from "@/lib/seminar-planner-format";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import type { SeminarAgendaItemInput } from "@/types/seminar-planner";
 
@@ -80,15 +81,21 @@ export function SeminarAgendaSessionSummaryDrawer({
     >
       <div className="space-y-5">
         <dl className="grid grid-cols-2 gap-3 text-sm">
+          <div className="col-span-2 sm:col-span-1">
+            <dt className="text-sm font-medium text-gray-600">{t.startTime}</dt>
+            <dd className="mt-1 text-base font-semibold tabular-nums text-gray-900">
+              {formatSeminarClockRange(item.start_time, item.end_time)}
+            </dd>
+          </div>
           <div>
-            <dt className="text-xs text-gray-400">{t.category}</dt>
-            <dd className="font-medium text-gray-800">
+            <dt className="text-sm font-medium text-gray-600">{t.category}</dt>
+            <dd className="mt-1 text-base font-medium text-gray-900">
               {item.category_name || "—"}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-400">{t.format}</dt>
-            <dd className="font-medium text-gray-800">
+            <dt className="text-sm font-medium text-gray-600">{t.format}</dt>
+            <dd className="mt-1 text-base font-medium text-gray-900">
               {item.format_name || "—"}
             </dd>
           </div>

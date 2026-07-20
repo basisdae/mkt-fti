@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  buildAgendaWarningReport,
   countAgendaOverlaps,
   countIncompleteAgendaItems,
 } from "@/lib/seminar-planner-agenda-warnings";
@@ -74,5 +75,16 @@ assert.equal(
   ]),
   1,
 );
+
+const report = buildAgendaWarningReport([completeItem, incompleteItem]);
+assert.equal(report.totalIssueCount, 2);
+assert.equal(report.affectedSessionCount, 1);
+assert.equal(report.groupedIssues.incomplete_data.length, 1);
+assert.equal(report.groupedIssues.missing_owner.length, 1);
+
+const overlapReport = buildAgendaWarningReport([overlappingA, overlappingB]);
+assert.equal(overlapReport.totalIssueCount, 2);
+assert.equal(overlapReport.affectedSessionCount, 2);
+assert.equal(overlapReport.groupedIssues.time_overlap.length, 2);
 
 console.log("seminar-planner-agenda-warnings: all tests passed");

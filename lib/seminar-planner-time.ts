@@ -46,6 +46,47 @@ export function normalizeTimeInput(value: string | null | undefined): string {
   return minutes == null ? value.slice(0, 5) : (formatMinutesToTime(minutes) ?? "");
 }
 
+/**
+ * Parse user-typed time into HH:mm (24h).
+ * Accepts `14:20`, `1420`, `905`, strips trailing `น.` if pasted.
+ */
+export function parseFlexibleTimeInput(raw: string): string | null {
+  const cleaned = raw.trim().replace(/\s*น\.?\s*$/u, "");
+  if (!cleaned) return null;
+
+  const colonMatch = /^(\d{1,2}):(\d{1,2})$/.exec(cleaned);
+  if (colonMatch) {
+    const hours = Number(colonMatch[1]);
+    const minutes = Number(colonMatch[2]);
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+    return formatMinutesToTime(hours * 60 + minutes);
+  }
+
+  if (/^\d{1,4}$/.test(cleaned)) {
+    const padded = cleaned.padStart(4, "0");
+    const hours = Number(padded.slice(0, 2));
+    const minutes = Number(padded.slice(2, 4));
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+    return formatMinutesToTime(hours * 60 + minutes);
+  }
+
+  return null;
+}
+
+/** Shift a normalized HH:mm value by delta minutes (clamped to 00:00–23:59). */
+export function shiftTimeInputValue(
+  value: string | null | undefined,
+  deltaMinutes: number,
+): string | null {
+  const base = parseTimeToMinutes(normalizeTimeInput(value));
+  if (base == null) {
+    if (deltaMinutes <= 0) return null;
+    return formatMinutesToTime(Math.min(23 * 60 + 59, deltaMinutes));
+  }
+  const next = Math.max(0, Math.min(23 * 60 + 59, base + deltaMinutes));
+  return formatMinutesToTime(next);
+}
+
 /** Duration from start/end; falls back to duration_minutes when times missing. */
 export function calcDurationMinutes(
   startTime: string | null | undefined,

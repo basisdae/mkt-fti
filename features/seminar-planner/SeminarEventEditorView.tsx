@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Pencil, Plus, RefreshCw } from "lucide-react";
+import { FileText, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { SeminarAgendaLibraryDropdown } from "@/components/seminar-planner/SeminarAgendaLibraryDropdown";
+import { SeminarAgendaExportPreview } from "@/components/seminar-planner/SeminarAgendaExportPreview";
+import { SeminarAgendaClearDialog } from "@/components/seminar-planner/SeminarAgendaClearDialog";
 import {
   SeminarAgendaReplaceLibraryDialog,
   type SeminarAgendaReplaceLibraryTarget,
@@ -12,6 +14,8 @@ import {
 import { SeminarAgendaSortableList } from "@/components/seminar-planner/SeminarAgendaSortableList";
 import { SeminarAgendaSessionSummaryDrawer } from "@/components/seminar-planner/SeminarAgendaSessionSummaryDrawer";
 import { SeminarAgendaSummary } from "@/components/seminar-planner/SeminarAgendaSummary";
+import { SeminarAgendaWarningsDrawer } from "@/components/seminar-planner/SeminarAgendaWarningsDrawer";
+import { SeminarTimeInput } from "@/components/seminar-planner/SeminarTimeInput";
 import { SeminarEventStatusBadge } from "@/components/seminar-planner/SeminarEventStatusBadge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/forms/Input";
@@ -19,10 +23,12 @@ import { Select } from "@/components/forms/Select";
 import { Textarea } from "@/components/forms/Textarea";
 import { useAuth } from "@/hooks/AuthStore";
 import {
+  clearSeminarAgendaAction,
   getSeminarEventBundleAction,
   saveSeminarAgendaItemsAction,
   saveSeminarEventAction,
 } from "@/lib/actions/seminar-planner";
+import { restoreAppMainScrollTop, getAppMainScrollTop } from "@/lib/app-scroll";
 import {
   listCategoriesAction,
   listFormatsAction,
@@ -36,7 +42,12 @@ import {
   reportActionError,
 } from "@/lib/auth/supabase-auth-guard-ui";
 import { duplicateBullets, normalizeBullets } from "@/lib/seminar-planner-bullets";
-import { validateAgendaItems } from "@/lib/seminar-planner-agenda-warnings";
+import { buildAgendaWarningReport } from "@/lib/seminar-planner-agenda-warnings";
+import type {
+  AgendaWarningCategory,
+  AgendaWarningIssue,
+} from "@/lib/seminar-planner-agenda-warnings";
+import { newAgendaClientKey } from "@/lib/seminar-planner-agenda-keys";
 import {
   needsLibraryReplaceConfirm,
   replaceAgendaItemFromLibrary,
@@ -45,10 +56,11 @@ import {
   resolveEventAndAgendaDates,
   syncAgendaItemsToEventDate,
 } from "@/lib/seminar-planner-agenda-date";
-import { newAgendaClientKey } from "@/lib/seminar-planner-agenda-keys";
 import {
   formatSeminarDateRange,
+  formatSeminarClockRange,
   formatSeminarMinutes,
+  formatSeminarSessionStatusLabel,
   SEMINAR_EVENT_FORMAT_LABELS,
   SEMINAR_EVENT_STATUS_LABELS,
 } from "@/lib/seminar-planner-format";
@@ -170,6 +182,23 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   const [replaceConfirmSession, setReplaceConfirmSession] =
     useState<SeminarLibSessionRow | null>(null);
   const [replaceError, setReplaceError] = useState<string | null>(null);
+  const [expandedAgendaKeys, setExpandedAgendaKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [highlightAgendaKey, setHighlightAgendaKey] = useState<string | null>(
+    null,
+  );
+  const highlightTimeoutRef = useRef<number | null>(null);
+  const [warningsDrawerOpen, setWarningsDrawerOpen] = useState(false);
+  const [warningsFocusCategory, setWarningsFocusCategory] =
+    useState<AgendaWarningCategory | null>(null);
+  const [clearAgendaDialogOpen, setClearAgendaDialogOpen] = useState(false);
+  const [clearingAgenda, setClearingAgenda] = useState(false);
+  const [clearAgendaError, setClearAgendaError] = useState<string | null>(null);
+  const [agendaExportOpen, setAgendaExportOpen] = useState(false);
+  const [categoryColorHints, setCategoryColorHints] = useState<
+    Record<string, string>
+  >({});
 
   const [masterOptions, setMasterOptions] = useState<{
     formats: { value: string; label: string }[];
@@ -219,17 +248,27 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     setDirty(false);
   }, []);
 
-  async function loadBundle() {
-    setLoading(true);
+  async function loadBundle(options?: { silent?: boolean }) {
+    const scrollY = options?.silent ? getAppMainScrollTop() : null;
+    if (!options?.silent) {
+      setLoading(true);
+    }
     const result = await getSeminarEventBundleAction(eventId);
-    setLoading(false);
+    if (!options?.silent) {
+      setLoading(false);
+    }
     if (!result.ok) {
       reportActionError(result.error, setError);
-      setBundle(null);
+      if (!options?.silent) {
+        setBundle(null);
+      }
       return;
     }
     setError(null);
     applyBundle(result.data);
+    if (scrollY != null) {
+      restoreAppMainScrollTop(scrollY);
+    }
   }
 
   async function loadMasterData() {
@@ -256,7 +295,10 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
         .map((f) => ({ value: f.name, label: f.name })),
       statuses: statuses.data
         .filter((s) => s.is_active && !s.is_archived)
-        .map((s) => ({ value: s.name, label: s.name })),
+        .map((s) => ({
+          value: s.name,
+          label: formatSeminarSessionStatusLabel(s.name),
+        })),
       targetGroups: targetGroups.data
         .filter((g) => g.is_active && !g.is_archived)
         .map((g) => ({ id: g.id, name: g.name })),
@@ -267,6 +309,12 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
         .filter((c) => c.is_active && !c.is_archived)
         .map((c) => ({ value: c.name, label: c.name })),
     });
+    const hints: Record<string, string> = {};
+    for (const category of categories.data) {
+      const hint = category.color_hint?.trim();
+      if (hint) hints[category.name] = hint;
+    }
+    setCategoryColorHints(hints);
   }
 
   useEffect(() => {
@@ -279,11 +327,16 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   useEffect(() => {
     void loadBundle();
     void loadMasterData();
+    return () => {
+      if (highlightTimeoutRef.current != null) {
+        window.clearTimeout(highlightTimeoutRef.current);
+      }
+    };
   }, [eventId]);
 
-  const agendaWarnings = useMemo(
-    () => validateAgendaItems(agendaItems, { dirty }),
-    [agendaItems, dirty],
+  const agendaWarningReport = useMemo(
+    () => buildAgendaWarningReport(agendaItems, { dirty: false }),
+    [agendaItems],
   );
 
   const agendaTotals = useMemo(() => {
@@ -296,6 +349,17 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
       totalMinutes,
     };
   }, [agendaItems]);
+
+  const agendaExportEvent = useMemo(() => {
+    if (!bundle) return null;
+    return {
+      title: eventForm.title?.trim() || bundle.event.title,
+      start_date: eventForm.start_date ?? bundle.event.start_date,
+      end_date: eventForm.end_date ?? bundle.event.end_date,
+      venue: eventForm.venue ?? bundle.event.venue,
+      event_format: eventForm.event_format ?? bundle.event.event_format,
+    };
+  }, [bundle, eventForm]);
 
   const isNotFound = error === SEMINAR_PLANNER_ERRORS.eventNotFound;
   const isPermissionDenied =
@@ -350,7 +414,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     const saved = await persistAgendaItems(reordered);
     setSavingAgendaOrder(false);
     if (!saved) {
-      await loadBundle();
+      await loadBundle({ silent: true });
     }
   }
 
@@ -359,8 +423,57 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     setSaveError(null);
     const saved = await persistAgendaItems();
     if (!saved) {
-      await loadBundle();
+      await loadBundle({ silent: true });
     }
+  }
+
+  function setAgendaExpanded(sortId: string, expanded: boolean) {
+    setExpandedAgendaKeys((prev) => {
+      const next = new Set(prev);
+      if (expanded) next.add(sortId);
+      else next.delete(sortId);
+      return next;
+    });
+  }
+
+  function openWarningsDrawer(category?: AgendaWarningCategory) {
+    setWarningsFocusCategory(category ?? null);
+    setWarningsDrawerOpen(true);
+  }
+
+  function focusAgendaIssue(issue: AgendaWarningIssue) {
+    setWarningsDrawerOpen(false);
+    setExpandedAgendaKeys((prev) => new Set(prev).add(issue.itemId));
+    setHighlightAgendaKey(issue.itemId);
+    if (highlightTimeoutRef.current != null) {
+      window.clearTimeout(highlightTimeoutRef.current);
+    }
+    window.requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-agenda-row="${issue.itemId}"]`);
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    highlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightAgendaKey(null);
+      highlightTimeoutRef.current = null;
+    }, 2500);
+  }
+
+  async function handleClearAgendaConfirm() {
+    setClearingAgenda(true);
+    setClearAgendaError(null);
+    const result = await clearSeminarAgendaAction(eventId);
+    if (!result.ok) {
+      setClearAgendaError(result.error ?? t.clearAgendaFailed);
+      setClearingAgenda(false);
+      await loadBundle({ silent: true });
+      return;
+    }
+    setClearAgendaDialogOpen(false);
+    setClearingAgenda(false);
+    setDirty(false);
+    setSavedAt(new Date().toISOString());
+    setSaveError(null);
+    await loadBundle({ silent: true });
   }
 
   function reorderAgenda(next: SeminarAgendaItemInput[]) {
@@ -378,16 +491,15 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     setDirty(true);
   }
 
-  async function moveAgenda(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= agendaItems.length) return;
-    const next = [...agendaItems];
-    const [removed] = next.splice(index, 1);
-    next.splice(target, 0, removed);
-    await handleAgendaReorder(next);
-  }
-
   async function removeAgendaItem(index: number) {
+    const item = agendaItems[index];
+    if (
+      !window.confirm(
+        t.removeSessionConfirm(item?.title?.trim() || t.sessionTitle),
+      )
+    ) {
+      return;
+    }
     const next = agendaItems.filter((_, i) => i !== index);
     await handleAgendaReorder(next);
   }
@@ -416,7 +528,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
       setSaveError(agendaResult.error);
       return false;
     }
-    await loadBundle();
+    await loadBundle({ silent: true });
     setDirty(false);
     setSavedAt(new Date().toISOString());
     return true;
@@ -445,7 +557,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     );
     setReplacingAgendaIndex(null);
     if (!saved) {
-      await loadBundle();
+      await loadBundle({ silent: true });
       return false;
     }
     return true;
@@ -526,7 +638,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
         return;
       }
 
-      await loadBundle();
+      await loadBundle({ silent: tab === "agenda" });
       setDirty(false);
       setSavedAt(new Date().toISOString());
     } finally {
@@ -646,7 +758,10 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               <dt className="text-gray-400">{t.dailyHours}</dt>
               <dd className="font-medium text-gray-800">
                 {eventForm.daily_start_time || eventForm.daily_end_time
-                  ? `${eventForm.daily_start_time?.slice(0, 5) ?? "—"} – ${eventForm.daily_end_time?.slice(0, 5) ?? "—"}`
+                  ? formatSeminarClockRange(
+                      eventForm.daily_start_time,
+                      eventForm.daily_end_time,
+                    )
                   : "—"}
               </dd>
             </div>
@@ -785,24 +900,22 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               }
               disabled={!canEdit}
             />
-            <Input
+            <SeminarTimeInput
               label={t.dailyStartLabel}
-              type="time"
-              value={eventForm.daily_start_time?.slice(0, 5) ?? ""}
-              onChange={(e) =>
+              value={eventForm.daily_start_time}
+              onChange={(value) =>
                 patchEvent({
-                  daily_start_time: e.target.value || null,
+                  daily_start_time: value,
                 })
               }
               disabled={!canEdit}
             />
-            <Input
+            <SeminarTimeInput
               label={t.dailyEndLabel}
-              type="time"
-              value={eventForm.daily_end_time?.slice(0, 5) ?? ""}
-              onChange={(e) =>
+              value={eventForm.daily_end_time}
+              onChange={(value) =>
                 patchEvent({
-                  daily_end_time: e.target.value || null,
+                  daily_end_time: value,
                 })
               }
               disabled={!canEdit}
@@ -953,7 +1066,38 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
                 )}
               </p>
             </div>
-            {canEdit ? (
+            {agendaItems.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setAgendaExportOpen(true)}
+                >
+                  <FileText className="h-4 w-4" />
+                  {t.agendaDocumentPreview}
+                </Button>
+                {canEdit ? (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-fti-red hover:bg-red-50"
+                      onClick={() => {
+                        setClearAgendaError(null);
+                        setClearAgendaDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {t.clearAgenda}
+                    </Button>
+                    <Button variant="secondary" onClick={addCustomSession}>
+                      <Plus className="h-4 w-4" />
+                      {t.addCustomSession}
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            ) : canEdit ? (
               <Button variant="secondary" onClick={addCustomSession}>
                 <Plus className="h-4 w-4" />
                 {t.addCustomSession}
@@ -969,27 +1113,11 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
             />
           ) : null}
 
-          <SeminarAgendaSummary items={agendaItems} />
-
-          {agendaWarnings.length > 0 ? (
-            <ul className="space-y-1">
-              {agendaWarnings.map((warning) => (
-                <li
-                  key={warning.id}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-xs",
-                    warning.severity === "error"
-                      ? "bg-red-50 text-fti-red"
-                      : warning.severity === "warning"
-                        ? "bg-amber-50 text-amber-800"
-                        : "bg-blue-50 text-blue-700",
-                  )}
-                >
-                  {warning.message}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <SeminarAgendaSummary
+            items={agendaItems}
+            warningReport={agendaWarningReport}
+            onOpenWarnings={openWarningsDrawer}
+          />
 
           {agendaItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center">
@@ -1002,18 +1130,43 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               statusOptions={masterOptions.statuses}
               replacingIndex={replacingAgendaIndex}
               savingOrder={savingAgendaOrder}
+              expandedKeys={expandedAgendaKeys}
+              highlightAgendaKey={highlightAgendaKey}
+              onExpandedChange={setAgendaExpanded}
               onReorder={(next) => void handleAgendaReorder(next)}
               onChange={updateAgendaItem}
               onReplaceFromLibrary={(index, session) =>
                 requestReplaceFromLibrary(index, session)
               }
-              onMoveUp={(index) => void moveAgenda(index, -1)}
-              onMoveDown={(index) => void moveAgenda(index, 1)}
               onRemove={(index) => void removeAgendaItem(index)}
               onViewSummary={setSummaryItemIndex}
               onShortDetailBlur={() => void handleShortDetailBlur()}
             />
           )}
+
+          <SeminarAgendaWarningsDrawer
+            open={warningsDrawerOpen}
+            report={agendaWarningReport}
+            focusCategory={warningsFocusCategory}
+            onClose={() => {
+              setWarningsDrawerOpen(false);
+              setWarningsFocusCategory(null);
+            }}
+            onSelectIssue={focusAgendaIssue}
+          />
+
+          <SeminarAgendaClearDialog
+            open={clearAgendaDialogOpen}
+            sessionCount={agendaItems.length}
+            clearing={clearingAgenda}
+            error={clearAgendaError}
+            onClose={() => {
+              if (clearingAgenda) return;
+              setClearAgendaDialogOpen(false);
+              setClearAgendaError(null);
+            }}
+            onConfirm={() => void handleClearAgendaConfirm()}
+          />
 
           <SeminarAgendaSessionSummaryDrawer
             open={summaryItemIndex != null}
@@ -1031,6 +1184,14 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
             error={replaceError}
             onClose={handleReplaceConfirmClose}
             onConfirm={() => void handleReplaceConfirm()}
+          />
+
+          <SeminarAgendaExportPreview
+            open={agendaExportOpen}
+            event={agendaExportEvent}
+            items={agendaItems}
+            categoryColorHints={categoryColorHints}
+            onClose={() => setAgendaExportOpen(false)}
           />
         </section>
       )}
