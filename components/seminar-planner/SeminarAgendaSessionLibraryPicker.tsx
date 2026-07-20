@@ -10,13 +10,31 @@ import { cn } from "@/lib/utils";
 
 interface SeminarAgendaSessionLibraryPickerProps {
   currentSessionId?: string | null;
+  currentTitle?: string;
+  currentCategory?: string;
+  currentMinutes?: number | null;
   disabled?: boolean;
   busy?: boolean;
   onSelect: (session: SeminarLibSessionRow) => void;
 }
 
+function sessionOptionLabel(session: SeminarLibSessionRow): string {
+  const parts = [session.title];
+  if (session.category_name?.trim()) {
+    parts.push(session.category_name.trim());
+  }
+  parts.push(formatSeminarMinutes(session.recommended_minutes ?? 0));
+  if (session.recommended_speaker?.trim()) {
+    parts.push(session.recommended_speaker.trim());
+  }
+  return parts.join(" · ");
+}
+
 export function SeminarAgendaSessionLibraryPicker({
   currentSessionId,
+  currentTitle = "",
+  currentCategory = "",
+  currentMinutes = null,
   disabled = false,
   busy = false,
   onSelect,
@@ -56,20 +74,43 @@ export function SeminarAgendaSessionLibraryPicker({
   }, []);
 
   const currentLabel = useMemo(() => {
-    if (!currentSessionId) return t.replaceFromLibraryEmpty;
-    const match = sessions.find((row) => row.id === currentSessionId);
-    return match?.title ?? t.replaceFromLibraryCurrent;
-  }, [currentSessionId, sessions]);
+    if (currentTitle.trim()) {
+      const parts = [currentTitle.trim()];
+      if (currentCategory.trim()) parts.push(currentCategory.trim());
+      if (currentMinutes != null) {
+        parts.push(formatSeminarMinutes(currentMinutes));
+      }
+      return parts.join(" · ");
+    }
+
+    if (currentSessionId) {
+      const match = sessions.find((row) => row.id === currentSessionId);
+      if (match) return sessionOptionLabel(match);
+      return t.replaceFromLibraryCurrent;
+    }
+
+    return t.replaceFromLibraryEmpty;
+  }, [currentTitle, currentCategory, currentMinutes, currentSessionId, sessions]);
 
   function handlePick(session: SeminarLibSessionRow) {
     if (disabled || busy) return;
+    if (session.id === currentSessionId) return;
     onSelect(session);
     setOpen(false);
     setQuery("");
   }
 
+  function stopDrag(event: React.PointerEvent | React.MouseEvent) {
+    event.stopPropagation();
+  }
+
   return (
-    <div ref={containerRef} className="relative sm:col-span-2 lg:col-span-4">
+    <div
+      ref={containerRef}
+      className="relative sm:col-span-2 lg:col-span-4"
+      onPointerDown={stopDrag}
+      onClick={stopDrag}
+    >
       <label className="block text-[11px] font-medium text-gray-600">
         {t.replaceFromLibrary}
       </label>
@@ -121,9 +162,7 @@ export function SeminarAgendaSessionLibraryPicker({
                       {session.title}
                     </p>
                     <p className="mt-0.5 truncate text-[10px] text-gray-500">
-                      {session.category_name || "—"}
-                      {" · "}
-                      {formatSeminarMinutes(session.recommended_minutes ?? 0)}
+                      {sessionOptionLabel(session)}
                     </p>
                   </button>
                 </li>

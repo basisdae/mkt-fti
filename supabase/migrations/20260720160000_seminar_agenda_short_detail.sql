@@ -5,3 +5,5 @@ alter table public.seminar_agenda_items
 
 comment on column public.seminar_agenda_items.agenda_short_detail is
   'Short agenda-only note for this event session (1–2 lines); not synced from library.';
+
+notify pgrst, 'reload schema';

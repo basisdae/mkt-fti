@@ -110,6 +110,11 @@ export const SEMINAR_PLANNER_COPY = {
   replaceFromLibraryCurrent: "เชื่อมคลังอยู่ — เลือกเพื่อเปลี่ยน",
   replaceFromLibraryHint:
     "เปลี่ยนเนื้อหาจากคลังในกล่องนี้ — ตำแหน่ง เวลาเริ่ม สถานะ และหมายเหตุยังอยู่",
+  replaceDialogTitle: "เปลี่ยนรายการในลำดับนี้?",
+  replaceDialogBody: "“{fromTitle}” → “{toTitle}”",
+  replaceDialogBodyOverwrite:
+    "รายละเอียดจากคลังที่แก้เองจะถูกแทนที่ — “{fromTitle}” → “{toTitle}”",
+  replaceDialogConfirm: "เปลี่ยนรายการ",
   replaceLibraryConfirm:
     "รายละเอียด/วิทยากรจากคลังจะถูกแทนที่ — ต้องการดำเนินการต่อหรือไม่?",
   replacingSession: "กำลังเปลี่ยน…",
@@ -230,3 +235,16 @@ export const SEMINAR_PLANNER_COPY = {
   noPermissionView: "คุณไม่มีสิทธิ์เข้าถึง Seminar Planner",
   noPermissionEdit: "คุณไม่มีสิทธิ์แก้ไข Seminar Planner",
 } as const;
+
+export function formatSeminarReplaceLibraryDialogMessage(
+  fromTitle: string,
+  toTitle: string,
+  needsOverwriteWarning = false,
+): string {
+  const from = fromTitle.trim() || "—";
+  const to = toTitle.trim() || "—";
+  const template = needsOverwriteWarning
+    ? SEMINAR_PLANNER_COPY.replaceDialogBodyOverwrite
+    : SEMINAR_PLANNER_COPY.replaceDialogBody;
+  return template.replace("{fromTitle}", from).replace("{toTitle}", to);
+}

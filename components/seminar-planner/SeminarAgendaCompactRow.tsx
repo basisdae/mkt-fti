@@ -297,6 +297,9 @@ export function SeminarAgendaCompactRow({
             <>
               <SeminarAgendaSessionLibraryPicker
                 currentSessionId={item.library_session_id}
+                currentTitle={item.title}
+                currentCategory={item.category_name ?? ""}
+                currentMinutes={duration ?? item.duration_minutes ?? null}
                 disabled={disabled}
                 busy={replacing}
                 onSelect={onReplaceFromLibrary}

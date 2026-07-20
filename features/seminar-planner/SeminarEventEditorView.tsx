@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Pencil, Plus, RefreshCw } from "lucide-react";
 import { SeminarAgendaLibraryDropdown } from "@/components/seminar-planner/SeminarAgendaLibraryDropdown";
+import {
+  SeminarAgendaReplaceLibraryDialog,
+  type SeminarAgendaReplaceLibraryTarget,
+} from "@/components/seminar-planner/SeminarAgendaReplaceLibraryDialog";
 import { SeminarAgendaSortableList } from "@/components/seminar-planner/SeminarAgendaSortableList";
 import { SeminarAgendaSessionSummaryDrawer } from "@/components/seminar-planner/SeminarAgendaSessionSummaryDrawer";
 import { SeminarAgendaSummary } from "@/components/seminar-planner/SeminarAgendaSummary";
@@ -161,6 +165,11 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   const [replacingAgendaIndex, setReplacingAgendaIndex] = useState<number | null>(
     null,
   );
+  const [replaceConfirmTarget, setReplaceConfirmTarget] =
+    useState<SeminarAgendaReplaceLibraryTarget | null>(null);
+  const [replaceConfirmSession, setReplaceConfirmSession] =
+    useState<SeminarLibSessionRow | null>(null);
+  const [replaceError, setReplaceError] = useState<string | null>(null);
 
   const [masterOptions, setMasterOptions] = useState<{
     formats: { value: string; label: string }[];
@@ -413,7 +422,36 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     return true;
   }
 
-  async function replaceAgendaFromLibrary(
+  async function commitReplaceFromLibrary(
+    index: number,
+    session: SeminarLibSessionRow,
+  ) {
+    if (!canEdit || replacingAgendaIndex != null) return false;
+
+    const nextItems = replaceAgendaItemFromLibrary(
+      agendaItems,
+      index,
+      session,
+      eventForm.start_date ?? null,
+    );
+    setReplacingAgendaIndex(index);
+    setReplaceError(null);
+    setAgendaItems(
+      nextItems.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+    );
+
+    const saved = await saveAgendaItemsOnly(
+      nextItems.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+    );
+    setReplacingAgendaIndex(null);
+    if (!saved) {
+      await loadBundle();
+      return false;
+    }
+    return true;
+  }
+
+  function requestReplaceFromLibrary(
     index: number,
     session: SeminarLibSessionRow,
   ) {
@@ -424,27 +462,39 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     if (current.library_session_id === session.id) return;
 
     if (needsLibraryReplaceConfirm(current, session)) {
-      const ok = window.confirm(t.replaceLibraryConfirm);
-      if (!ok) return;
+      setReplaceError(null);
+      setReplaceConfirmSession(session);
+      setReplaceConfirmTarget({
+        index,
+        fromTitle: current.title,
+        toTitle: session.title,
+        needsOverwriteWarning: true,
+      });
+      return;
     }
 
-    const nextItems = replaceAgendaItemFromLibrary(
-      agendaItems,
-      index,
-      session,
-      eventForm.start_date ?? null,
-    );
-    setReplacingAgendaIndex(index);
-    setSaveError(null);
-    setAgendaItems(nextItems.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })));
+    void commitReplaceFromLibrary(index, session);
+  }
 
-    const saved = await saveAgendaItemsOnly(
-      nextItems.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
-    );
-    setReplacingAgendaIndex(null);
-    if (!saved) {
-      await loadBundle();
+  async function handleReplaceConfirm() {
+    if (!replaceConfirmTarget || !replaceConfirmSession) return;
+    const { index } = replaceConfirmTarget;
+    const session = replaceConfirmSession;
+    const ok = await commitReplaceFromLibrary(index, session);
+    if (ok) {
+      setReplaceConfirmTarget(null);
+      setReplaceConfirmSession(null);
+      setReplaceError(null);
+    } else {
+      setReplaceError(t.replaceLibraryFailed);
     }
+  }
+
+  function handleReplaceConfirmClose() {
+    if (replacingAgendaIndex != null) return;
+    setReplaceConfirmTarget(null);
+    setReplaceConfirmSession(null);
+    setReplaceError(null);
   }
 
   async function handleSave() {
@@ -955,7 +1005,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               onReorder={(next) => void handleAgendaReorder(next)}
               onChange={updateAgendaItem}
               onReplaceFromLibrary={(index, session) =>
-                void replaceAgendaFromLibrary(index, session)
+                requestReplaceFromLibrary(index, session)
               }
               onMoveUp={(index) => void moveAgenda(index, -1)}
               onMoveDown={(index) => void moveAgenda(index, 1)}
@@ -973,6 +1023,14 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
                 : null
             }
             onClose={() => setSummaryItemIndex(null)}
+          />
+
+          <SeminarAgendaReplaceLibraryDialog
+            target={replaceConfirmTarget}
+            replacing={replacingAgendaIndex != null}
+            error={replaceError}
+            onClose={handleReplaceConfirmClose}
+            onConfirm={() => void handleReplaceConfirm()}
           />
         </section>
       )}

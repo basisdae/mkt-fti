@@ -22,6 +22,7 @@
     "test:monthly-plan": "npx tsx lib/monthly-plan-permissions.test.ts && npx tsx lib/monthly-plan-board.test.ts",
     "test:sidebar-nav": "npx tsx lib/nav/sidebar-nav.test.ts",
     "setup:gallery-db": "node scripts/apply-product-gallery-schema.mjs",
+    "setup:seminar-agenda-short-detail": "node scripts/apply-seminar-agenda-short-detail.mjs",
     "setup:supplier-logos": "node scripts/setup-supplier-logos.mjs"
   },
   "dependencies": {
