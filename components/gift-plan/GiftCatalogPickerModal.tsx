@@ -60,7 +60,7 @@ export function GiftCatalogPickerModal({
   const [category, setCategory] = useState("all");
   const [source, setSource] = useState("all");
   const [status, setStatus] = useState("active");
-  const [sort, setSort] = useState<GiftCatalogSortKey>("name");
+  const [sort, setSort] = useState<GiftCatalogSortKey>("manual");
   const [showArchived, setShowArchived] = useState(false);
   const [activeTierId, setActiveTierId] = useState<TierTabSelection>(initialTierId);
 
@@ -117,6 +117,13 @@ export function GiftCatalogPickerModal({
     });
 
     rows = [...rows].sort((a, b) => {
+      if (sort === "manual") {
+        return (
+          a.sort_order - b.sort_order ||
+          a.gift_name.localeCompare(b.gift_name, "th") ||
+          a.id.localeCompare(b.id)
+        );
+      }
       if (sort === "updated") {
         return (
           new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
@@ -330,6 +337,7 @@ export function GiftCatalogPickerModal({
                   onChange={(e) => setSort(e.target.value as GiftCatalogSortKey)}
                   className="w-40"
                   options={[
+                    { value: "manual", label: t.sortManual },
                     { value: "name", label: t.sortByName },
                     { value: "updated", label: t.sortLatestUpdated },
                     { value: "actual_cost", label: t.sortActualCost },

@@ -54,6 +54,7 @@ export function GiftCatalogCard({
             <button
               type="button"
               title={t.edit}
+              data-catalog-no-drag
               onClick={onEdit}
               className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 text-gray-600 shadow-sm hover:bg-white"
             >
@@ -109,7 +110,13 @@ export function GiftCatalogCard({
             : t.addToTier(activeTierName)}
         </Button>
       ) : onEdit ? (
-        <Button className="mt-3 w-full" variant="secondary" size="sm" onClick={onEdit}>
+        <Button
+          className="mt-3 w-full"
+          variant="secondary"
+          size="sm"
+          data-catalog-no-drag
+          onClick={onEdit}
+        >
           {t.edit}
         </Button>
       ) : null}

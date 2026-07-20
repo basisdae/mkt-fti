@@ -19,6 +19,8 @@ const catalog: GiftCatalogRow = {
   image_path: null,
   reference_url: null,
   operational_status: "interested",
+  status: "active",
+  sort_order: 0,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
   created_by_email: null,

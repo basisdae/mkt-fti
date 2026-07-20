@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { GiftCatalogCard } from "@/components/gift-plan/GiftCatalogCard";
+import { GiftCatalogSortableGrid } from "@/components/gift-plan/GiftCatalogSortableGrid";
 import {
   GiftCatalogItemDialog,
   type GiftCatalogSavePayload,
@@ -23,9 +23,14 @@ import {
   isGiftCatalogInUseAction,
   listGiftCatalogAction,
   saveGiftCatalogAction,
+  reorderGiftCatalogAction,
   setGiftCatalogStatusAction,
   updateGiftCatalogImageAction,
 } from "@/lib/actions/gift-catalog";
+import {
+  applyVisibleCatalogReorder,
+  catalogHasActiveFilters,
+} from "@/lib/gift-catalog-order";
 import {
   removeGiftCatalogCover,
   uploadGiftCatalogCover,
@@ -56,7 +61,8 @@ export function GiftCatalogView() {
   const [source, setSource] = useState("all");
   const [status, setStatus] = useState("all");
   const [operational, setOperational] = useState<GiftCatalogOperationalFilter>("all");
-  const [sort, setSort] = useState<GiftCatalogSortKey>("name");
+  const [sort, setSort] = useState<GiftCatalogSortKey>("manual");
+  const [reordering, setReordering] = useState(false);
   const savingRef = useRef(false);
   const [showArchived, setShowArchived] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -92,6 +98,18 @@ export function GiftCatalogView() {
     return counts;
   }, [items, showArchived]);
 
+  const hasActiveFilters = useMemo(
+    () =>
+      catalogHasActiveFilters({
+        query,
+        category,
+        source,
+        status,
+        operational,
+      }),
+    [query, category, source, status, operational],
+  );
+
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     let rows = items.filter((item) => {
@@ -109,6 +127,13 @@ export function GiftCatalogView() {
       );
     });
     rows = [...rows].sort((a, b) => {
+      if (sort === "manual") {
+        return (
+          a.sort_order - b.sort_order ||
+          a.gift_name.localeCompare(b.gift_name, "th") ||
+          a.id.localeCompare(b.id)
+        );
+      }
       if (sort === "updated") {
         return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
       }
@@ -125,6 +150,94 @@ export function GiftCatalogView() {
     });
     return rows;
   }, [items, query, category, source, status, operational, sort, showArchived]);
+
+  const dragEnabled =
+    canEdit && sort === "manual" && !hasActiveFilters && !loading;
+
+  async function handleReorderVisible(reorderedVisible: GiftCatalogRow[]) {
+    const previousItems = items;
+    const merged = applyVisibleCatalogReorder(items, reorderedVisible);
+    setItems(merged);
+    setReordering(true);
+    const result = await reorderGiftCatalogAction(merged.map((item) => item.id));
+    setReordering(false);
+    if (!result.ok) {
+      setItems(previousItems);
+      reportActionError(result.error ?? t.catalogReorderFailed, setError);
+      return;
+    }
+    setError(null);
+  }
+
+  function renderCatalogActions(item: GiftCatalogRow) {
+    if (!canEdit) return null;
+    return (
+      <div className="flex flex-wrap gap-2 px-1" data-catalog-no-drag>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async () => {
+            const result = await duplicateGiftCatalogAction(item.id);
+            if (!result.ok) reportActionError(result.error, setError);
+            else void refresh();
+          }}
+        >
+          {t.duplicate}
+        </Button>
+        {item.status !== "archived" ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              const result = await setGiftCatalogStatusAction(item.id, "archived");
+              if (!result.ok) reportActionError(result.error, setError);
+              else void refresh();
+            }}
+          >
+            {t.archive}
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={async () => {
+              const result = await setGiftCatalogStatusAction(item.id, "active");
+              if (!result.ok) reportActionError(result.error, setError);
+              else void refresh();
+            }}
+          >
+            {t.restore}
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={async () => {
+            const usage = await isGiftCatalogInUseAction(item.id);
+            if (!usage.ok) {
+              setError(usage.error);
+              return;
+            }
+            if (usage.data) {
+              setError(t.catalogInUseArchive);
+              return;
+            }
+            if (!window.confirm(t.deleteCatalogConfirm(item.gift_name))) return;
+            const result = await deleteGiftCatalogAction(item.id);
+            if (!result.ok) reportActionError(result.error, setError);
+            else {
+              if (result.data.imagePath) {
+                await removeGiftCatalogCover(result.data.imagePath).catch(() => {});
+              }
+              void refresh();
+            }
+          }}
+        >
+          {t.delete}
+        </Button>
+      </div>
+    );
+  }
 
   async function handleSave({ values, image }: GiftCatalogSavePayload) {
     if (savingRef.current) return;
@@ -289,6 +402,7 @@ export function GiftCatalogView() {
           onChange={(e) => setSort(e.target.value as GiftCatalogSortKey)}
           className="w-40"
           options={[
+            { value: "manual", label: t.sortManual },
             { value: "name", label: t.sortByName },
             { value: "updated", label: t.sortLatestUpdated },
             { value: "actual_cost", label: t.sortActualCost },
@@ -305,6 +419,12 @@ export function GiftCatalogView() {
         </label>
       </div>
 
+      {sort === "manual" && hasActiveFilters ? (
+        <p className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          {t.catalogDragDisabledFilter}
+        </p>
+      ) : null}
+
       {error ? (
         <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-fti-red">
           {error}
@@ -313,106 +433,21 @@ export function GiftCatalogView() {
 
       {loading ? (
         <p className="text-sm text-gray-500">{t.loadingCatalog}</p>
+      ) : visible.length === 0 ? (
+        <p className="text-sm text-gray-500">{t.noCatalogMatches}</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visible.map((item) => (
-            <div key={item.id} className="space-y-2">
-              <GiftCatalogCard
-                item={item}
-                activeTierName="—"
-                inActiveTier={false}
-                activeTierQty={null}
-                otherTierUsage={[]}
-                showTierActions={false}
-                onAdd={() => {}}
-                onEditQty={() => {}}
-                onEdit={
-                  canEdit
-                    ? () => {
-                        setEditing(item);
-                        setDialogOpen(true);
-                      }
-                    : undefined
-                }
-              />
-              {canEdit ? (
-                <div className="flex flex-wrap gap-2 px-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      const result = await duplicateGiftCatalogAction(item.id);
-                      if (!result.ok) reportActionError(result.error, setError);
-                      else void refresh();
-                    }}
-                  >
-                    {t.duplicate}
-                  </Button>
-                  {item.status !== "archived" ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        const result = await setGiftCatalogStatusAction(
-                          item.id,
-                          "archived",
-                        );
-                        if (!result.ok) reportActionError(result.error, setError);
-                        else void refresh();
-                      }}
-                    >
-                      {t.archive}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        const result = await setGiftCatalogStatusAction(
-                          item.id,
-                          "active",
-                        );
-                        if (!result.ok) reportActionError(result.error, setError);
-                        else void refresh();
-                      }}
-                    >
-                      {t.restore}
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      const usage = await isGiftCatalogInUseAction(item.id);
-                      if (!usage.ok) {
-                        setError(usage.error);
-                        return;
-                      }
-                      if (usage.data) {
-                        setError(t.catalogInUseArchive);
-                        return;
-                      }
-                      if (!window.confirm(t.deleteCatalogConfirm(item.gift_name)))
-                        return;
-                      const result = await deleteGiftCatalogAction(item.id);
-                      if (!result.ok) reportActionError(result.error, setError);
-                      else {
-                        if (result.data.imagePath) {
-                          await removeGiftCatalogCover(result.data.imagePath).catch(
-                            () => {},
-                          );
-                        }
-                        void refresh();
-                      }
-                    }}
-                  >
-                    {t.delete}
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
+        <GiftCatalogSortableGrid
+          items={visible}
+          dragEnabled={dragEnabled}
+          showManualHint={sort !== "manual"}
+          savingOrder={reordering}
+          onReorder={handleReorderVisible}
+          onEdit={(item) => {
+            setEditing(item);
+            setDialogOpen(true);
+          }}
+          renderActions={renderCatalogActions}
+        />
       )}
 
       <GiftCatalogItemDialog

@@ -61,7 +61,22 @@ function mapRow(row: Record<string, unknown>): GiftCatalogRow {
     ...mapped,
     reference_url: mapped.reference_url ?? null,
     operational_status: mapped.operational_status ?? "interested",
+    sort_order: Number(mapped.sort_order ?? 0),
   };
+}
+
+async function nextGiftCatalogSortOrder(
+  supabase: SupabaseClient,
+): Promise<number> {
+  const { data, error } = await supabase
+    .from("gift_catalog")
+    .select("sort_order")
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data ? Number(data.sort_order) + 1 : 0;
 }
 
 function normalizeInput(input: GiftCatalogInput) {
@@ -96,7 +111,8 @@ export async function listGiftCatalogAction(options?: {
   let query = auth.data.supabase
     .from("gift_catalog")
     .select("*")
-    .order("updated_at", { ascending: false });
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
 
   if (!options?.includeArchived) {
     query = query.neq("status", "archived");
@@ -138,10 +154,18 @@ export async function saveGiftCatalogAction(input: {
     return { ok: true, data: { id: input.id } };
   }
 
+  let sortOrder: number;
+  try {
+    sortOrder = await nextGiftCatalogSortOrder(supabase);
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : t.catalogCreateFailed);
+  }
+
   const { data, error } = await supabase
     .from("gift_catalog")
     .insert({
       ...values,
+      sort_order: sortOrder,
       image_url: null,
       image_path: null,
       created_by_email: user.email,
@@ -215,8 +239,36 @@ export async function duplicateGiftCatalogAction(
   if (!row) return fail(t.catalogNotFound);
 
   const source = mapRow(row);
-  return saveGiftCatalogAction({
-    values: {
+  const { user, supabase } = auth.data;
+  const now = new Date().toISOString();
+  const insertOrder = source.sort_order + 1;
+
+  const { data: shiftRows, error: shiftListError } = await supabase
+    .from("gift_catalog")
+    .select("id, sort_order")
+    .gt("sort_order", source.sort_order);
+
+  if (shiftListError) {
+    return failDb("duplicateGiftCatalog.shiftList", shiftListError.message);
+  }
+
+  for (const shiftRow of shiftRows ?? []) {
+    const { error: shiftError } = await supabase
+      .from("gift_catalog")
+      .update({
+        sort_order: Number(shiftRow.sort_order) + 1,
+        updated_by_email: user.email,
+        updated_at: now,
+      })
+      .eq("id", shiftRow.id as string);
+    if (shiftError) {
+      return failDb("duplicateGiftCatalog.shift", shiftError.message);
+    }
+  }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("gift_catalog")
+    .insert({
       gift_name: `${source.gift_name} (สำเนา)`,
       internal_code: null,
       category: source.category,
@@ -224,6 +276,8 @@ export async function duplicateGiftCatalogAction(
       description: source.description,
       image_url: null,
       image_path: null,
+      reference_url: null,
+      operational_status: "interested",
       unit: source.unit,
       default_actual_cost: Number(source.default_actual_cost),
       default_estimated_gift_value: Number(source.default_estimated_gift_value),
@@ -231,10 +285,18 @@ export async function duplicateGiftCatalogAction(
       specification: source.specification,
       notes: source.notes,
       status: "active",
-      reference_url: null,
-      operational_status: "interested",
-    },
-  });
+      sort_order: insertOrder,
+      created_by_email: user.email,
+      updated_by_email: user.email,
+    })
+    .select("id")
+    .single();
+
+  if (insertError) {
+    return failDb("duplicateGiftCatalog.insert", insertError.message);
+  }
+  if (!inserted) return fail(t.catalogCreateFailed);
+  return { ok: true, data: { id: inserted.id as string } };
 }
 
 export async function setGiftCatalogStatusAction(
@@ -244,13 +306,35 @@ export async function setGiftCatalogStatusAction(
   const auth = await requireEdit();
   if (!auth.ok) return auth;
 
-  const { error } = await auth.data.supabase
+  const { user, supabase } = auth.data;
+  const now = new Date().toISOString();
+
+  const { data: existing, error: loadError } = await supabase
     .from("gift_catalog")
-    .update({
-      status,
-      updated_by_email: auth.data.user.email,
-      updated_at: new Date().toISOString(),
-    })
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (loadError) return failDb("setGiftCatalogStatus.load", loadError.message);
+  if (!existing) return fail(t.catalogNotFound);
+
+  const patch: Record<string, unknown> = {
+    status,
+    updated_by_email: user.email,
+    updated_at: now,
+  };
+
+  if (status === "active" && existing.status === "archived") {
+    try {
+      patch.sort_order = await nextGiftCatalogSortOrder(supabase);
+    } catch (err) {
+      return fail(err instanceof Error ? err.message : t.catalogCreateFailed);
+    }
+  }
+
+  const { error } = await supabase
+    .from("gift_catalog")
+    .update(patch)
     .eq("id", id);
 
   if (error) return failDb("setGiftCatalogStatus", error.message);
@@ -298,4 +382,35 @@ export async function isGiftCatalogInUseAction(
 
   if (error) return failDb("isGiftCatalogInUse", error.message);
   return { ok: true, data: (count ?? 0) > 0 };
+}
+
+export async function reorderGiftCatalogAction(
+  orderedIds: string[],
+): Promise<ActionResult<null>> {
+  const auth = await requireEdit();
+  if (!auth.ok) return auth;
+
+  const uniqueIds = [...new Set(orderedIds)];
+  if (uniqueIds.length !== orderedIds.length) {
+    return fail(t.catalogReorderDuplicate);
+  }
+
+  const { supabase, user } = auth.data;
+  const now = new Date().toISOString();
+
+  for (let index = 0; index < orderedIds.length; index += 1) {
+    const id = orderedIds[index];
+    const { error } = await supabase
+      .from("gift_catalog")
+      .update({
+        sort_order: index,
+        updated_by_email: user.email,
+        updated_at: now,
+      })
+      .eq("id", id);
+
+    if (error) return failDb("reorderGiftCatalog", error.message);
+  }
+
+  return { ok: true, data: null };
 }

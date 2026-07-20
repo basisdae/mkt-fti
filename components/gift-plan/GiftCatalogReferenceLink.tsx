@@ -28,6 +28,7 @@ export function GiftCatalogReferenceLink({
         target="_blank"
         rel="noopener noreferrer"
         title={t.openReferenceLink}
+        data-catalog-no-drag
         className={cn(
           "inline-flex h-7 w-7 items-center justify-center rounded-lg text-primary hover:bg-light-purple/60",
           className,

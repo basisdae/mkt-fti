@@ -153,11 +153,18 @@ export const GIFT_PLAN_COPY = {
   allStatus: "ทุกสถานะรายการ",
   allOperationalStatus: "ทุกสถานะดำเนินการ",
   sortByName: "เรียงตามชื่อ",
+  sortManual: "จัดลำดับเอง",
   sortLatestUpdated: "อัปเดตล่าสุด",
   sortActualCost: "ต้นทุนจริง",
   sortEstValue: "มูลค่าประเมิน",
+  catalogDragHintManual: "เลือกจัดลำดับเองเพื่อเคลื่อนย้าย",
+  catalogDragDisabledFilter:
+    "ปิดการลากชั่วคราวขณะค้นหาหรือกรอง — ล้างตัวกรองเพื่อจัดลำดับ",
+  catalogReorderFailed: "บันทึกลำดับไม่สำเร็จ — คืนตำแหน่งเดิมแล้ว",
+  catalogReorderDuplicate: "ไม่สามารถบันทึกลำดับซ้ำได้",
   showArchived: "แสดงรายการที่เก็บถาวร",
   loadingCatalog: "กำลังโหลดคลัง…",
+  noCatalogMatches: "ไม่พบรายการตามเงื่อนไขที่เลือก",
   deleteCatalogConfirm: (name: string) => `ลบ "${name}" หรือไม่?`,
   catalogInUseArchive:
     "รายการนี้ถูกใช้ในแผนของขวัญแล้ว กรุณาเก็บถาวรแทนการลบ",

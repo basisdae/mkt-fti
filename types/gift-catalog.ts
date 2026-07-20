@@ -35,6 +35,7 @@ export interface GiftCatalogRow {
   /** Record status (active / inactive / archived). */
   status: GiftCatalogStatus;
   operational_status: GiftCatalogOperationalStatus;
+  sort_order: number;
   created_at: string;
   updated_at: string;
   created_by_email: string | null;
@@ -61,6 +62,7 @@ export interface GiftCatalogInput {
 }
 
 export type GiftCatalogSortKey =
+  | "manual"
   | "name"
   | "updated"
   | "actual_cost"
