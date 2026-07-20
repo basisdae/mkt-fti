@@ -1,0 +1,67 @@
+import {
+  calcWorkProgress,
+  allSubtasksDone,
+} from "@/lib/monthly-plan-progress";
+import {
+  bucketsToPlacementUpdates,
+  groupWorkItemsIntoBuckets,
+  moveItemBetweenBuckets,
+} from "@/lib/monthly-plan-board";
+import { bucketId } from "@/lib/monthly-plan-format";
+import type { MktWorkItemCard } from "@/types/monthly-plan";
+
+function assert(condition: boolean, message: string) {
+  if (!condition) throw new Error(message);
+}
+
+const sampleItem = (id: string, month: number | null, sort: number): MktWorkItemCard => ({
+  id,
+  title: `Work ${id}`,
+  description: "",
+  status: "PLAN",
+  priority: null,
+  plan_year: month == null ? null : 2026,
+  plan_month: month,
+  sort_order: sort,
+  owner_user_id: null,
+  collaborator_user_ids: [],
+  start_date: null,
+  deadline: null,
+  created_by_email: "",
+  created_at: "",
+  updated_at: "",
+  subtasks: [
+    { id: "s1", work_item_id: id, title: "A", is_done: true, sort_order: 0, created_at: "", updated_at: "" },
+    { id: "s2", work_item_id: id, title: "B", is_done: false, sort_order: 1, created_at: "", updated_at: "" },
+  ],
+  subtasks_done: 1,
+  subtasks_total: 2,
+});
+
+const progress = calcWorkProgress(sampleItem("1", null, 0).subtasks);
+assert(progress.done === 1 && progress.total === 2 && progress.percent === 50, "progress calc");
+
+assert(
+  !allSubtasksDone(sampleItem("1", null, 0).subtasks),
+  "not all done yet",
+);
+
+const buckets = groupWorkItemsIntoBuckets(
+  [sampleItem("a", null, 0), sampleItem("b", 1, 0), sampleItem("c", 1, 1)],
+  2026,
+);
+assert(buckets[bucketId(2026, null)].length === 1, "unplanned bucket");
+assert(buckets[bucketId(2026, 1)].length === 2, "january bucket");
+
+const moved = moveItemBetweenBuckets(buckets, "a", bucketId(2026, 2), null);
+assert(moved[bucketId(2026, null)].length === 0, "moved out of unplanned");
+assert(moved[bucketId(2026, 2)].length === 1, "moved into february");
+assert(moved[bucketId(2026, 2)][0].id === "a", "correct item moved");
+
+const updates = bucketsToPlacementUpdates(moved, 2026);
+assert(
+  updates.some((row) => row.id === "a" && row.plan_month === 2),
+  "placement update for moved item",
+);
+
+console.log("monthly-plan-board: all tests passed");

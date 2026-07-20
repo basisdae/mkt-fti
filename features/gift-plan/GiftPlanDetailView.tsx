@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { GiftPlanEditorView } from "@/features/gift-plan/GiftPlanEditorView";
-import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { getGiftPlanEditorBundleAction } from "@/lib/actions/gift-plans";
 import { useAuth } from "@/hooks/AuthStore";
 import { canExportGiftPlans } from "@/lib/auth/permissions";
+import { isSupabaseAuthGuardMessage } from "@/lib/auth/gift-plan-auth";
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanEditorBundle } from "@/types/gift-plan";
 
@@ -18,6 +18,7 @@ export function GiftPlanDetailView({ planId }: GiftPlanDetailViewProps) {
   const canExport = canExportGiftPlans(user);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authBlocked, setAuthBlocked] = useState(false);
   const [editorBundle, setEditorBundle] = useState<GiftPlanEditorBundle | null>(
     null,
   );
@@ -30,7 +31,11 @@ export function GiftPlanDetailView({ planId }: GiftPlanDetailViewProps) {
       if (cancelled) return;
       setLoading(false);
       if (!result.ok) {
-        setError(result.error);
+        if (isSupabaseAuthGuardMessage(result.error)) {
+          setAuthBlocked(true);
+        } else {
+          setError(result.error);
+        }
         return;
       }
       setEditorBundle(result.data);
@@ -57,12 +62,16 @@ export function GiftPlanDetailView({ planId }: GiftPlanDetailViewProps) {
     );
   }
 
-  if (!editorBundle) return null;
+  if (!editorBundle) {
+    if (authBlocked) {
+      return null;
+    }
+    return (
+      <div className="p-6 text-sm text-gray-500">{t.loadingPlan}</div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <GiftPlanSupabaseAuthBanner />
-      <GiftPlanEditorView initialBundle={editorBundle} canExport={canExport} />
-    </div>
+    <GiftPlanEditorView initialBundle={editorBundle} canExport={canExport} />
   );
 }

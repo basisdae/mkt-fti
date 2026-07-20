@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { resolveGiftPlanAuthError } from "@/lib/auth/gift-plan-auth";
+import {
+  GIFT_PLAN_AUTH_NOT_CONFIRMED_MESSAGE,
+  isSupabaseAuthUserConfirmed,
+  resolveGiftPlanAuthError,
+} from "@/lib/auth/gift-plan-auth";
 import { getServerSession } from "@/lib/auth/server-session";
 import { createClient } from "@/lib/supabase/server";
 import type { AppUser } from "@/types/auth";
@@ -36,6 +40,11 @@ export async function getAuthenticatedSupabaseForActions(): Promise<Authenticate
 
   if (error || !authUser?.email) {
     return { ok: false, error: resolveGiftPlanAuthError(session) };
+  }
+
+  if (!isSupabaseAuthUserConfirmed(authUser)) {
+    await supabase.auth.signOut();
+    return { ok: false, error: GIFT_PLAN_AUTH_NOT_CONFIRMED_MESSAGE };
   }
 
   const authEmail = normalizeEmail(authUser.email);

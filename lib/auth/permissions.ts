@@ -133,6 +133,14 @@ export function canEditSeminarPlanner(source: PermissionSource): boolean {
   return hasPermission(source, "seminar_planner.edit");
 }
 
+export function canViewMonthlyPlan(source: PermissionSource): boolean {
+  return hasPermission(source, "monthly_plan.view");
+}
+
+export function canEditMonthlyPlan(source: PermissionSource): boolean {
+  return hasPermission(source, "monthly_plan.edit");
+}
+
 export function canAccessPath(
   source: PermissionSource,
   pathname: string,
@@ -196,6 +204,12 @@ export function canAccessPath(
     );
   }
 
+  if (path.startsWith("/monthly-plan")) {
+    return (
+      perms.has("monthly_plan.view") || perms.has("monthly_plan.edit")
+    );
+  }
+
   return false;
 }
 
@@ -228,6 +242,7 @@ export function getHomePathForUser(source: PermissionSource): string {
   if (perms.has("timeline.view")) return "/timeline";
   if (perms.has("gift_plans.view")) return "/gift-plans";
   if (perms.has("seminar_planner.view")) return "/seminars";
+  if (perms.has("monthly_plan.view")) return "/monthly-plan";
   if (perms.has("settings.view") || perms.has("users.manage")) {
     return "/settings";
   }

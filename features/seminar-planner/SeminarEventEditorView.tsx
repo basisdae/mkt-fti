@@ -27,8 +27,20 @@ import {
   listTargetGroupsAction,
 } from "@/lib/actions/seminar-library";
 import { canEditSeminarPlanner } from "@/lib/auth/permissions";
+import {
+  canEditWithSupabaseAuth,
+  reportActionError,
+} from "@/lib/auth/supabase-auth-guard-ui";
 import { duplicateBullets, normalizeBullets } from "@/lib/seminar-planner-bullets";
 import { validateAgendaItems } from "@/lib/seminar-planner-agenda-warnings";
+import {
+  needsLibraryReplaceConfirm,
+  replaceAgendaItemFromLibrary,
+} from "@/lib/seminar-planner-agenda-replace";
+import {
+  resolveEventAndAgendaDates,
+  syncAgendaItemsToEventDate,
+} from "@/lib/seminar-planner-agenda-date";
 import {
   formatSeminarDateRange,
   formatSeminarMinutes,
@@ -121,8 +133,8 @@ function newCustomAgendaItem(sortOrder: number): SeminarAgendaItemInput {
 
 export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps) {
   const searchParams = useSearchParams();
-  const { user } = useAuth();
-  const canEdit = canEditSeminarPlanner(user);
+  const { user, session } = useAuth();
+  const canEdit = canEditWithSupabaseAuth(canEditSeminarPlanner(user), session);
   const savingRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
@@ -141,6 +153,9 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
 
   const [dragAgendaIndex, setDragAgendaIndex] = useState<number | null>(null);
   const [summaryItemIndex, setSummaryItemIndex] = useState<number | null>(null);
+  const [replacingAgendaIndex, setReplacingAgendaIndex] = useState<number | null>(
+    null,
+  );
 
   const [masterOptions, setMasterOptions] = useState<{
     formats: { value: string; label: string }[];
@@ -157,11 +172,15 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   });
 
   const applyBundle = useCallback((data: SeminarEventBundle) => {
+    const resolved = resolveEventAndAgendaDates(
+      data.event.start_date,
+      data.agenda_items,
+    );
     setBundle(data);
     setEventForm({
       title: data.event.title,
       event_type: data.event.event_type,
-      start_date: data.event.start_date,
+      start_date: resolved.eventDate,
       end_date: data.event.end_date,
       daily_start_time: data.event.daily_start_time,
       daily_end_time: data.event.daily_end_time,
@@ -176,7 +195,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     setTargetGroupIds(data.target_group_ids);
     setPurposeIds(data.purpose_ids);
     setAgendaItems(
-      [...data.agenda_items]
+      [...resolved.agendaItems]
         .sort((a, b) => a.sort_order - b.sort_order)
         .map(agendaRowToInput),
     );
@@ -188,7 +207,7 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     const result = await getSeminarEventBundleAction(eventId);
     setLoading(false);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       setBundle(null);
       return;
     }
@@ -267,7 +286,15 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
     error === SEMINAR_PLANNER_ERRORS.noPermissionEdit;
 
   function patchEvent(partial: Partial<SeminarEventInput>) {
-    setEventForm((prev) => ({ ...prev, ...partial }));
+    setEventForm((prev) => {
+      const next = { ...prev, ...partial };
+      if ("start_date" in partial) {
+        setAgendaItems((items) =>
+          syncAgendaItemsToEventDate(items, next.start_date ?? null),
+        );
+      }
+      return next;
+    });
     setDirty(true);
   }
 
@@ -276,8 +303,13 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
   }
 
   function reorderAgenda(next: SeminarAgendaItemInput[]) {
+    const eventDate = eventForm.start_date ?? null;
     setAgendaItems(
-      next.map((item, index) => ({ ...item, sort_order: index })),
+      next.map((item, index) => ({
+        ...item,
+        sort_order: index,
+        session_date: eventDate,
+      })),
     );
     setDirty(true);
   }
@@ -326,6 +358,55 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
       newCustomAgendaItem(agendaItems.length),
     ]);
     setTab("agenda");
+  }
+
+  async function saveAgendaItemsOnly(nextItems: SeminarAgendaItemInput[]) {
+    const agendaResult = await saveSeminarAgendaItemsAction({
+      event_id: eventId,
+      items: nextItems,
+    });
+    if (!agendaResult.ok) {
+      setSaveError(agendaResult.error);
+      return false;
+    }
+    await loadBundle();
+    setDirty(false);
+    setSavedAt(new Date().toISOString());
+    return true;
+  }
+
+  async function replaceAgendaFromLibrary(
+    index: number,
+    session: SeminarLibSessionRow,
+  ) {
+    if (!canEdit || replacingAgendaIndex != null) return;
+
+    const current = agendaItems[index];
+    if (!current) return;
+    if (current.library_session_id === session.id) return;
+
+    if (needsLibraryReplaceConfirm(current, session)) {
+      const ok = window.confirm(t.replaceLibraryConfirm);
+      if (!ok) return;
+    }
+
+    const nextItems = replaceAgendaItemFromLibrary(
+      agendaItems,
+      index,
+      session,
+      eventForm.start_date ?? null,
+    );
+    setReplacingAgendaIndex(index);
+    setSaveError(null);
+    setAgendaItems(nextItems.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })));
+
+    const saved = await saveAgendaItemsOnly(
+      nextItems.map((item, itemIndex) => ({ ...item, sort_order: itemIndex })),
+    );
+    setReplacingAgendaIndex(null);
+    if (!saved) {
+      await loadBundle();
+    }
   }
 
   async function handleSave() {
@@ -766,7 +847,23 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
               <h2 className="text-sm font-semibold text-gray-900">
                 {t.agendaSection}
               </h2>
-              <p className="mt-1 text-xs text-gray-500">{t.agendaCompactHint}</p>
+              <p className="mt-1 text-xs text-gray-500">
+                {eventForm.start_date ? (
+                  <>
+                    {t.agendaEventDateLabel}:{" "}
+                    <span className="font-medium text-gray-700">
+                      {formatSeminarDateRange(
+                        eventForm.start_date ?? null,
+                        eventForm.end_date ?? null,
+                      )}
+                    </span>
+                    {" · "}
+                    {t.agendaEventDateHint}
+                  </>
+                ) : (
+                  t.agendaEventDateMissing
+                )}
+              </p>
             </div>
             {canEdit ? (
               <Button variant="secondary" onClick={addCustomSession}>
@@ -838,7 +935,11 @@ export function SeminarEventEditorView({ eventId }: SeminarEventEditorViewProps)
                     allItems={agendaItems}
                     statusOptions={masterOptions.statuses}
                     disabled={!canEdit}
+                    replacing={replacingAgendaIndex === index}
                     onChange={(next) => updateAgendaItem(index, next)}
+                    onReplaceFromLibrary={(session) =>
+                      void replaceAgendaFromLibrary(index, session)
+                    }
                     onMoveUp={() => moveAgenda(index, -1)}
                     onMoveDown={() => moveAgenda(index, 1)}
                     onRemove={() => removeAgendaItem(index)}

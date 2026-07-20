@@ -40,6 +40,10 @@ import {
   setTargetGroupArchivedAction,
 } from "@/lib/actions/seminar-library";
 import { canEditSeminarPlanner } from "@/lib/auth/permissions";
+import {
+  canEditWithSupabaseAuth,
+  reportActionError,
+} from "@/lib/auth/supabase-auth-guard-ui";
 import { formatSeminarMinutes } from "@/lib/seminar-planner-format";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import type {
@@ -95,8 +99,8 @@ const SIMPLE_TABS: SimpleMasterTab[] = [
 ];
 
 export function SeminarLibraryView() {
-  const { user } = useAuth();
-  const canEdit = canEditSeminarPlanner(user);
+  const { user, session } = useAuth();
+  const canEdit = canEditWithSupabaseAuth(canEditSeminarPlanner(user), session);
   const savingRef = useRef(false);
 
   const [bundle, setBundle] = useState<SeminarLibraryBundle | null>(null);
@@ -376,7 +380,7 @@ export function SeminarLibraryView() {
         return;
     }
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       return;
     }
     await refresh();
@@ -410,7 +414,7 @@ export function SeminarLibraryView() {
         return;
     }
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       return;
     }
     await refresh();

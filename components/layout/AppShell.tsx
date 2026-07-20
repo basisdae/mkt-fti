@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SupabaseAuthGuardBanner } from "@/components/auth/SupabaseAuthGuardBanner";
 import { Sidebar } from "./Sidebar";
 import { TopHeader } from "./TopHeader";
 import { AppFooter } from "./AppFooter";
@@ -43,6 +44,7 @@ export function AppShell({ children }: AppShellProps) {
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopHeader onMenuClick={() => setMobileNavOpen(true)} />
+        <SupabaseAuthGuardBanner />
         <main className="flex-1 overflow-y-auto">{children}</main>
         <AppFooter />
       </div>

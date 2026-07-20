@@ -90,3 +90,36 @@ export function resolveGiftPlanAuthError(session: {
     afterAppLogin: true,
   });
 }
+
+const SUPABASE_AUTH_GUARD_MESSAGES = [
+  GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE,
+  GIFT_PLAN_AUTH_PASSWORD_MISMATCH_MESSAGE,
+  GIFT_PLAN_AUTH_NOT_CONFIRMED_MESSAGE,
+  GIFT_PLAN_AUTH_SESSION_EXPIRED_MESSAGE,
+] as const;
+
+/** True when the message is already shown by the global Supabase auth guard banner. */
+export function isSupabaseAuthGuardMessage(message: string | null | undefined): boolean {
+  if (!message) return false;
+  return (SUPABASE_AUTH_GUARD_MESSAGES as readonly string[]).includes(message);
+}
+
+type SupabaseAuthUserLike = {
+  email_confirmed_at?: string | null;
+  confirmed_at?: string | null;
+};
+
+/** Supabase Auth users must have a confirmation timestamp before writes are allowed. */
+export function isSupabaseAuthUserConfirmed(
+  user: SupabaseAuthUserLike | null | undefined,
+): boolean {
+  if (!user) return false;
+  return Boolean(user.email_confirmed_at ?? user.confirmed_at);
+}
+
+/** Server Actions and edit controls require a live, confirmed Supabase Auth session. */
+export function canWriteWithSupabaseAuth(session: {
+  supabaseAuthLinked?: boolean;
+} | null | undefined): boolean {
+  return session?.supabaseAuthLinked === true;
+}

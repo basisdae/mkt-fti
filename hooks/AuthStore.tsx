@@ -13,6 +13,7 @@ import { authenticateUser, signOutRemote } from "@/lib/auth/credentials";
 import {
   bridgeSupabaseAuthSessionAction,
   signOutSupabaseAuthAction,
+  verifySupabaseAuthBridgeStatusAction,
 } from "@/lib/actions/supabase-auth-bridge";
 import { getDefaultPermissionsForRole } from "@/lib/auth/permission-catalog";
 import { formatAppRole } from "@/lib/auth/roles";
@@ -38,19 +39,55 @@ interface AuthStoreValue {
   roleLabel: string;
   login: (email: string, password: string) => Promise<AppUser>;
   logout: () => Promise<void>;
-  /** Reload permissions/profile from the local user registry into the session. */
+  /** Reload permissions/profile and live Supabase Auth bridge status. */
   refreshSession: () => void;
 }
 
 const AuthStoreContext = createContext<AuthStoreValue | null>(null);
+
+async function syncSupabaseBridgeStatus(
+  user: AppUser,
+  fallback?: Pick<AuthSession, "supabaseAuthLinked" | "supabaseAuthBridgeError">,
+): Promise<AuthSession> {
+  if (!isSupabaseConfigured()) {
+    return createSession(user, {
+      supabaseAuthLinked: fallback?.supabaseAuthLinked,
+      supabaseAuthBridgeError: fallback?.supabaseAuthBridgeError ?? null,
+    });
+  }
+
+  try {
+    const verify = await verifySupabaseAuthBridgeStatusAction();
+    return createSession(user, {
+      supabaseAuthLinked: verify.linked,
+      supabaseAuthBridgeError: verify.linked ? null : verify.errorCode,
+    });
+  } catch {
+    return createSession(user, {
+      supabaseAuthLinked: fallback?.supabaseAuthLinked,
+      supabaseAuthBridgeError: fallback?.supabaseAuthBridgeError ?? null,
+    });
+  }
+}
 
 export function AuthStoreProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setSession(readSessionFromStorage());
-    setReady(true);
+    void (async () => {
+      const stored = readSessionFromStorage();
+      if (!stored?.user) {
+        setSession(null);
+        setReady(true);
+        return;
+      }
+
+      const next = await syncSupabaseBridgeStatus(stored.user, stored);
+      writeSession(next);
+      setSession(next);
+      setReady(true);
+    })();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -95,20 +132,19 @@ export function AuthStoreProvider({ children }: { children: ReactNode }) {
         setSession(null);
         return;
       }
-    const user: AppUser = {
-      id: record.id,
-      email: record.email,
-      displayName: record.displayName,
-      role: record.role,
-      permissions:
-        record.permissions.length > 0
-          ? record.permissions
-          : getDefaultPermissionsForRole(record.role),
-    };
-    const next = createSession(user, {
-      supabaseAuthLinked: current.supabaseAuthLinked,
-      supabaseAuthBridgeError: current.supabaseAuthBridgeError ?? null,
-    });
+
+      const user: AppUser = {
+        id: record.id,
+        email: record.email,
+        displayName: record.displayName,
+        role: record.role,
+        permissions:
+          record.permissions.length > 0
+            ? record.permissions
+            : getDefaultPermissionsForRole(record.role),
+      };
+
+      const next = await syncSupabaseBridgeStatus(user, current);
       writeSession(next);
       setSession(next);
     })();

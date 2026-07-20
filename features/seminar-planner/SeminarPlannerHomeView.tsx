@@ -16,6 +16,10 @@ import {
   setSeminarEventArchivedAction,
 } from "@/lib/actions/seminar-planner";
 import { canEditSeminarPlanner } from "@/lib/auth/permissions";
+import {
+  canEditWithSupabaseAuth,
+  reportActionError,
+} from "@/lib/auth/supabase-auth-guard-ui";
 import { SEMINAR_EVENT_STATUS_LABELS } from "@/lib/seminar-planner-format";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import {
@@ -35,8 +39,8 @@ const TAB_LABELS: Record<TabKey, string> = {
 
 export function SeminarPlannerHomeView() {
   const router = useRouter();
-  const { user } = useAuth();
-  const canEdit = canEditSeminarPlanner(user);
+  const { user, session } = useAuth();
+  const canEdit = canEditWithSupabaseAuth(canEditSeminarPlanner(user), session);
 
   const [events, setEvents] = useState<SeminarEventSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +61,7 @@ export function SeminarPlannerHomeView() {
     const result = await listSeminarEventsAction({ includeArchived: true });
     setLoading(false);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       setEvents([]);
       return;
     }
@@ -141,7 +145,7 @@ export function SeminarPlannerHomeView() {
     setMenuId(null);
     const result = await duplicateSeminarEventAction(event.id);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       return;
     }
     router.push(`/seminars/${result.data.id}`);
@@ -152,7 +156,7 @@ export function SeminarPlannerHomeView() {
     if (!window.confirm(t.deleteEventConfirm(event.title))) return;
     const result = await deleteSeminarEventAction(event.id);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       return;
     }
     void refresh();
@@ -162,7 +166,7 @@ export function SeminarPlannerHomeView() {
     setMenuId(null);
     const result = await setSeminarEventArchivedAction(event.id, archived);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       return;
     }
     void refresh();

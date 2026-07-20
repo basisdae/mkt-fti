@@ -188,13 +188,6 @@ export function SeminarAgendaSessionCard({
           options={[{ value: "", label: "—" }, ...formatOptions]}
         />
         <Input
-          label={t.sessionDate}
-          type="date"
-          value={item.session_date ?? ""}
-          onChange={(e) => patch({ session_date: e.target.value || null })}
-          disabled={disabled}
-        />
-        <Input
           label={t.startTime}
           type="time"
           value={normalizeTimeInput(item.start_time)}

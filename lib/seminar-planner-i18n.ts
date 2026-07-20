@@ -100,12 +100,26 @@ export const SEMINAR_PLANNER_COPY = {
   editInLibrary: "ไปแก้ที่คลังเซสชัน",
   targetGroupsLabel: "กลุ่มเป้าหมาย",
   expandSessionFields: "แก้ไขเวลาและหมายเหตุ",
+  replaceFromLibrary: "รายการจากคลัง",
+  replaceFromLibraryAction: "เปลี่ยน…",
+  replaceFromLibraryEmpty: "เลือกรายการจากคลัง…",
+  replaceFromLibraryCurrent: "เชื่อมคลังอยู่ — เลือกเพื่อเปลี่ยน",
+  replaceFromLibraryHint:
+    "เปลี่ยนเนื้อหาจากคลังในกล่องนี้ — ตำแหน่ง เวลาเริ่ม สถานะ และหมายเหตุยังอยู่",
+  replaceLibraryConfirm:
+    "รายละเอียด/วิทยากรจากคลังจะถูกแทนที่ — ต้องการดำเนินการต่อหรือไม่?",
+  replacingSession: "กำลังเปลี่ยน…",
+  replaceLibraryFailed: "เปลี่ยนรายการจากคลังไม่สำเร็จ",
   agendaSnapshotHint:
     "รายละเอียดนี้เป็นสำเนาจากคลังเซสชัน — แก้ต้นฉบับที่คลังเซสชัน",
   customSessionSummaryHint:
     "เซสชันนี้ไม่ได้เชื่อมคลัง — แก้รายละเอียดที่คลังเซสชันแล้วเพิ่มใหม่ถ้าต้องการ",
   agendaCompactHint:
     "คลิกชื่อเซสชันหรือ “ดูสรุป” เพื่ออ่านรายละเอียด — แก้เวลาและหมายเหตุที่ลูกศรด้านขวา",
+  agendaEventDateLabel: "วันที่จัดงาน",
+  agendaEventDateHint: "ทุก Session ใช้วันที่นี้ — แก้ได้ที่แท็บภาพรวม",
+  agendaEventDateMissing:
+    "ยังไม่กำหนดวันที่จัดงาน — ตั้งที่แท็บภาพรวม",
   addCustomSession: "เพิ่มเซสชันใหม่",
   librarySearch: "ค้นหาเซสชันในคลัง…",
   sessionTitle: "ชื่อเซสชัน",

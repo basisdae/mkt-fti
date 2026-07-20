@@ -8,6 +8,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { SeminarAgendaSessionLibraryPicker } from "@/components/seminar-planner/SeminarAgendaSessionLibraryPicker";
 import { warningsForAgendaItem } from "@/lib/seminar-planner-agenda-warnings";
 import {
   calcDurationMinutes,
@@ -15,7 +16,7 @@ import {
 } from "@/lib/seminar-planner-time";
 import { formatSeminarMinutes } from "@/lib/seminar-planner-format";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
-import type { SeminarAgendaItemInput } from "@/types/seminar-planner";
+import type { SeminarAgendaItemInput, SeminarLibSessionRow } from "@/types/seminar-planner";
 import { cn } from "@/lib/utils";
 
 interface SeminarAgendaCompactRowProps {
@@ -25,7 +26,9 @@ interface SeminarAgendaCompactRowProps {
   allItems: SeminarAgendaItemInput[];
   statusOptions: { value: string; label: string }[];
   disabled?: boolean;
+  replacing?: boolean;
   onChange: (item: SeminarAgendaItemInput) => void;
+  onReplaceFromLibrary: (session: SeminarLibSessionRow) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
@@ -42,7 +45,9 @@ export function SeminarAgendaCompactRow({
   allItems,
   statusOptions,
   disabled = false,
+  replacing = false,
   onChange,
+  onReplaceFromLibrary,
   onMoveUp,
   onMoveDown,
   onRemove,
@@ -224,17 +229,19 @@ export function SeminarAgendaCompactRow({
       ) : null}
 
       {expanded ? (
-        <div className="grid gap-2 border-t border-gray-100 bg-gray-50/50 px-3 py-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block text-[11px] text-gray-500">
-            {t.sessionDate}
-            <input
-              type="date"
-              value={item.session_date ?? ""}
-              disabled={disabled}
-              onChange={(e) => patch({ session_date: e.target.value || null })}
-              className={cn(inputClass, "mt-1")}
-            />
-          </label>
+        <div className="space-y-2 border-t border-gray-100 bg-gray-50/50 px-3 py-3">
+          {!disabled ? (
+            <>
+              <SeminarAgendaSessionLibraryPicker
+                currentSessionId={item.library_session_id}
+                disabled={disabled}
+                busy={replacing}
+                onSelect={onReplaceFromLibrary}
+              />
+              <p className="text-[10px] text-gray-500">{t.replaceFromLibraryHint}</p>
+            </>
+          ) : null}
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block text-[11px] text-gray-500">
             {t.startTime}
             <input
@@ -311,6 +318,7 @@ export function SeminarAgendaCompactRow({
               className={cn(inputClass, "mt-1 resize-y")}
             />
           </label>
+          </div>
         </div>
       ) : null}
     </article>

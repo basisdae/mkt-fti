@@ -9,11 +9,14 @@ import {
   type GiftCatalogSavePayload,
 } from "@/components/gift-plan/GiftCatalogItemDialog";
 import { GiftCatalogSummaryStrip, emptyOperationalCounts } from "@/components/gift-plan/GiftCatalogSummaryStrip";
-import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/forms/Select";
 import { useAuth } from "@/hooks/AuthStore";
 import { canEditGiftPlans } from "@/lib/auth/permissions";
+import {
+  canEditWithSupabaseAuth,
+  reportActionError,
+} from "@/lib/auth/supabase-auth-guard-ui";
 import {
   deleteGiftCatalogAction,
   duplicateGiftCatalogAction,
@@ -43,8 +46,8 @@ import { GIFT_CATALOG_OPERATIONAL_STATUSES } from "@/types/gift-catalog";
 import type { GiftCatalogOperationalFilter, GiftCatalogRow, GiftCatalogSortKey } from "@/types/gift-catalog";
 
 export function GiftCatalogView() {
-  const { user } = useAuth();
-  const canEdit = canEditGiftPlans(user);
+  const { user, session } = useAuth();
+  const canEdit = canEditWithSupabaseAuth(canEditGiftPlans(user), session);
   const [items, setItems] = useState<GiftCatalogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export function GiftCatalogView() {
     const result = await listGiftCatalogAction({ includeArchived: true });
     setLoading(false);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       setItems([]);
       return;
     }
@@ -189,7 +192,6 @@ export function GiftCatalogView() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
-      <GiftPlanSupabaseAuthBanner />
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -340,7 +342,7 @@ export function GiftCatalogView() {
                     size="sm"
                     onClick={async () => {
                       const result = await duplicateGiftCatalogAction(item.id);
-                      if (!result.ok) setError(result.error);
+                      if (!result.ok) reportActionError(result.error, setError);
                       else void refresh();
                     }}
                   >
@@ -355,7 +357,7 @@ export function GiftCatalogView() {
                           item.id,
                           "archived",
                         );
-                        if (!result.ok) setError(result.error);
+                        if (!result.ok) reportActionError(result.error, setError);
                         else void refresh();
                       }}
                     >
@@ -370,7 +372,7 @@ export function GiftCatalogView() {
                           item.id,
                           "active",
                         );
-                        if (!result.ok) setError(result.error);
+                        if (!result.ok) reportActionError(result.error, setError);
                         else void refresh();
                       }}
                     >
@@ -393,7 +395,7 @@ export function GiftCatalogView() {
                       if (!window.confirm(t.deleteCatalogConfirm(item.gift_name)))
                         return;
                       const result = await deleteGiftCatalogAction(item.id);
-                      if (!result.ok) setError(result.error);
+                      if (!result.ok) reportActionError(result.error, setError);
                       else {
                         if (result.data.imagePath) {
                           await removeGiftCatalogCover(result.data.imagePath).catch(

@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import {
   classifySupabaseSignInError,
+  GIFT_PLAN_AUTH_NOT_CONFIRMED_MESSAGE,
   GIFT_PLAN_AUTH_NOT_PROVISIONED_MESSAGE,
   GIFT_PLAN_AUTH_PASSWORD_MISMATCH_MESSAGE,
   GIFT_PLAN_AUTH_SESSION_EXPIRED_MESSAGE,
+  isSupabaseAuthGuardMessage,
+  isSupabaseAuthUserConfirmed,
   messageForBridgeError,
   resolveGiftPlanAuthError,
+  canWriteWithSupabaseAuth,
 } from "./auth/gift-plan-auth";
 
 assert.equal(
@@ -45,5 +49,17 @@ assert.equal(
   }),
   GIFT_PLAN_AUTH_SESSION_EXPIRED_MESSAGE,
 );
+
+assert.equal(isSupabaseAuthGuardMessage(GIFT_PLAN_AUTH_NOT_CONFIRMED_MESSAGE), true);
+assert.equal(isSupabaseAuthGuardMessage("Something else"), false);
+
+assert.equal(
+  isSupabaseAuthUserConfirmed({ email_confirmed_at: "2026-01-01T00:00:00Z" }),
+  true,
+);
+assert.equal(isSupabaseAuthUserConfirmed({ email_confirmed_at: null }), false);
+
+assert.equal(canWriteWithSupabaseAuth({ supabaseAuthLinked: true }), true);
+assert.equal(canWriteWithSupabaseAuth({ supabaseAuthLinked: false }), false);
 
 console.log("gift-plan-auth: ok");

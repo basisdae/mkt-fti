@@ -9,6 +9,7 @@ import {
   duplicateBullets,
   normalizeBullets,
 } from "@/lib/seminar-planner-bullets";
+import { resolveEventAndAgendaDates } from "@/lib/seminar-planner-agenda-date";
 import { getAuthenticatedSupabaseForActions } from "@/lib/supabase/authenticated-server";
 import type { AppUser } from "@/types/auth";
 import {
@@ -98,7 +99,10 @@ function normalizeEventInput(values: SeminarEventInput) {
   };
 }
 
-function normalizeAgendaInput(values: SeminarAgendaItemInput) {
+function normalizeAgendaInput(
+  values: SeminarAgendaItemInput,
+  eventDate: string | null,
+) {
   const title = values.title.trim();
   if (!title) throw new Error(t.sessionTitleRequired);
 
@@ -113,7 +117,7 @@ function normalizeAgendaInput(values: SeminarAgendaItemInput) {
     title,
     category_name: values.category_name?.trim() ?? "",
     format_name: values.format_name?.trim() ?? "",
-    session_date: values.session_date ?? null,
+    session_date: eventDate,
     start_time: values.start_time ?? null,
     end_time: values.end_time ?? null,
     duration_minutes: minutes ?? null,
@@ -199,13 +203,20 @@ async function loadEventBundle(
 
   if (agendaError) throw new Error(agendaError.message);
 
+  const mappedEvent = mapEvent(event);
+  const mappedAgenda = (agendaItems ?? []).map(mapAgendaItem);
+  const resolved = resolveEventAndAgendaDates(
+    mappedEvent.start_date,
+    mappedAgenda,
+  );
+
   return {
-    event: mapEvent(event),
+    event: { ...mappedEvent, start_date: resolved.eventDate },
     target_group_ids: (targetGroups ?? []).map(
       (row) => row.target_group_id as string,
     ),
     purpose_ids: (purposes ?? []).map((row) => row.purpose_id as string),
-    agenda_items: (agendaItems ?? []).map(mapAgendaItem),
+    agenda_items: resolved.agendaItems,
   };
 }
 
@@ -400,6 +411,14 @@ export async function saveSeminarEventAction(input: {
     return fail(err instanceof Error ? err.message : t.eventCreateFailed);
   }
 
+  if (values.start_date != null) {
+    const { error: syncError } = await supabase
+      .from("seminar_agenda_items")
+      .update({ session_date: values.start_date })
+      .eq("event_id", eventId);
+    if (syncError) return fail(syncError.message);
+  }
+
   return { ok: true, data: { id: eventId, updated_at: now } };
 }
 
@@ -564,10 +583,12 @@ export async function saveSeminarAgendaItemsAction(input: {
 
   const { data: event } = await supabase
     .from("seminar_events")
-    .select("id")
+    .select("id, start_date")
     .eq("id", eventId)
     .maybeSingle();
   if (!event) return fail(t.eventNotFound);
+
+  const eventDate = (event.start_date as string | null) ?? null;
 
   const { data: existingItems } = await supabase
     .from("seminar_agenda_items")
@@ -592,7 +613,7 @@ export async function saveSeminarAgendaItemsAction(input: {
   for (const item of input.items) {
     let payload;
     try {
-      payload = normalizeAgendaInput(item);
+      payload = normalizeAgendaInput(item, eventDate);
     } catch (err) {
       return fail(err instanceof Error ? err.message : t.sessionTitleRequired);
     }

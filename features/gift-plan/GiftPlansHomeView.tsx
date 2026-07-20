@@ -10,7 +10,6 @@ import {
 import { DeleteGiftPlanDialog } from "@/components/gift-plan/DeleteGiftPlanDialog";
 import { EditGiftPlanBasicsDialog } from "@/components/gift-plan/EditGiftPlanBasicsDialog";
 import { GiftPlanCard } from "@/components/gift-plan/GiftPlanCard";
-import { GiftPlanSupabaseAuthBanner } from "@/components/gift-plan/GiftPlanSupabaseAuthBanner";
 import { NewGiftPlanDialog } from "@/components/gift-plan/NewGiftPlanDialog";
 import { RenameGiftPlanDialog } from "@/components/gift-plan/RenameGiftPlanDialog";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +30,10 @@ import {
   canEditGiftPlans,
   canExportGiftPlans,
 } from "@/lib/auth/permissions";
+import {
+  canEditWithSupabaseAuth,
+  reportActionError,
+} from "@/lib/auth/supabase-auth-guard-ui";
 import { downloadGiftPlanExport, exportGiftPlanWorkbook } from "@/lib/gift-plan-export";
 import { GIFT_PLAN_COPY as t } from "@/lib/gift-plan-i18n";
 import type { GiftPlanBasicsForm, GiftPlanListSummary } from "@/types/gift-plan";
@@ -47,8 +50,8 @@ const TAB_LABELS: Record<TabKey, string> = {
 
 export function GiftPlansHomeView() {
   const router = useRouter();
-  const { user } = useAuth();
-  const canEdit = canEditGiftPlans(user);
+  const { user, session } = useAuth();
+  const canEdit = canEditWithSupabaseAuth(canEditGiftPlans(user), session);
   const canExport = canExportGiftPlans(user);
   const showCosts = canEdit || canExport;
 
@@ -78,7 +81,7 @@ export function GiftPlansHomeView() {
     const result = await listGiftPlanSummariesAction();
     setLoading(false);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       setPlans([]);
       return;
     }
@@ -163,7 +166,7 @@ export function GiftPlansHomeView() {
   async function handleExport(plan: GiftPlanListSummary) {
     const result = await getGiftPlanExportBundleAction(plan.id);
     if (!result.ok) {
-      setError(result.error);
+      reportActionError(result.error, setError);
       return;
     }
     const exported = await exportGiftPlanWorkbook(result.data);
@@ -172,7 +175,6 @@ export function GiftPlansHomeView() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
-      <GiftPlanSupabaseAuthBanner />
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -267,7 +269,7 @@ export function GiftPlansHomeView() {
               onDuplicate={async () => {
                 const result = await duplicateGiftPlanAction(plan.id);
                 if (!result.ok) {
-                  setError(result.error);
+                  reportActionError(result.error, setError);
                   return;
                 }
                 router.push(`/gift-plans/${result.data.id}`);
@@ -275,12 +277,12 @@ export function GiftPlansHomeView() {
               onRename={() => setRenameTarget(plan)}
               onArchive={async () => {
                 const result = await setGiftPlanArchivedAction(plan.id, true);
-                if (!result.ok) setError(result.error);
+                if (!result.ok) reportActionError(result.error, setError);
                 else void refresh();
               }}
               onUnarchive={async () => {
                 const result = await setGiftPlanArchivedAction(plan.id, false);
-                if (!result.ok) setError(result.error);
+                if (!result.ok) reportActionError(result.error, setError);
                 else void refresh();
               }}
               onDelete={() => {
@@ -359,7 +361,7 @@ export function GiftPlansHomeView() {
           const result = await deleteGiftPlanAction(deleteTarget.id);
           setDeleting(false);
           if (!result.ok) {
-            setError(result.error);
+            reportActionError(result.error, setError);
             return;
           }
           setDeleteTarget(null);
