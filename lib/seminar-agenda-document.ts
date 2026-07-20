@@ -4,7 +4,8 @@ import {
   resolveSeminarCategoryVisual,
   type SeminarCategoryVisual,
 } from "@/lib/seminar-agenda-category-colors";
-import { SEMINAR_EVENT_FORMAT_LABELS } from "@/lib/seminar-planner-format";
+import { SEMINAR_EVENT_FORMAT_LABELS, formatSeminarClockRange } from "@/lib/seminar-planner-format";
+import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
 import { calcDurationMinutes } from "@/lib/seminar-planner-time";
 import type {
   SeminarAgendaItemInput,
@@ -15,6 +16,7 @@ import type {
 export interface SeminarAgendaDocumentSession {
   id: string;
   order: number;
+  timeRange: string;
   title: string | null;
   categoryName: string | null;
   categoryVisual: SeminarCategoryVisual;
@@ -89,6 +91,20 @@ export function isAgendaDocumentDraft(items: SeminarAgendaItemInput[]): boolean 
   return items.some(isAgendaItemIncompleteForExport);
 }
 
+/** Participant-facing time range for agenda export (24h, no duration). */
+export function formatAgendaDocumentTimeRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+): string {
+  const hasStart = Boolean(start?.trim());
+  const hasEnd = Boolean(end?.trim());
+  if (!hasStart || !hasEnd) return t.agendaDocumentTimeUnset;
+
+  const range = formatSeminarClockRange(start, end);
+  if (range === "—") return t.agendaDocumentTimeUnset;
+  return range;
+}
+
 export function buildSeminarAgendaDocument(
   options: BuildSeminarAgendaDocumentOptions,
 ): SeminarAgendaDocumentModel {
@@ -102,6 +118,7 @@ export function buildSeminarAgendaDocument(
     return {
       id: agendaItemKey(item, index),
       order: index + 1,
+      timeRange: formatAgendaDocumentTimeRange(item.start_time, item.end_time),
       title: item.title?.trim() || null,
       categoryName: formatSeminarCategoryLabel(categoryKey),
       categoryVisual: resolveSeminarCategoryVisual(

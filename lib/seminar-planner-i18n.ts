@@ -171,6 +171,7 @@ export const SEMINAR_PLANNER_COPY = {
   agendaDocumentEyebrow: "AGENDA",
   agendaDocumentDraft: "DRAFT",
   agendaDocumentDate: "วันที่",
+  agendaDocumentTimeUnset: "ยังไม่กำหนดเวลา",
   agendaDocumentIncompleteTag: "ข้อมูลไม่ครบ",
 
   // Event detail header

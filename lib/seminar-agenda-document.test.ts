@@ -71,15 +71,16 @@ assert.equal(model.isDraft, false);
 assert.equal(model.sessions.length, 2);
 assert.equal(model.topicCountLabel, "2 หัวข้อ");
 assert.equal(model.sessions[0].title, "Opening & Welcome");
+assert.equal(model.sessions[0].timeRange, "09:00–09:20 น.");
 assert.equal(model.sessions[0].shortDetail, sampleItem().agenda_short_detail);
 assert.equal(model.sessions[0].categoryName, "อัปเดตองค์กร");
 assert.equal(model.sessions[1].categoryVisual.accent, "#16a34a");
 assert.equal(model.sessions[1].shortDetail, null);
 
 const serialized = JSON.stringify(model);
-assert.ok(!serialized.includes("09:00"));
+assert.ok(serialized.includes("09:00–09:20 น."));
 assert.ok(!serialized.includes("Moderator"));
-assert.ok(!serialized.includes("นาที"));
+assert.ok(!serialized.includes("30 นาที"));
 assert.ok(!serialized.includes('"Draft"'));
 assert.ok(!serialized.includes("ข้อมูลไม่ครบ"));
 assert.ok(!serialized.includes("ผู้รับผิดชอบ"));
@@ -90,6 +91,7 @@ const draftModel = buildSeminarAgendaDocument({
   items: [sampleItem({ end_time: "" })],
 });
 assert.equal(draftModel.isDraft, true);
+assert.equal(draftModel.sessions[0].timeRange, "ยังไม่กำหนดเวลา");
 assert.equal(isAgendaDocumentDraft([sampleItem({ end_time: "" })]), true);
 
 console.log("seminar-agenda-document.test.ts: ok");

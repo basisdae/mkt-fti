@@ -5,6 +5,7 @@ import "./seminar-agenda-print.css";
 import { SEMINAR_AGENDA_DOCUMENT_ACCENT } from "@/lib/seminar-agenda-category-colors";
 import type { SeminarAgendaDocumentModel } from "@/lib/seminar-agenda-document";
 import { SEMINAR_PLANNER_COPY as t } from "@/lib/seminar-planner-i18n";
+import { cn } from "@/lib/utils";
 
 interface SeminarAgendaTimelineDocumentProps {
   model: SeminarAgendaDocumentModel;
@@ -35,6 +36,15 @@ function SessionRow({
       <div className="seminar-agenda-session__left">
         <span className="seminar-agenda-session__order">
           {session.order.toString().padStart(2, "0")}
+        </span>
+        <span
+          className={cn(
+            "seminar-agenda-session__time",
+            session.timeRange === t.agendaDocumentTimeUnset &&
+              "seminar-agenda-session__time--unset",
+          )}
+        >
+          {session.timeRange}
         </span>
       </div>
 
