@@ -45,6 +45,8 @@ export function formatShortDate(value: string | null | undefined): string {
   });
 }
 
+export const MONTHLY_PLAN_NEW_WORK_ID = "__monthly_plan_new__";
+
 export function currentPlanYear(): number {
   return new Date().getFullYear();
 }

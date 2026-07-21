@@ -6,6 +6,8 @@ import {
   bucketsToPlacementUpdates,
   groupWorkItemsIntoBuckets,
   moveItemBetweenBuckets,
+  moveItemToMonthBucket,
+  reorderItemInBucket,
 } from "@/lib/monthly-plan-board";
 import { bucketId } from "@/lib/monthly-plan-format";
 import { isMonthlyPlanTap } from "@/lib/monthly-plan-dnd";
@@ -67,5 +69,11 @@ assert(
 
 assert(isMonthlyPlanTap({ x: 0, y: 0 }, { x: 4, y: 4 }), "tap within threshold");
 assert(!isMonthlyPlanTap({ x: 0, y: 0 }, { x: 0, y: 12 }), "movement starts drag");
+
+const reordered = reorderItemInBucket(moved, "c", "b");
+assert(reordered[bucketId(2026, 1)][0].id === "c", "reordered within bucket");
+
+const toAugust = moveItemToMonthBucket(moved, "b", 2026, 8);
+assert(toAugust[bucketId(2026, 8)].some((row) => row.id === "b"), "move to month bucket");
 
 console.log("monthly-plan-board: all tests passed");

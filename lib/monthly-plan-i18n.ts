@@ -48,6 +48,20 @@ export const MONTHLY_PLAN_COPY = {
   cancel: "ยกเลิก",
   deleting: "กำลังลบ…",
   deleteFailed: "ลบงานไม่สำเร็จ",
+  collapseCard: "พับการ์ด",
+  expandCard: "กางการ์ด",
+  collapseAll: "พับทั้งหมด",
+  expandAll: "กางทั้งหมด",
+  cardActions: "เมนูงาน",
+  setMonth: "กำหนดเดือน",
+  moveToMonth: "ย้ายไปเดือน",
+  removeFromPlan: "นำออกจากแผน",
+  movedToMonth: "ย้ายไปเดือน{month}แล้ว",
+  movedToUnplanned: "นำออกจากแผนแล้ว",
+  workCreated: "เพิ่มงานเรียบร้อยแล้ว",
+  newWorkTitle: "งานใหม่",
+  savingPlacement: "กำลังบันทึกลำดับ…",
+  subtasksCount: "{done}/{total} Task",
   save: "บันทึก",
   close: "ปิด",
   loading: "กำลังโหลด…",
@@ -71,6 +85,17 @@ export const MONTHLY_PLAN_COPY = {
 
 export function formatMonthlyPlanDeleteDialogMessage(title: string): string {
   return MONTHLY_PLAN_COPY.deleteDialogBody.replace("{title}", title);
+}
+
+export function formatMonthlyPlanMovedToMonth(month: number): string {
+  const label = MONTHLY_PLAN_COPY.months[month - 1] ?? String(month);
+  return MONTHLY_PLAN_COPY.movedToMonth.replace("{month}", label);
+}
+
+export function formatMonthlyPlanSubtasksCount(done: number, total: number): string {
+  return MONTHLY_PLAN_COPY.subtasksCount
+    .replace("{done}", String(done))
+    .replace("{total}", String(total));
 }
 
 export const MONTHLY_PLAN_MONTH_THEMES = [

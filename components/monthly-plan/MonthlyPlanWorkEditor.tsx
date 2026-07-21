@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -146,6 +146,17 @@ export function itemToEditorValues(item: MktWorkItemCard): MonthlyPlanWorkEditor
   };
 }
 
+export function emptyEditorValues(): MonthlyPlanWorkEditorValues {
+  return {
+    title: "",
+    description: "",
+    status: "PLAN",
+    priority: "",
+    owner_user_id: "",
+    subtasks: [],
+  };
+}
+
 export function MonthlyPlanWorkEditor({
   item,
   assignees,
@@ -169,6 +180,10 @@ export function MonthlyPlanWorkEditor({
     () => calcWorkProgress(values.subtasks),
     [values.subtasks],
   );
+
+  useEffect(() => {
+    onChange(values);
+  }, [item.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function patch(partial: Partial<MonthlyPlanWorkEditorValues>) {
     setValues((current) => {

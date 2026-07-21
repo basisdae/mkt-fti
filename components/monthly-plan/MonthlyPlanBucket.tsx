@@ -21,9 +21,13 @@ interface MonthlyPlanBucketProps {
   assignees: MktWorkAssigneeOption[];
   month: number | null;
   disabled?: boolean;
+  canEdit?: boolean;
   canDelete?: boolean;
   isActiveDrop?: boolean;
+  collapsedCardIds: ReadonlySet<string>;
   onOpenItem: (id: string) => void;
+  onToggleCardCollapse: (id: string) => void;
+  onSelectMonth?: (itemId: string, month: number | null) => void;
   onDeleteRequest?: (item: MktWorkItemCard) => void;
   layout?: "column" | "strip";
 }
@@ -38,9 +42,13 @@ export function MonthlyPlanBucket({
   assignees,
   month,
   disabled = false,
+  canEdit = false,
   canDelete = false,
   isActiveDrop = false,
+  collapsedCardIds,
   onOpenItem,
+  onToggleCardCollapse,
+  onSelectMonth,
   onDeleteRequest,
   layout = "column",
 }: MonthlyPlanBucketProps) {
@@ -53,7 +61,7 @@ export function MonthlyPlanBucket({
     <section
       ref={setNodeRef}
       className={cn(
-        "flex min-h-[12rem] flex-col rounded-2xl border transition-all duration-150",
+        "flex min-h-[12rem] flex-col rounded-2xl border transition-[box-shadow,border-color] duration-150",
         isStrip ? "min-h-[9rem]" : "min-h-[14rem]",
         highlighted && "ring-2 ring-offset-2 shadow-md",
       )}
@@ -117,9 +125,17 @@ export function MonthlyPlanBucket({
                   item={item}
                   assignees={assignees}
                   month={month}
+                  collapsed={collapsedCardIds.has(item.id)}
                   disabled={disabled}
+                  canEdit={canEdit}
                   canDelete={canDelete}
                   onOpen={() => onOpenItem(item.id)}
+                  onToggleCollapse={() => onToggleCardCollapse(item.id)}
+                  onSelectMonth={
+                    onSelectMonth
+                      ? (nextMonth) => onSelectMonth(item.id, nextMonth)
+                      : undefined
+                  }
                   onDeleteRequest={onDeleteRequest}
                 />
               </div>

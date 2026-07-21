@@ -13,6 +13,8 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
+import { ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import {
   bucketId,
   monthTheme,
@@ -28,6 +30,7 @@ import {
   findBucketForItem,
   flattenBuckets,
   moveItemBetweenBuckets,
+  reorderItemInBucket,
   type MonthlyPlanBuckets,
 } from "@/lib/monthly-plan-board";
 import type { MktWorkAssigneeOption, MktWorkItemCard } from "@/types/monthly-plan";
@@ -41,8 +44,14 @@ interface MonthlyPlanBoardProps {
   buckets: MonthlyPlanBuckets;
   assignees: MktWorkAssigneeOption[];
   disabled?: boolean;
+  canEdit?: boolean;
   canDelete?: boolean;
+  collapsedCardIds: ReadonlySet<string>;
   onOpenItem: (id: string) => void;
+  onToggleCardCollapse: (id: string) => void;
+  onCollapseAll: () => void;
+  onExpandAll: () => void;
+  onSelectMonth?: (itemId: string, month: number | null) => void;
   onDeleteRequest?: (item: MktWorkItemCard) => void;
   onBucketsChange: (next: MonthlyPlanBuckets) => void;
   onCommit: (next: MonthlyPlanBuckets) => void;
@@ -54,8 +63,14 @@ export function MonthlyPlanBoard({
   buckets,
   assignees,
   disabled = false,
+  canEdit = false,
   canDelete = false,
+  collapsedCardIds,
   onOpenItem,
+  onToggleCardCollapse,
+  onCollapseAll,
+  onExpandAll,
+  onSelectMonth,
   onDeleteRequest,
   onBucketsChange,
   onCommit,
@@ -64,6 +79,9 @@ export function MonthlyPlanBoard({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDropBucket, setActiveDropBucket] = useState<string | null>(null);
   const activeDropBucketRef = useRef<string | null>(null);
+  const latestBucketsRef = useRef(buckets);
+
+  latestBucketsRef.current = buckets;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -87,9 +105,13 @@ export function MonthlyPlanBoard({
     return parseBucketId(key)?.planMonth ?? null;
   }, [activeId, buckets]);
 
+  const allCollapsed =
+    flattenBuckets(buckets).length > 0 &&
+    flattenBuckets(buckets).every((item) => collapsedCardIds.has(item.id));
+
   function resolveBucketKey(overId: string): string | null {
     if (overId.startsWith("bucket:")) return overId;
-    return findBucketForItem(buckets, overId);
+    return findBucketForItem(latestBucketsRef.current, overId);
   }
 
   function setDropBucketHighlight(bucketKey: string | null) {
@@ -109,21 +131,34 @@ export function MonthlyPlanBoard({
     }
 
     const activeItemId = String(active.id);
-    const overBucketKey = resolveBucketKey(String(over.id));
+    const overId = String(over.id);
+    const overBucketKey = resolveBucketKey(overId);
     if (!overBucketKey) return;
 
     setDropBucketHighlight(overBucketKey);
 
-    const activeBucketKey = findBucketForItem(buckets, activeItemId);
-    if (!activeBucketKey || activeBucketKey === overBucketKey) return;
+    const currentBuckets = latestBucketsRef.current;
+    const activeBucketKey = findBucketForItem(currentBuckets, activeItemId);
+    if (!activeBucketKey) return;
 
-    const overItemId = String(over.id).startsWith("bucket:")
-      ? null
-      : String(over.id);
+    if (
+      activeBucketKey === overBucketKey &&
+      !overId.startsWith("bucket:") &&
+      overId !== activeItemId
+    ) {
+      onBucketsChange(
+        reorderItemInBucket(currentBuckets, activeItemId, overId),
+      );
+      return;
+    }
+
+    if (activeBucketKey === overBucketKey) return;
+
+    const overItemId = overId.startsWith("bucket:") ? null : overId;
 
     onBucketsChange(
       moveItemBetweenBuckets(
-        buckets,
+        currentBuckets,
         activeItemId,
         overBucketKey,
         overItemId,
@@ -136,15 +171,26 @@ export function MonthlyPlanBoard({
     overBucketKey: string,
     overId: string,
   ) {
-    const overItemId = overId.startsWith("bucket:") ? null : overId;
+    const currentBuckets = latestBucketsRef.current;
+    let next = currentBuckets;
 
-    const next = moveItemBetweenBuckets(
-      buckets,
-      activeItemId,
-      overBucketKey,
-      overItemId,
-    );
-    onBucketsChange(next);
+    if (!overId.startsWith("bucket:") && overId !== activeItemId) {
+      const activeBucketKey = findBucketForItem(currentBuckets, activeItemId);
+      if (activeBucketKey === overBucketKey) {
+        next = reorderItemInBucket(currentBuckets, activeItemId, overId);
+      }
+    }
+
+    if (findBucketForItem(next, activeItemId) !== overBucketKey) {
+      const overItemId = overId.startsWith("bucket:") ? null : overId;
+      next = moveItemBetweenBuckets(
+        next,
+        activeItemId,
+        overBucketKey,
+        overItemId,
+      );
+    }
+
     onCommit(next);
   }
 
@@ -190,6 +236,28 @@ export function MonthlyPlanBoard({
       onDragCancel={handleDragCancel}
     >
       <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs text-gray-600"
+            onClick={allCollapsed ? onExpandAll : onCollapseAll}
+          >
+            {allCollapsed ? (
+              <>
+                <ChevronsDownUp className="h-3.5 w-3.5" />
+                {t.expandAll}
+              </>
+            ) : (
+              <>
+                <ChevronsUpDown className="h-3.5 w-3.5" />
+                {t.collapseAll}
+              </>
+            )}
+          </Button>
+        </div>
+
         <MonthlyPlanBucket
           bucketId={unplannedKey}
           title={t.unplannedTitle}
@@ -200,9 +268,13 @@ export function MonthlyPlanBoard({
           assignees={assignees}
           month={null}
           disabled={disabled}
+          canEdit={canEdit}
           canDelete={canDelete}
           isActiveDrop={activeDropBucket === unplannedKey}
+          collapsedCardIds={collapsedCardIds}
           onOpenItem={onOpenItem}
+          onToggleCardCollapse={onToggleCardCollapse}
+          onSelectMonth={onSelectMonth}
           onDeleteRequest={onDeleteRequest}
           layout="strip"
         />
@@ -225,9 +297,13 @@ export function MonthlyPlanBoard({
                 assignees={assignees}
                 month={month}
                 disabled={disabled}
+                canEdit={canEdit}
                 canDelete={canDelete}
                 isActiveDrop={activeDropBucket === key}
+                collapsedCardIds={collapsedCardIds}
                 onOpenItem={onOpenItem}
+                onToggleCardCollapse={onToggleCardCollapse}
+                onSelectMonth={onSelectMonth}
                 onDeleteRequest={onDeleteRequest}
               />
             );
@@ -235,12 +311,13 @@ export function MonthlyPlanBoard({
         </div>
       </div>
 
-      <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
+      <DragOverlay dropAnimation={{ duration: 120, easing: "ease-out" }}>
         {activeItem ? (
           <MonthlyPlanWorkCardPreview
             item={activeItem}
             assignees={assignees}
             month={activeMonth}
+            collapsed={collapsedCardIds.has(activeItem.id)}
           />
         ) : null}
       </DragOverlay>

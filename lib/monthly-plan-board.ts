@@ -74,6 +74,94 @@ export function bucketsToPlacementUpdates(
   return updates;
 }
 
+export function reorderItemInBucket(
+  buckets: MonthlyPlanBuckets,
+  activeId: string,
+  overId: string,
+): MonthlyPlanBuckets {
+  const bucketKey = findBucketForItem(buckets, activeId);
+  if (!bucketKey) return buckets;
+
+  const overBucketKey = findBucketForItem(buckets, overId);
+  if (bucketKey !== overBucketKey) return buckets;
+
+  const list = [...buckets[bucketKey]];
+  const oldIndex = list.findIndex((item) => item.id === activeId);
+  const newIndex = list.findIndex((item) => item.id === overId);
+  if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return buckets;
+
+  const nextList = [...list];
+  const [moved] = nextList.splice(oldIndex, 1);
+  nextList.splice(newIndex, 0, moved);
+
+  return {
+    ...buckets,
+    [bucketKey]: nextList,
+  };
+}
+
+export function moveItemToMonthBucket(
+  buckets: MonthlyPlanBuckets,
+  itemId: string,
+  year: number,
+  planMonth: number | null,
+): MonthlyPlanBuckets {
+  const targetKey = bucketId(year, planMonth);
+  if (!buckets[targetKey]) return buckets;
+  return moveItemBetweenBuckets(buckets, itemId, targetKey, null);
+}
+
+export function mergeItemsWithServer(
+  localItems: MktWorkItemCard[],
+  serverItems: MktWorkItemCard[],
+  keepPlacementIds: ReadonlySet<string>,
+): MktWorkItemCard[] {
+  const serverMap = new Map(serverItems.map((item) => [item.id, item]));
+  const localMap = new Map(localItems.map((item) => [item.id, item]));
+  const merged: MktWorkItemCard[] = [];
+
+  for (const serverItem of serverItems) {
+    const localItem = localMap.get(serverItem.id);
+    if (!localItem) {
+      merged.push(serverItem);
+      continue;
+    }
+
+    if (keepPlacementIds.has(serverItem.id)) {
+      merged.push({
+        ...serverItem,
+        plan_year: localItem.plan_year,
+        plan_month: localItem.plan_month,
+        sort_order: localItem.sort_order,
+      });
+      continue;
+    }
+
+    if (serverItem.updated_at > localItem.updated_at) {
+      merged.push(serverItem);
+      continue;
+    }
+
+    merged.push({
+      ...localItem,
+      subtasks:
+        serverItem.subtasks.length >= localItem.subtasks.length
+          ? serverItem.subtasks
+          : localItem.subtasks,
+      subtasks_done: serverItem.subtasks_done,
+      subtasks_total: serverItem.subtasks_total,
+    });
+  }
+
+  for (const localItem of localItems) {
+    if (!serverMap.has(localItem.id)) {
+      merged.push(localItem);
+    }
+  }
+
+  return merged;
+}
+
 export function moveItemBetweenBuckets(
   buckets: MonthlyPlanBuckets,
   activeId: string,

@@ -5,34 +5,43 @@ import { Drawer } from "@/components/ui/Drawer";
 import { Button } from "@/components/ui/Button";
 import {
   MonthlyPlanWorkEditor,
+  emptyEditorValues,
+  itemToEditorValues,
   type MonthlyPlanWorkEditorValues,
 } from "@/components/monthly-plan/MonthlyPlanWorkEditor";
 import {
+  createMonthlyWorkItemAction,
   deleteMonthlyWorkItemAction,
   getMonthlyWorkItemAction,
   saveMonthlyWorkSubtasksAction,
   updateMonthlyWorkItemAction,
 } from "@/lib/actions/monthly-plan";
+import { MONTHLY_PLAN_NEW_WORK_ID } from "@/lib/monthly-plan-format";
 import { MONTHLY_PLAN_COPY as t } from "@/lib/monthly-plan-i18n";
 import type { MktWorkAssigneeOption, MktWorkItemCard } from "@/types/monthly-plan";
 
 interface MonthlyPlanWorkDrawerProps {
   workId: string | null;
+  unplannedSortOrder: number;
   assignees: MktWorkAssigneeOption[];
   canEdit: boolean;
   onClose: () => void;
+  onCreated: (item: MktWorkItemCard) => void;
   onUpdated: (item: MktWorkItemCard) => void;
   onDeleted: (id: string) => void;
 }
 
 export function MonthlyPlanWorkDrawer({
   workId,
+  unplannedSortOrder,
   assignees,
   canEdit,
   onClose,
+  onCreated,
   onUpdated,
   onDeleted,
 }: MonthlyPlanWorkDrawerProps) {
+  const isNew = workId === MONTHLY_PLAN_NEW_WORK_ID;
   const [item, setItem] = useState<MktWorkItemCard | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -40,7 +49,7 @@ export function MonthlyPlanWorkDrawer({
   const editorValuesRef = useRef<MonthlyPlanWorkEditorValues | null>(null);
 
   const load = useCallback(async () => {
-    if (!workId) return;
+    if (!workId || isNew) return;
     setLoading(true);
     setError(null);
     const result = await getMonthlyWorkItemAction(workId);
@@ -51,24 +60,86 @@ export function MonthlyPlanWorkDrawer({
       return;
     }
     setItem(result.data);
-  }, [workId]);
+  }, [isNew, workId]);
 
   useEffect(() => {
     if (!workId) {
       setItem(null);
+      setError(null);
+      editorValuesRef.current = null;
       return;
     }
+
+    if (isNew) {
+      setItem(null);
+      setLoading(false);
+      setError(null);
+      editorValuesRef.current = emptyEditorValues();
+      return;
+    }
+
     void load();
-  }, [workId, load]);
+  }, [workId, isNew, load]);
 
   async function handleSave() {
-    if (!item || !canEdit || !editorValuesRef.current) return;
+    if (!canEdit || !editorValuesRef.current || saving) return;
+
+    const values = editorValuesRef.current;
+    const title = values.title.trim() || t.newWorkTitle;
+
     setSaving(true);
     setError(null);
 
-    const values = editorValuesRef.current;
+    if (isNew) {
+      const createResult = await createMonthlyWorkItemAction({
+        title,
+        description: values.description,
+        status: values.status,
+        priority: values.priority || null,
+        plan_year: null,
+        plan_month: null,
+        sort_order: unplannedSortOrder,
+        owner_user_id: values.owner_user_id || null,
+      });
+
+      if (!createResult.ok) {
+        setSaving(false);
+        setError(createResult.error);
+        return;
+      }
+
+      let createdItem = createResult.data;
+
+      if (values.subtasks.some((task) => task.title.trim())) {
+        const subtasksResult = await saveMonthlyWorkSubtasksAction(
+          createdItem.id,
+          values.subtasks,
+        );
+        if (!subtasksResult.ok) {
+          setSaving(false);
+          setError(subtasksResult.error);
+          return;
+        }
+
+        const refreshed = await getMonthlyWorkItemAction(createdItem.id);
+        if (refreshed.ok) {
+          createdItem = refreshed.data;
+        }
+      }
+
+      setSaving(false);
+      editorValuesRef.current = emptyEditorValues();
+      onCreated(createdItem);
+      return;
+    }
+
+    if (!item) {
+      setSaving(false);
+      return;
+    }
+
     const updateResult = await updateMonthlyWorkItemAction(item.id, {
-      title: values.title,
+      title,
       description: values.description,
       status: values.status,
       priority: values.priority || null,
@@ -85,14 +156,16 @@ export function MonthlyPlanWorkDrawer({
       item.id,
       values.subtasks,
     );
-    setSaving(false);
 
     if (!subtasksResult.ok) {
+      setSaving(false);
       setError(subtasksResult.error);
       return;
     }
 
     const refreshed = await getMonthlyWorkItemAction(item.id);
+    setSaving(false);
+
     if (refreshed.ok) {
       setItem(refreshed.data);
       onUpdated(refreshed.data);
@@ -100,7 +173,7 @@ export function MonthlyPlanWorkDrawer({
   }
 
   async function handleDelete() {
-    if (!item || !canEdit) return;
+    if (!item || !canEdit || isNew) return;
     if (!window.confirm(t.deleteConfirm)) return;
 
     const result = await deleteMonthlyWorkItemAction(item.id);
@@ -112,23 +185,52 @@ export function MonthlyPlanWorkDrawer({
     onClose();
   }
 
+  const drawerTitle = isNew ? t.addWork : (item?.title ?? t.drawerTitle);
+
+  const editorItem: MktWorkItemCard | null = isNew
+    ? {
+        id: MONTHLY_PLAN_NEW_WORK_ID,
+        title: "",
+        description: "",
+        status: "PLAN",
+        priority: null,
+        plan_year: null,
+        plan_month: null,
+        sort_order: 0,
+        owner_user_id: null,
+        collaborator_user_ids: [],
+        start_date: null,
+        deadline: null,
+        created_by_email: "",
+        created_at: "",
+        updated_at: "",
+        subtasks: [],
+        subtasks_done: 0,
+        subtasks_total: 0,
+      }
+    : item;
+
   return (
     <Drawer
       open={workId != null}
       onClose={onClose}
-      title={item?.title ?? t.drawerTitle}
+      title={drawerTitle}
       footer={
         canEdit ? (
           <div className="flex flex-wrap justify-between gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-fti-red hover:bg-red-50"
-              onClick={() => void handleDelete()}
-              disabled={saving || !item}
-            >
-              {t.deleteWork}
-            </Button>
+            {!isNew ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-fti-red hover:bg-red-50"
+                onClick={() => void handleDelete()}
+                disabled={saving || loading || !item}
+              >
+                {t.deleteWork}
+              </Button>
+            ) : (
+              <span />
+            )}
             <div className="flex gap-2">
               <Button type="button" variant="secondary" onClick={onClose}>
                 {t.close}
@@ -136,7 +238,7 @@ export function MonthlyPlanWorkDrawer({
               <Button
                 type="button"
                 onClick={() => void handleSave()}
-                disabled={saving || loading || !item}
+                disabled={saving || loading || (!isNew && !item)}
               >
                 {saving ? t.saving : t.save}
               </Button>
@@ -155,12 +257,13 @@ export function MonthlyPlanWorkDrawer({
         <p className="text-sm text-gray-500">{t.loading}</p>
       ) : error ? (
         <p className="text-sm text-fti-red">{error}</p>
-      ) : item ? (
+      ) : editorItem ? (
         <MonthlyPlanWorkEditor
-          key={item.updated_at}
-          item={item}
+          key={isNew ? "new" : editorItem.updated_at}
+          item={editorItem}
           assignees={assignees}
           disabled={!canEdit}
+          showFullPageLink={!isNew}
           onChange={(values) => {
             editorValuesRef.current = values;
           }}

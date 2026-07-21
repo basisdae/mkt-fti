@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Plus, RotateCcw } from "lucide-react";
 import { MonthlyPlanBoard } from "@/components/monthly-plan/MonthlyPlanBoard";
+import { monthMoveToastMessage } from "@/components/monthly-plan/MonthlyPlanWorkCardMenu";
 import { MonthlyPlanDeleteWorkDialog } from "@/components/monthly-plan/MonthlyPlanDeleteWorkDialog";
 import { MonthlyPlanFilters } from "@/components/monthly-plan/MonthlyPlanFilters";
 import { MonthlyPlanWorkDrawer } from "@/components/monthly-plan/MonthlyPlanWorkDrawer";
@@ -11,7 +12,6 @@ import { Toast } from "@/components/ui/Toast";
 import { useAuth } from "@/hooks/AuthStore";
 import {
   batchUpdateMonthlyPlacementsAction,
-  createMonthlyWorkItemAction,
   deleteMonthlyWorkItemAction,
   listMonthlyPlanAssigneesAction,
   listMonthlyPlanBoardAction,
@@ -19,8 +19,14 @@ import {
 import {
   bucketsToPlacementUpdates,
   groupWorkItemsIntoBuckets,
+  mergeItemsWithServer,
+  moveItemToMonthBucket,
+  type MonthlyPlanBuckets,
 } from "@/lib/monthly-plan-board";
-import { currentPlanYear } from "@/lib/monthly-plan-format";
+import {
+  currentPlanYear,
+  MONTHLY_PLAN_NEW_WORK_ID,
+} from "@/lib/monthly-plan-format";
 import { MONTHLY_PLAN_COPY as t } from "@/lib/monthly-plan-i18n";
 import { canEditMonthlyPlan, canViewMonthlyPlan } from "@/lib/auth/permissions";
 import {
@@ -32,6 +38,8 @@ import type {
   MktWorkBoardFilters,
   MktWorkItemCard,
 } from "@/types/monthly-plan";
+
+const PLACEMENT_SAVE_DEBOUNCE_MS = 400;
 
 function matchesClientFilters(
   item: MktWorkItemCard,
@@ -77,7 +85,7 @@ function visibleBoardItems(
 
 function mergePlacementsIntoItems(
   items: MktWorkItemCard[],
-  buckets: ReturnType<typeof groupWorkItemsIntoBuckets>,
+  buckets: MonthlyPlanBuckets,
   year: number,
 ): MktWorkItemCard[] {
   const updates = bucketsToPlacementUpdates(buckets, year);
@@ -92,6 +100,14 @@ function mergePlacementsIntoItems(
       sort_order: patch.sort_order,
     };
   });
+}
+
+function cloneItem(item: MktWorkItemCard): MktWorkItemCard {
+  return {
+    ...item,
+    subtasks: [...item.subtasks],
+    collaborator_user_ids: [...item.collaborator_user_ids],
+  };
 }
 
 export function MonthlyPlanView() {
@@ -114,9 +130,19 @@ export function MonthlyPlanView() {
   const [deleteTarget, setDeleteTarget] = useState<MktWorkItemCard | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [collapsedCardIds, setCollapsedCardIds] = useState<Set<string>>(new Set());
+  const [isSavingPlacement, setIsSavingPlacement] = useState(false);
 
   const bucketsBeforeDragRef = useRef<MktWorkItemCard[] | null>(null);
   const isDraggingRef = useRef(false);
+  const blockBucketSyncRef = useRef(false);
+  const pendingBucketsRef = useRef<MonthlyPlanBuckets | null>(null);
+  const pendingPlacementIdsRef = useRef<Set<string>>(new Set());
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const persistSeqRef = useRef(0);
+  const allItemsRef = useRef(allItems);
+
+  allItemsRef.current = allItems;
 
   const displayBuckets = useMemo(
     () => groupWorkItemsIntoBuckets(visibleBoardItems(allItems, filters), year),
@@ -126,93 +152,176 @@ export function MonthlyPlanView() {
   const [buckets, setBuckets] = useState(displayBuckets);
 
   useEffect(() => {
-    if (!isDraggingRef.current) {
+    if (!isDraggingRef.current && !blockBucketSyncRef.current) {
       setBuckets(displayBuckets);
     }
   }, [displayBuckets]);
 
   const loadBoard = useCallback(async () => {
     if (!canView) return;
-    setLoading(true);
-    setError(null);
 
     const [boardResult, assigneeResult] = await Promise.all([
       listMonthlyPlanBoardAction(year, {}),
       listMonthlyPlanAssigneesAction(),
     ]);
 
-    setLoading(false);
-
     if (!boardResult.ok) {
       reportActionError(boardResult.error, setError);
+      setLoading(false);
       return;
     }
     if (!assigneeResult.ok) {
       reportActionError(assigneeResult.error, setError);
+      setLoading(false);
       return;
     }
 
-    setAllItems(boardResult.data);
+    setAllItems((current) =>
+      mergeItemsWithServer(
+        current,
+        boardResult.data,
+        pendingPlacementIdsRef.current,
+      ),
+    );
     setAssignees(assigneeResult.data);
+    setError(null);
+    setLoading(false);
   }, [canView, year]);
 
   useEffect(() => {
+    setLoading(true);
     void loadBoard();
   }, [loadBoard]);
 
   useEffect(() => {
     const onFocus = () => {
+      if (isDraggingRef.current || pendingBucketsRef.current) return;
       void loadBoard();
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [loadBoard]);
 
-  async function persistBuckets(nextBuckets: typeof buckets) {
-    const previousItems = allItems;
-    const mergedItems = mergePlacementsIntoItems(allItems, nextBuckets, year);
-    setAllItems(mergedItems);
+  useEffect(
+    () => () => {
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current);
+    },
+    [],
+  );
 
-    const result = await batchUpdateMonthlyPlacementsAction(
-      bucketsToPlacementUpdates(nextBuckets, year),
+  function applyOptimisticBuckets(nextBuckets: MonthlyPlanBuckets) {
+    blockBucketSyncRef.current = true;
+    const mergedItems = mergePlacementsIntoItems(
+      allItemsRef.current,
+      nextBuckets,
+      year,
     );
+    for (const update of bucketsToPlacementUpdates(nextBuckets, year)) {
+      pendingPlacementIdsRef.current.add(update.id);
+    }
+    setAllItems(mergedItems);
+    setBuckets(nextBuckets);
+  }
+
+  async function flushPersistBuckets() {
+    const nextBuckets = pendingBucketsRef.current;
+    if (!nextBuckets) return;
+
+    pendingBucketsRef.current = null;
+    const seq = ++persistSeqRef.current;
+    const previousItems = allItemsRef.current.map(cloneItem);
+    const updates = bucketsToPlacementUpdates(nextBuckets, year);
+
+    setIsSavingPlacement(true);
+    const result = await batchUpdateMonthlyPlacementsAction(updates);
+    setIsSavingPlacement(false);
+
+    if (seq !== persistSeqRef.current) return;
+
     if (!result.ok) {
       setAllItems(previousItems);
       setBuckets(
-        groupWorkItemsIntoBuckets(visibleBoardItems(previousItems, filters), year),
+        groupWorkItemsIntoBuckets(
+          visibleBoardItems(previousItems, filters),
+          year,
+        ),
       );
+      for (const update of updates) {
+        pendingPlacementIdsRef.current.delete(update.id);
+      }
+      blockBucketSyncRef.current = false;
       setToast({ message: t.saveFailed, variant: "error" });
       return;
     }
 
+    const savedMap = new Map(result.data.map((row) => [row.id, row]));
+    setAllItems((current) =>
+      current.map((item) => {
+        const saved = savedMap.get(item.id);
+        if (!saved) return item;
+        pendingPlacementIdsRef.current.delete(item.id);
+        return {
+          ...item,
+          plan_year: saved.plan_year,
+          plan_month: saved.plan_month,
+          sort_order: saved.sort_order,
+          updated_at: saved.updated_at,
+        };
+      }),
+    );
     setBuckets(nextBuckets);
+    blockBucketSyncRef.current = false;
+
     if (bucketsBeforeDragRef.current) {
       setUndoSnapshot(bucketsBeforeDragRef.current);
     }
     bucketsBeforeDragRef.current = null;
   }
 
-  function handleBucketsChange(next: typeof buckets) {
+  function schedulePersistBuckets(nextBuckets: MonthlyPlanBuckets) {
+    pendingBucketsRef.current = nextBuckets;
+    applyOptimisticBuckets(nextBuckets);
+
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current);
+    }
+    persistTimerRef.current = setTimeout(() => {
+      persistTimerRef.current = null;
+      void flushPersistBuckets();
+    }, PLACEMENT_SAVE_DEBOUNCE_MS);
+  }
+
+  function handleBucketsChange(next: MonthlyPlanBuckets) {
     if (!isDraggingRef.current) {
-      bucketsBeforeDragRef.current = allItems.map((item) => ({
-        ...item,
-        subtasks: [...item.subtasks],
-        collaborator_user_ids: [...item.collaborator_user_ids],
-      }));
+      bucketsBeforeDragRef.current = allItemsRef.current.map(cloneItem);
       isDraggingRef.current = true;
+      blockBucketSyncRef.current = true;
     }
     setBuckets(next);
   }
 
-  async function handleDragCommitted(next: typeof buckets) {
+  function handleDragCommitted(next: MonthlyPlanBuckets) {
     isDraggingRef.current = false;
-    if (!canEdit) return;
-    await persistBuckets(next);
+    if (!canEdit) {
+      blockBucketSyncRef.current = false;
+      setBuckets(displayBuckets);
+      return;
+    }
+    schedulePersistBuckets(next);
   }
 
   function handleDragRevert() {
     isDraggingRef.current = false;
+    const snapshot = bucketsBeforeDragRef.current;
     bucketsBeforeDragRef.current = null;
+    blockBucketSyncRef.current = false;
+    if (snapshot) {
+      setAllItems(snapshot);
+      setBuckets(
+        groupWorkItemsIntoBuckets(visibleBoardItems(snapshot, filters), year),
+      );
+      return;
+    }
     setBuckets(displayBuckets);
   }
 
@@ -222,38 +331,18 @@ export function MonthlyPlanView() {
     setUndoSnapshot(null);
     const grouped = groupWorkItemsIntoBuckets(snapshot, year);
     setAllItems(snapshot);
-    await persistBucketsFromUndo(grouped, snapshot);
+    schedulePersistBuckets(grouped);
   }
 
-  async function persistBucketsFromUndo(
-    nextBuckets: ReturnType<typeof groupWorkItemsIntoBuckets>,
-    snapshot: MktWorkItemCard[],
-  ) {
-    const result = await batchUpdateMonthlyPlacementsAction(
-      bucketsToPlacementUpdates(nextBuckets, year),
-    );
-    if (!result.ok) {
-      setAllItems(snapshot);
-      setToast({ message: t.saveFailed, variant: "error" });
-      return;
-    }
-    setBuckets(nextBuckets);
-  }
-
-  async function handleAddWork() {
+  function handleAddWork() {
     if (!canEdit) return;
-    const result = await createMonthlyWorkItemAction({
-      title: "งานใหม่",
-      plan_year: null,
-      plan_month: null,
-      sort_order: allItems.filter((item) => item.plan_month == null).length,
-    });
-    if (!result.ok) {
-      setToast({ message: result.error, variant: "error" });
-      return;
-    }
-    setAllItems((current) => [...current, result.data]);
-    setDrawerId(result.data.id);
+    setDrawerId(MONTHLY_PLAN_NEW_WORK_ID);
+  }
+
+  function handleItemCreated(item: MktWorkItemCard) {
+    setAllItems((current) => [...current, item]);
+    setDrawerId(null);
+    setToast({ message: t.workCreated, variant: "success" });
   }
 
   function handleItemUpdated(item: MktWorkItemCard) {
@@ -264,7 +353,47 @@ export function MonthlyPlanView() {
 
   function handleItemDeleted(id: string) {
     setAllItems((current) => current.filter((row) => row.id !== id));
+    setCollapsedCardIds((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
     if (drawerId === id) setDrawerId(null);
+  }
+
+  function handleToggleCardCollapse(id: string) {
+    setCollapsedCardIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleCollapseAll() {
+    setCollapsedCardIds(new Set(allItemsRef.current.map((item) => item.id)));
+  }
+
+  function handleExpandAll() {
+    setCollapsedCardIds(new Set());
+  }
+
+  function handleSelectMonth(itemId: string, month: number | null) {
+    if (!canEdit) return;
+
+    const item = allItemsRef.current.find((row) => row.id === itemId);
+    if (!item) return;
+    if (item.plan_month === month && (month == null || item.plan_year === year)) {
+      return;
+    }
+
+    const currentBuckets = groupWorkItemsIntoBuckets(
+      visibleBoardItems(allItemsRef.current, filters),
+      year,
+    );
+    const nextBuckets = moveItemToMonthBucket(currentBuckets, itemId, year, month);
+    schedulePersistBuckets(nextBuckets);
+    setToast({ message: monthMoveToastMessage(month), variant: "success" });
   }
 
   function handleDeleteRequest(item: MktWorkItemCard) {
@@ -330,6 +459,9 @@ export function MonthlyPlanView() {
               ))}
             </select>
           </label>
+          {isSavingPlacement ? (
+            <span className="text-xs text-gray-500">{t.savingPlacement}</span>
+          ) : null}
           {undoSnapshot && canEdit ? (
             <Button type="button" variant="secondary" onClick={() => void handleUndo()}>
               <RotateCcw className="h-4 w-4" />
@@ -337,7 +469,7 @@ export function MonthlyPlanView() {
             </Button>
           ) : null}
           {canEdit ? (
-            <Button type="button" onClick={() => void handleAddWork()}>
+            <Button type="button" onClick={handleAddWork}>
               <Plus className="h-4 w-4" />
               {t.addWork}
             </Button>
@@ -365,11 +497,17 @@ export function MonthlyPlanView() {
           buckets={buckets}
           assignees={assignees}
           disabled={!canEdit}
+          canEdit={canEdit}
           canDelete={canEdit}
+          collapsedCardIds={collapsedCardIds}
           onOpenItem={setDrawerId}
+          onToggleCardCollapse={handleToggleCardCollapse}
+          onCollapseAll={handleCollapseAll}
+          onExpandAll={handleExpandAll}
+          onSelectMonth={handleSelectMonth}
           onDeleteRequest={handleDeleteRequest}
           onBucketsChange={handleBucketsChange}
-          onCommit={(next) => void handleDragCommitted(next)}
+          onCommit={handleDragCommitted}
           onDragRevert={handleDragRevert}
         />
       )}
@@ -384,9 +522,13 @@ export function MonthlyPlanView() {
 
       <MonthlyPlanWorkDrawer
         workId={drawerId}
+        unplannedSortOrder={
+          allItems.filter((item) => item.plan_month == null).length
+        }
         assignees={assignees}
         canEdit={canEdit}
         onClose={() => setDrawerId(null)}
+        onCreated={handleItemCreated}
         onUpdated={handleItemUpdated}
         onDeleted={handleItemDeleted}
       />
