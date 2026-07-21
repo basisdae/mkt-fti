@@ -39,6 +39,10 @@ import {
   MonthlyPlanWorkCardPreview,
 } from "@/components/monthly-plan/MonthlyPlanWorkCard";
 
+export interface MonthlyPlanDragCommitMeta {
+  activeItemId: string;
+}
+
 interface MonthlyPlanBoardProps {
   year: number;
   buckets: MonthlyPlanBuckets;
@@ -47,14 +51,18 @@ interface MonthlyPlanBoardProps {
   canEdit?: boolean;
   canDelete?: boolean;
   collapsedCardIds: ReadonlySet<string>;
+  collapsedMonthIds: ReadonlySet<number>;
   onOpenItem: (id: string) => void;
   onToggleCardCollapse: (id: string) => void;
-  onCollapseAll: () => void;
-  onExpandAll: () => void;
+  onToggleMonthCollapse: (month: number) => void;
+  onCollapseAllCards: () => void;
+  onExpandAllCards: () => void;
+  onCollapseAllMonths: () => void;
+  onExpandAllMonths: () => void;
   onSelectMonth?: (itemId: string, month: number | null) => void;
   onDeleteRequest?: (item: MktWorkItemCard) => void;
   onBucketsChange: (next: MonthlyPlanBuckets) => void;
-  onCommit: (next: MonthlyPlanBuckets) => void;
+  onCommit: (next: MonthlyPlanBuckets, meta?: MonthlyPlanDragCommitMeta) => void;
   onDragRevert?: () => void;
 }
 
@@ -66,10 +74,14 @@ export function MonthlyPlanBoard({
   canEdit = false,
   canDelete = false,
   collapsedCardIds,
+  collapsedMonthIds,
   onOpenItem,
   onToggleCardCollapse,
-  onCollapseAll,
-  onExpandAll,
+  onToggleMonthCollapse,
+  onCollapseAllCards,
+  onExpandAllCards,
+  onCollapseAllMonths,
+  onExpandAllMonths,
   onSelectMonth,
   onDeleteRequest,
   onBucketsChange,
@@ -105,9 +117,11 @@ export function MonthlyPlanBoard({
     return parseBucketId(key)?.planMonth ?? null;
   }, [activeId, buckets]);
 
-  const allCollapsed =
+  const allCardsCollapsed =
     flattenBuckets(buckets).length > 0 &&
     flattenBuckets(buckets).every((item) => collapsedCardIds.has(item.id));
+
+  const allMonthsCollapsed = collapsedMonthIds.size === 12;
 
   function resolveBucketKey(overId: string): string | null {
     if (overId.startsWith("bucket:")) return overId;
@@ -191,7 +205,7 @@ export function MonthlyPlanBoard({
       );
     }
 
-    onCommit(next);
+    onCommit(next, { activeItemId });
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -236,15 +250,18 @@ export function MonthlyPlanBoard({
       onDragCancel={handleDragCancel}
     >
       <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">
+            {t.viewControls}
+          </span>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             className="text-xs text-gray-600"
-            onClick={allCollapsed ? onExpandAll : onCollapseAll}
+            onClick={allCardsCollapsed ? onExpandAllCards : onCollapseAllCards}
           >
-            {allCollapsed ? (
+            {allCardsCollapsed ? (
               <>
                 <ChevronsDownUp className="h-3.5 w-3.5" />
                 {t.expandAll}
@@ -253,6 +270,25 @@ export function MonthlyPlanBoard({
               <>
                 <ChevronsUpDown className="h-3.5 w-3.5" />
                 {t.collapseAll}
+              </>
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs text-gray-600"
+            onClick={allMonthsCollapsed ? onExpandAllMonths : onCollapseAllMonths}
+          >
+            {allMonthsCollapsed ? (
+              <>
+                <ChevronsDownUp className="h-3.5 w-3.5" />
+                {t.expandAllMonths}
+              </>
+            ) : (
+              <>
+                <ChevronsUpDown className="h-3.5 w-3.5" />
+                {t.collapseAllMonths}
               </>
             )}
           </Button>
@@ -290,6 +326,7 @@ export function MonthlyPlanBoard({
                 key={key}
                 bucketId={key}
                 title={theme.label}
+                fullTitle={theme.fullLabel}
                 accent={theme.accent}
                 soft={theme.soft}
                 border={theme.border}
@@ -300,6 +337,8 @@ export function MonthlyPlanBoard({
                 canEdit={canEdit}
                 canDelete={canDelete}
                 isActiveDrop={activeDropBucket === key}
+                monthCollapsed={collapsedMonthIds.has(month)}
+                onToggleMonthCollapse={() => onToggleMonthCollapse(month)}
                 collapsedCardIds={collapsedCardIds}
                 onOpenItem={onOpenItem}
                 onToggleCardCollapse={onToggleCardCollapse}

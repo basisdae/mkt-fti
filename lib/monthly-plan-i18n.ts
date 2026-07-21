@@ -52,6 +52,13 @@ export const MONTHLY_PLAN_COPY = {
   expandCard: "กางการ์ด",
   collapseAll: "พับทั้งหมด",
   expandAll: "กางทั้งหมด",
+  collapseAllMonths: "พับเดือนทั้งหมด",
+  expandAllMonths: "กางเดือนทั้งหมด",
+  collapseMonth: "พับเดือน",
+  expandMonth: "กางเดือน",
+  viewControls: "มุมมอง",
+  movedWorkToMonth: "ย้ายงานไปเดือน{month}แล้ว",
+  dropOnCollapsedMonth: "วางงานในเดือนนี้",
   cardActions: "เมนูงาน",
   setMonth: "กำหนดเดือน",
   moveToMonth: "ย้ายไปเดือน",
@@ -81,6 +88,20 @@ export const MONTHLY_PLAN_COPY = {
     "พ.ย.",
     "ธ.ค.",
   ] as const,
+  monthsFull: [
+    "มกราคม",
+    "กุมภาพันธ์",
+    "มีนาคม",
+    "เมษายน",
+    "พฤษภาคม",
+    "มิถุนายน",
+    "กรกฎาคม",
+    "สิงหาคม",
+    "กันยายน",
+    "ตุลาคม",
+    "พฤศจิกายน",
+    "ธันวาคม",
+  ] as const,
 } as const;
 
 export function formatMonthlyPlanDeleteDialogMessage(title: string): string {
@@ -90,6 +111,11 @@ export function formatMonthlyPlanDeleteDialogMessage(title: string): string {
 export function formatMonthlyPlanMovedToMonth(month: number): string {
   const label = MONTHLY_PLAN_COPY.months[month - 1] ?? String(month);
   return MONTHLY_PLAN_COPY.movedToMonth.replace("{month}", label);
+}
+
+export function formatMonthlyPlanMovedWorkToMonth(month: number): string {
+  const label = MONTHLY_PLAN_COPY.monthsFull[month - 1] ?? String(month);
+  return MONTHLY_PLAN_COPY.movedWorkToMonth.replace("{month}", label);
 }
 
 export function formatMonthlyPlanSubtasksCount(done: number, total: number): string {

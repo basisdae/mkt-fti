@@ -18,16 +18,21 @@ import {
 } from "@/lib/actions/monthly-plan";
 import {
   bucketsToPlacementUpdates,
+  defaultCollapsedMonthIds,
   groupWorkItemsIntoBuckets,
   mergeItemsWithServer,
   moveItemToMonthBucket,
   type MonthlyPlanBuckets,
 } from "@/lib/monthly-plan-board";
+import type { MonthlyPlanDragCommitMeta } from "@/components/monthly-plan/MonthlyPlanBoard";
 import {
   currentPlanYear,
   MONTHLY_PLAN_NEW_WORK_ID,
 } from "@/lib/monthly-plan-format";
-import { MONTHLY_PLAN_COPY as t } from "@/lib/monthly-plan-i18n";
+import {
+  formatMonthlyPlanMovedWorkToMonth,
+  MONTHLY_PLAN_COPY as t,
+} from "@/lib/monthly-plan-i18n";
 import { canEditMonthlyPlan, canViewMonthlyPlan } from "@/lib/auth/permissions";
 import {
   canEditWithSupabaseAuth,
@@ -131,6 +136,9 @@ export function MonthlyPlanView() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [collapsedCardIds, setCollapsedCardIds] = useState<Set<string>>(new Set());
+  const [collapsedMonthIds, setCollapsedMonthIds] = useState<Set<number>>(
+    () => new Set(Array.from({ length: 12 }, (_, index) => index + 1)),
+  );
   const [isSavingPlacement, setIsSavingPlacement] = useState(false);
 
   const bucketsBeforeDragRef = useRef<MktWorkItemCard[] | null>(null);
@@ -150,6 +158,12 @@ export function MonthlyPlanView() {
   );
 
   const [buckets, setBuckets] = useState(displayBuckets);
+
+  useEffect(() => {
+    if (loading) return;
+    const yearBuckets = groupWorkItemsIntoBuckets(allItems, year);
+    setCollapsedMonthIds(defaultCollapsedMonthIds(year, yearBuckets));
+  }, [year, loading]);
 
   useEffect(() => {
     if (!isDraggingRef.current && !blockBucketSyncRef.current) {
@@ -300,13 +314,40 @@ export function MonthlyPlanView() {
     setBuckets(next);
   }
 
-  function handleDragCommitted(next: MonthlyPlanBuckets) {
+  function handleDragCommitted(
+    next: MonthlyPlanBuckets,
+    meta?: MonthlyPlanDragCommitMeta,
+  ) {
     isDraggingRef.current = false;
     if (!canEdit) {
       blockBucketSyncRef.current = false;
       setBuckets(displayBuckets);
       return;
     }
+
+    if (meta?.activeItemId && bucketsBeforeDragRef.current) {
+      const previous = bucketsBeforeDragRef.current.find(
+        (item) => item.id === meta.activeItemId,
+      );
+      const patch = bucketsToPlacementUpdates(next, year).find(
+        (update) => update.id === meta.activeItemId,
+      );
+      if (
+        previous &&
+        patch &&
+        (previous.plan_month !== patch.plan_month ||
+          previous.plan_year !== patch.plan_year)
+      ) {
+        setToast({
+          message:
+            patch.plan_month != null
+              ? formatMonthlyPlanMovedWorkToMonth(patch.plan_month)
+              : t.movedToUnplanned,
+          variant: "success",
+        });
+      }
+    }
+
     schedulePersistBuckets(next);
   }
 
@@ -370,12 +411,29 @@ export function MonthlyPlanView() {
     });
   }
 
-  function handleCollapseAll() {
+  function handleCollapseAllCards() {
     setCollapsedCardIds(new Set(allItemsRef.current.map((item) => item.id)));
   }
 
-  function handleExpandAll() {
+  function handleExpandAllCards() {
     setCollapsedCardIds(new Set());
+  }
+
+  function handleToggleMonthCollapse(month: number) {
+    setCollapsedMonthIds((current) => {
+      const next = new Set(current);
+      if (next.has(month)) next.delete(month);
+      else next.add(month);
+      return next;
+    });
+  }
+
+  function handleCollapseAllMonths() {
+    setCollapsedMonthIds(new Set(Array.from({ length: 12 }, (_, index) => index + 1)));
+  }
+
+  function handleExpandAllMonths() {
+    setCollapsedMonthIds(new Set());
   }
 
   function handleSelectMonth(itemId: string, month: number | null) {
@@ -500,10 +558,14 @@ export function MonthlyPlanView() {
           canEdit={canEdit}
           canDelete={canEdit}
           collapsedCardIds={collapsedCardIds}
+          collapsedMonthIds={collapsedMonthIds}
           onOpenItem={setDrawerId}
           onToggleCardCollapse={handleToggleCardCollapse}
-          onCollapseAll={handleCollapseAll}
-          onExpandAll={handleExpandAll}
+          onToggleMonthCollapse={handleToggleMonthCollapse}
+          onCollapseAllCards={handleCollapseAllCards}
+          onExpandAllCards={handleExpandAllCards}
+          onCollapseAllMonths={handleCollapseAllMonths}
+          onExpandAllMonths={handleExpandAllMonths}
           onSelectMonth={handleSelectMonth}
           onDeleteRequest={handleDeleteRequest}
           onBucketsChange={handleBucketsChange}

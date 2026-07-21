@@ -4,10 +4,13 @@ import {
 } from "@/lib/monthly-plan-progress";
 import {
   bucketsToPlacementUpdates,
+  defaultCollapsedMonthIds,
+  formatBucketStatusSummary,
   groupWorkItemsIntoBuckets,
   moveItemBetweenBuckets,
   moveItemToMonthBucket,
   reorderItemInBucket,
+  summarizeBucketStatuses,
 } from "@/lib/monthly-plan-board";
 import { bucketId } from "@/lib/monthly-plan-format";
 import { isMonthlyPlanTap } from "@/lib/monthly-plan-dnd";
@@ -75,5 +78,23 @@ assert(reordered[bucketId(2026, 1)][0].id === "c", "reordered within bucket");
 
 const toAugust = moveItemToMonthBucket(moved, "b", 2026, 8);
 assert(toAugust[bucketId(2026, 8)].some((row) => row.id === "b"), "move to month bucket");
+
+const statusCounts = summarizeBucketStatuses([
+  sampleItem("1", 1, 0),
+  { ...sampleItem("2", 1, 1), status: "WORK" },
+  { ...sampleItem("3", 1, 2), status: "DONE" },
+]);
+assert(
+  formatBucketStatusSummary(statusCounts) === "PLAN 1 · WORK 1 · DONE 1",
+  "status summary",
+);
+
+const yearBuckets = groupWorkItemsIntoBuckets(
+  [sampleItem("a", 1, 0), sampleItem("b", 8, 0)],
+  2026,
+);
+const collapsedDefaults = defaultCollapsedMonthIds(2026, yearBuckets);
+assert(collapsedDefaults.has(2), "empty month starts collapsed");
+assert(!collapsedDefaults.has(8), "future month with work starts expanded");
 
 console.log("monthly-plan-board: all tests passed");

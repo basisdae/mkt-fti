@@ -56,6 +56,7 @@ export function monthTheme(month: number) {
   return {
     month,
     label: t.months[index],
+    fullLabel: t.monthsFull[index],
     ...({
       accent: ["#4F46E5", "#7C3AED", "#2563EB", "#0891B2", "#059669", "#16A34A", "#CA8A04", "#EA580C", "#DC2626", "#DB2777", "#9333EA", "#0D9488"][index],
       soft: ["#EEF2FF", "#F5F3FF", "#EFF6FF", "#ECFEFF", "#ECFDF5", "#F0FDF4", "#FEFCE8", "#FFF7ED", "#FEF2F2", "#FDF2F8", "#FAF5FF", "#F0FDFA"][index],

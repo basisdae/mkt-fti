@@ -1,4 +1,4 @@
-import type { MktWorkItemCard, MktWorkPlacementUpdate } from "@/types/monthly-plan";
+import type { MktWorkItemCard, MktWorkPlacementUpdate, MktWorkStatus } from "@/types/monthly-plan";
 import { bucketId, parseBucketId } from "@/lib/monthly-plan-format";
 
 export type MonthlyPlanBuckets = Record<string, MktWorkItemCard[]>;
@@ -221,4 +221,57 @@ export function cloneBuckets(buckets: MonthlyPlanBuckets): MonthlyPlanBuckets {
     }));
   }
   return next;
+}
+
+export type MonthlyPlanStatusCounts = Record<MktWorkStatus, number>;
+
+export function summarizeBucketStatuses(
+  items: MktWorkItemCard[],
+): MonthlyPlanStatusCounts {
+  const counts: MonthlyPlanStatusCounts = { PLAN: 0, WORK: 0, DONE: 0 };
+  for (const item of items) {
+    counts[item.status] += 1;
+  }
+  return counts;
+}
+
+export function formatBucketStatusSummary(
+  counts: MonthlyPlanStatusCounts,
+): string | null {
+  const parts: string[] = [];
+  if (counts.PLAN > 0) parts.push(`PLAN ${counts.PLAN}`);
+  if (counts.WORK > 0) parts.push(`WORK ${counts.WORK}`);
+  if (counts.DONE > 0) parts.push(`DONE ${counts.DONE}`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** Months that should start collapsed for the given board year. */
+export function defaultCollapsedMonthIds(
+  year: number,
+  buckets: MonthlyPlanBuckets,
+): Set<number> {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+  const collapsed = new Set<number>();
+
+  for (let month = 1; month <= 12; month += 1) {
+    const items = buckets[bucketId(year, month)] ?? [];
+    const hasWork = items.length > 0;
+    let expanded = false;
+
+    if (year === currentYear && month === currentMonth) {
+      expanded = true;
+    } else if (year > currentYear && hasWork) {
+      expanded = true;
+    } else if (year === currentYear && month > currentMonth && hasWork) {
+      expanded = true;
+    }
+
+    if (!expanded) {
+      collapsed.add(month);
+    }
+  }
+
+  return collapsed;
 }
